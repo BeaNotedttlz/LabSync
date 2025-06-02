@@ -107,8 +107,8 @@ class FrequencyGenerator():
             self._write('OUTPUT', 'OFF')
 
         # update storage #
-        for param in ["wave", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode", "if_active"]:
-            self.storage._set_parameter("C"+str(channel), param, eval(param))
+        #for param in ["wave", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode", "if_active"]:
+        #    self.storage._set_parameter("C"+str(channel), param, eval(param))
 
     # Function to toggle just the output status of a channel #
     def toggle_channel_output(self, channel: int, if_on: bool) -> None:

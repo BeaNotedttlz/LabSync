@@ -22,7 +22,7 @@ class ParameterStorage():
 		if key in self.parameter:
 			self.parameter[key] = val
 			# notify listeners that a value has changed #
-			#self._notify_listener(device_name, val, parameter_name)
+			self._notify_listener(device_name, val, parameter_name)
 		else:
 			# return AttributeError if key doesnt exist #
 			raise AttributeError(f"Key: {key} not in saved paramters!")

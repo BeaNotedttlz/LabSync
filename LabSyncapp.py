@@ -335,6 +335,7 @@ class MainWindow(QMainWindow):
 		# info panel signal #
 		self.router._connect(self.info_panel, "laser_info_signal", [(self, "_show_laser_info")])
 		self.router._connect(self.Stage, "position_signal", [(self.info_panel, "_update_indicator")])
+		# self.router._connect(self.Laser1, "emission_signal", [(self.info)])
 
 		# Stage normal tab and expert tab signals #
 		self.router._connect(self.stage_normal, "storage_update_signal", [(self.Stage, "manage_storage")])
@@ -685,7 +686,7 @@ class LaserFunctions(QObject):
 		else:
 			actual_mode = operating_mode + 1
 
-		response = self.Laser.set_operating_mode(str(actual_mode))
+		response = self.Laser.set_operating_mode(actual_mode)
 		if not response:
 			return QMessageBox.critical(None, "Error", "Operating mode was not set! \n Check Error!")
 		elif response == -1:
@@ -708,6 +709,7 @@ class LaserFunctions(QObject):
 			if response:
 				self.emission = True
 				self.emission_signal.emit(True)
+				print("emission")
 			else:
 				self.emission = False
 				QMessageBox.warning(None, "Error", "Emission could not be started!")
