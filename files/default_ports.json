@@ -1,0 +1,6 @@
+{
+    "EcoVario": "ASRL/dev/ttyUSB10::INSTR",
+    "TGA1244": "ASRL/dev/ttyUSB11::INSTR",
+    "Laser1": "ASRL/dev/ttyUSB0::INSTR",
+    "Laser2": "ASRL/dev/ttyUSB1::INSTR"
+}

@@ -1,0 +1,230 @@
+# https://pyvisa.readthedocs.io/projects/pyvisa-sim/en/latest/
+# https://pyvisa.readthedocs.io/projects/pyvisa-sim/en/latest/definitions.html#definitions
+
+spec: "1.1"
+devices:
+  omicron:
+    eom:
+      ASRL INSTR:
+        q: "\r"
+        r: "\r"
+      USB INSTR:
+        q: "\r"
+        r: "\r"
+    error: "!UK"
+    dialogues:
+      - q: "?GFw|"
+        r: "!GFwSimDevice|18|42-1337"
+      - q: "?GSN"
+        r: "!GSNuSi-6.6207"
+      - q: "?GSI"
+        r: "!GSI420|100"
+      - q: "?GMP"
+        r: "!GMP100"
+      - q: "?GWH"
+        r: "!GWH314"
+      - q: "?MDP"
+        r: "!MDP66.26"
+      - q: "?MDT"
+        r: "!MTD37.6"
+      - q: "?MtA"
+        r: "!MtA23.5"
+      - q: "?MTB"
+        r: "!MTB27.2"
+      - q: "?GAS"
+        r: "!GAS514"
+      - q: "?GFB"
+        r: "!GFB0"
+      - q: "?GLF"
+        r: "!GLF0"
+      - q: "?LPF"
+        r: "!LPF10E-2|200E6"
+      - q: "?POn"
+        r: "!POn>"
+        e: "!POnx"
+      - q: "?POf"
+        r: "!POf>"
+      - q: "?LOn"
+        r: "!LOn>"
+        e: "!LOnx"
+      - q: "?LOf"
+        r: "!LOf>"
+      - q: "?RsC"
+        r: "!RsC\r!RsC>"
+      - q: "?CLD"
+        r: "!CLD\r!RCLD0"
+    properties:
+      levelpowerabs:
+        default: "800"
+        getter:
+          q: "?GLP"
+          r: "!GLP{:03X}"
+        setter:
+          q: "?SLP{:03X}"
+          r: "!SLP>"
+          e: "!SLPx"
+        specs:
+          min: "000"
+          max: "FFF"
+          type: str
+      levelpowerpercent:
+        default: 50.0
+        getter:
+          q: "?GPP"
+          r: "!GPP{:.1f}"
+        setter:
+          q: "?SPP{:.1f}"
+          r: "!SPP>"
+          e: "!SPPx"
+        specs:
+          min: 0.0
+          max: 100.0
+          type: float
+      temporarypower:
+        default: 50.0
+        getter:
+            q: "?TPP"
+            r: "!TPP{:.1f}"
+            r_expr: "{value} * (0.9 + 0.2 * random())"
+        setter:
+          q: "?TPP{:.1f}"
+          r: "!TPP>"
+          e: "!TPPx"
+        specs:
+          min: 0.0
+          max: 100.0
+          type: float
+      operatingmode:
+        default: "E000"
+        getter:
+          q: "?GOM"
+          r: "!GOM{}"
+        setter:
+          q: "?SOM{}"
+          r: "!SOM>"
+          e: "!SOMx"
+        specs:
+          min: "0000"
+          max: "FFFF"
+          type: str
+      autopowerup:
+        default: 0
+        getter:
+          q: "?SAP"
+          r: "!SAP{:1d}"
+        setter:
+          q: "?SAP{:1d}"
+          r: "!SAP>"
+          e: "!SAPx"
+        specs:
+          min: 0
+          max: 1
+          type: int
+      autostartup:
+        default: 0
+        getter:
+          q: "?SAS"
+          r: "!SAS{:1d}"
+        setter:
+          q: "?SAS{:1d}"
+          r: "!SAS>"
+          e: "!SASx"
+        specs:
+          min: 0
+          max: 1
+          type: int
+      impedancedigital:
+        default: 0
+        getter:
+          q: "?SID"
+          r: "!SID{:1d}"
+        setter:
+          q: "?SID{:1d}"
+          r: "!SID>"
+          e: "!SIDx"
+        specs:
+          min: 0
+          max: 1
+          type: int
+      impedanceanalog:
+        default: 0
+        getter:
+          q: "?SIA"
+          r: "!SIA{:1d}"
+        setter:
+          q: "?SIA{:1d}"
+          r: "!SIA>"
+          e: "!SIAx"
+        specs:
+          min: 0
+          max: 1
+          type: int
+      recallopmodeluxxplus:
+        default: 0
+        getter:
+          q: "?ROM"
+          r: "!ROM{:1d}"
+        setter:
+          q: "?ROM{:1d}"
+          r: "!ROM>"
+          e: "!ROMx"
+        specs:
+          min: 0
+          max: 5
+          type: int
+      changeoperatingmode:
+        default: 1
+        getter:
+          q: "?COM"
+          r: "!COM{:1d}"
+        setter:
+          q: "?SOM{:1d}"
+          r: "!SOM>"
+          e: "!SOMx"
+        specs:
+          min: 0
+          max: 5
+          type: int
+      icgfrequency:
+        default: 10000.0
+        getter:
+          q: "?GPF"
+          r: "!GPF{:1f}"
+        setter:
+          q: "?SPF{:1f}"
+          r: "!SPF>"
+          e: "!SPFx"
+        specs:
+          min: 0.1
+          max: 200000.0
+          type: float
+      icgdutycyle:
+        default: 50
+        getter:
+          q: "?GDC"
+          r: "!GDC{:1f}"
+        setter:
+          q: "?SDC{:1f}"
+          r: "!SDC>"
+          e: "!SDCx"
+        specs:
+          min: 0.1
+          max: 100.0
+          type: float
+      autoreset:
+        default: 0
+        getter:
+          q: "?Ars"
+          r: "!Ars{:1d}"
+        setter:
+          q: "?Ars{:1d}"
+          r: "!Ars>"
+          e: "!Arsx"
+        specs:
+          min: 0
+          max: 1
+          type: int
+resources:
+  ASRL3::INSTR:
+    device: omicron
+  
