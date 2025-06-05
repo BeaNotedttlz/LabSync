@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	# Timer for continous calling of functions #
 	timer = QTimer()
 	timer.timeout.connect(window.loop_functions)
-	#timer.start(400)
+	timer.start(2000)
 
 	# show Main window and execute loop #
 	window.show()

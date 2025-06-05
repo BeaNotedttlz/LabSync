@@ -57,7 +57,6 @@ class OmicronLaser():
 			self.firmware = self._ask("GFw|")
 			self.specs = self._ask("GSI")
 			self.max_power = self._ask("GMP")[0]
-			print(self.firmware)
 
 			# store laser information #
 			self.storage._set_parameter("Laser", "firmware", self.firmware)
@@ -94,7 +93,7 @@ class OmicronLaser():
 	# Function for setting new operating mode #
 	def set_operating_mode(self, mode: int) -> bool:
 		try:
-			response = self._set("ROM", mode)
+			response = self._set("ROM", str(mode))
 			if response == ">":
 				# update storage if successful #
 				self.storage._set_parameter("Laser", "operating_mode", mode)
