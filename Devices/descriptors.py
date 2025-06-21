@@ -9,7 +9,7 @@ class Param():
 	def __get__(self, obj, objtype=None):
 		if obj is None:
 			return self
-		return obj._storage.get(obj.name, self.name)
+		return obj.storage.get(obj.name, self.name)
 
 	def __set__(self, obj, value):
-		obj._storage.set(obj.name, self.name, value)
+		obj.storage.set(obj.name, self.name, value)

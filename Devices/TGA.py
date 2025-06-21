@@ -2,6 +2,7 @@ import pyvisa
 from pyvisa import errors
 from serial import SerialException
 from Devices.storage import ParameterStorage
+from Devices.descriptors import Param
 
 # Posssible waveforms, inputmodes and lockmodes #
 # needed to convert combobox value to actual selection #
@@ -11,6 +12,10 @@ lockmodes = ["indep", "master", "slave", "off"]
 
 ## class for core TGA 1244 functions ##
 class FrequencyGenerator():
+    frequency = Param("frequency", 0.0)
+    amplitude = Param("amplitude", 1.0)
+    waveform = Param("waveform", 0)
+
     def __init__(self, simulate: bool) -> None:
         # connected variable to check connected status when trying to write data #
         self.connected = False
@@ -105,10 +110,6 @@ class FrequencyGenerator():
             self._write('OUTPUT', 'ON')
         else:
             self._write('OUTPUT', 'OFF')
-
-        # update storage #
-        #for param in ["wave", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode", "if_active"]:
-        #    self.storage._set_parameter("C"+str(channel), param, eval(param))
 
     # Function to toggle just the output status of a channel #
     def toggle_channel_output(self, channel: int, if_on: bool) -> None:
