@@ -1,8 +1,7 @@
 import pyvisa
 from pyvisa import errors
 from serial import SerialException
-from Devices.storage import ParameterStorage
-
+from Devices.descriptors import Param
 '''
 Factors to calculate encoder position and speed have been calculated experimentally, but seem to be of sufficient precision
 # TODO Factors to calculate encoder acceleration and deacceleration have also been calculated experimentally, but dont meet the precision needed
@@ -12,19 +11,17 @@ Communication with the EcoVario-Controller usually follows the SDO communication
 
 ## class for core EcoConnect functions ##
 class EcoConnect():
+    position = Param("position", 0.0)
+    speed = Param("speed", 35.0)
+    accelleration = Param("accel", 501.30)
+    deaccelleration = Param("deccel", 501.30)
+
     def __init__(self, simulate: bool) -> None:
         # connected variable to check connected status when trying to write data #
         self.connected = False
         self.simulate = simulate
         # create Recource Manager #
         self.rm = pyvisa.ResourceManager("Devices/SimResp.yaml@sim" if self.simulate else "")
-
-        # create storage module #
-        self.storage = ParameterStorage()
-        self.storage._add_parameter("EcoVario", "target_position", 0.0)
-        self.storage._add_parameter("EcoVario", "speed", 0.0)
-        self.storage._add_parameter("EcoVario", "accel", 0.0)
-        self.storage._add_parameter("EcoVario", "deaccel", 0.0)
 
     # Function for opening serial port #
     def open_port(self, port: str, baudrate: int) -> None:
@@ -146,8 +143,6 @@ class EcoConnect():
         encoder_position_int = round(encoder_position)
         self._write_sdo(0x01, 0x607A, encoder_position_int)
 
-        # update storage if successfull #
-        self.storage._set_parameter("EcoVario", "target_position", pos)
 
     # Function for writing new speed to Stage #
     def _write_speed(self, speed: float) -> None:
@@ -158,9 +153,6 @@ class EcoConnect():
         encoder_speed = speed / 0.000019585
         encoder_speed_int = round(encoder_speed)
         self._write_sdo(0x01, 0x6081, encoder_speed_int)
-
-        # update storage if successfull #
-        self.storage._set_parameter("EcoVario", "speed", speed)
 
     # Function for writing new acceleration and deacceleration to stage #
     def _write_accel_deaccel(self, accel: float, deaccel: float) -> None:
@@ -176,10 +168,6 @@ class EcoConnect():
 
         self._write_sdo(0x01, 0x6083, encoder_accel_int)
         self._write_sdo(0x01, 0x6084, encoder_deaccel_int)
-
-        # update storage if successfull #
-        self.storage._set_parameter("EcoVario", "deaccel", deaccel)
-        self.storage._set_parameter("EcoVario", "accel", accel)
 
     # Function for writing control word to stage #
     def _write_control_word(self, control_word: hex) -> None:

@@ -1,43 +1,42 @@
+'''
+Parameter storage class
+
+This class handles the storage of values in a dictionary
+each method is called by the descriptor class "Param"
+Aditional method for adding callback methods to send update signal
+'''
 class ParameterStorage():
-	def __init__(self):
-		# Dict for saving values to keys #
+	def __init__(self) -> None:
+		# create data and listener dict #
 		self._data = {}
-		# Dict for saving listener callback methods #
 		self._listeners = {}
 
-	# Function for adding parameter to storage #
-	def add_parameter(self, device_name: str, param_name: str, inital_value):
-		# generate key #
+	# Function for adding parameter #
+	def add_parameter(self, device_name: str, param_name: str, init_value) -> None:
 		key = (device_name, param_name)
 		if key in self._data:
-			# check if key already exists -> debug only #
-			raise KeyError(f"key {key} already registered")
-		# Add key and inital value #
-		self._data[key] = inital_value
+			raise KeyError
+		self._data[key] = init_value
 
-	# Function for getting value from storage #
+	# Function for getting parameter #
 	def get(self, device_name: str, param_name: str):
-		# generate key #
-		key = (device_name, param_name)
-		return self._data[key]
+		return self._data[(device_name, param_name)]
 
-	# Function for setting value in storage #
-	def set(self, device_name: str, param_name: str, value):
-		# generate Key #
+	# Function for setting parameter #
+	def set(self, device_name: str, param_name: str, value) -> None:
 		key = (device_name, param_name)
-		# get old value #
-		old = self._data.get(key)
+		# get current value #
+		old = self._data[key]
 
-		if old != value:
-			# only update on value change #
+		# only update parameter if changed #
+		if old  != value:
 			self._data[key] = value
-			# notify all listeners of param #
+			# notify all listeners of parameter #
 			for cb in self._listeners.get(key, []):
 				cb(param_name, value)
 
-	# Function for adding listeners to param #
-	def add_listener(self, device_name: str, param_name: str, callback):
-		# Generate key #
-		key = ( device_name, param_name)
-		# add callback to list of key #
+	# Function for adding listener #
+	def add_listener(self, device_name: str, param_name: str, callback) -> None:
+		key = (device_name, param_name)
+		# append callback methods to list of key #
 		self._listeners.setdefault(key, []).append(callback)
