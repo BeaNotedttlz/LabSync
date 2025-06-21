@@ -2,6 +2,7 @@ import pyvisa
 from pyvisa import errors
 from serial import SerialException
 from Devices.descriptors import Param
+from Devices.storage import ParameterStorage
 '''
 Factors to calculate encoder position and speed have been calculated experimentally, but seem to be of sufficient precision
 # TODO Factors to calculate encoder acceleration and deacceleration have also been calculated experimentally, but dont meet the precision needed
@@ -16,12 +17,23 @@ class EcoConnect():
     accelleration = Param("accel", 501.30)
     deaccelleration = Param("deccel", 501.30)
 
-    def __init__(self, simulate: bool) -> None:
+    def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
         # connected variable to check connected status when trying to write data #
+        self.storage = _storage
         self.connected = False
         self.simulate = simulate
         # create Recource Manager #
         self.rm = pyvisa.ResourceManager("Devices/SimResp.yaml@sim" if self.simulate else "")
+
+        # add attr to storage #
+        for param in type(self)._get_params():
+            _storage.add_parameter(name, param.name, param.default)
+
+    @classmethod
+    def _get_params(cls):
+        for attr in vars(cls).values():
+            if isinstance(attr, Param):
+                yield
 
     # Function for opening serial port #
     def open_port(self, port: str, baudrate: int) -> None:
@@ -192,4 +204,5 @@ class EcoConnect():
             return
 
         self._write_sdo(0x01, 0x6040, 0x0037)
+
 
