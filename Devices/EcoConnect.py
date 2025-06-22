@@ -12,10 +12,10 @@ Communication with the EcoVario-Controller usually follows the SDO communication
 
 ## class for core EcoConnect functions ##
 class EcoConnect():
-    position = Param("position", 0.0)
-    speed = Param("speed", 35.0)
-    accelleration = Param("accel", 501.30)
-    deaccelleration = Param("deccel", 501.30)
+    position = Param("position", 0.0, float)
+    speed = Param("speed", 35.0, float)
+    accelleration = Param("accel", 501.30, float)
+    deaccelleration = Param("deccel", 501.30, float)
 
     def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
         # connected variable to check connected status when trying to write data #

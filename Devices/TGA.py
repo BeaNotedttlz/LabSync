@@ -12,30 +12,33 @@ lockmodes = ["indep", "master", "slave", "off"]
 
 ## class for core TGA 1244 functions ##
 class FrequencyGenerator():
-    frequency = Param("frequency", 0.0)
-    amplitude = Param("amplitude", 1.0)
-    offset = Param("offset", 0.0)
-    waveform = Param("waveform", 0)
+    frequency = Param("frequency", 0.0, float)
+    amplitude = Param("amplitude", 0.0, float)
+    offset = Param("offset", 0.0, float)
+    waveform = Param("waveform", 0, int)
+    phase = Param("phase", 0.0, float)
+    inputmode = Param("inputmode", 0, int)
+    lockmode = Param("lockmode", 0, int)
+    if_active = Param("if_active", False, bool)
 
 
-    def __init__(self, simulate: bool) -> None:
+    def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
         # connected variable to check connected status when trying to write data #
+        self.name = name
         self.connected = False
         self.simulate = simulate
         # create recource Manager #
         self.rm = pyvisa.ResourceManager("Devices/SimResp.yaml@sim" if self.simulate else "")
 
-        # creating storage module #
-        self.storage = ParameterStorage()
-        for i in [1, 2, 3, 4]:
-            self.storage._add_parameter("C"+str(i), "wave", 0)
-            self.storage._add_parameter("C"+str(i), "frequency", 0.0)
-            self.storage._add_parameter("C"+str(i), "amplitude", 0.0)
-            self.storage._add_parameter("C"+str(i), "offset", 0.0)
-            self.storage._add_parameter("C"+str(i), "phase", 0.0)
-            self.storage._add_parameter("C"+str(i), "inputmode", 0)
-            self.storage._add_parameter("C"+str(i), "lockmode", 0)
-            self.storage._add_parameter("C"+str(i), "if_active", False)
+        for param in type(self)._get_params():
+            _storage.add_parameter(name, param.name, param.default)
+
+
+    @classmethod
+    def _get_params(cls):
+        for attr in vars(cls).values():
+            if isinstance(attr, Param):
+                yield
 
     # Function for opening serial port #
     def open_port(self, port, baudrate) -> None:

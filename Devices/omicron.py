@@ -7,13 +7,13 @@ from Devices.descriptors import Param
 
 ## class for core Omicron LuxX functions ##
 class OmicronLaser():
-	firmware = Param("firmware", ["ND", "ND", "ND"])
-	specs = Param("specs", ["ND", "ND"])
-	max_power = Param("max_power", 1)
-	op_mode = Param("op_mode", 0)
-	control_mode = Param("control_mode", 0)
-	temp_power = Param("temp_power", 0.0)
-	emission = Param("emission", False)
+	firmware = Param("firmware", ["ND", "ND", "ND"], list)
+	specs = Param("specs", ["ND", "ND"], list)
+	max_power = Param("max_power", 1, int)
+	op_mode = Param("op_mode", 0, int)
+	control_mode = Param("control_mode", 0, int)
+	temp_power = Param("temp_power", 0.0, float)
+	emission = Param("emission", False, bool)
 
 	def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
 		# connected variable to check connected status when trying to write data #
