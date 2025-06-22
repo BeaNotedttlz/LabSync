@@ -8,7 +8,7 @@ self.frequency -> __get__
 self.frequency = 10.0 -> __set__
 '''
 class Param():
-	def __int__(self, name: str, default, type) -> None:
+	def __init__(self, name: str, default, type) -> None:
 		# set name and default value #
 		self.name = name
 		self.default = default
