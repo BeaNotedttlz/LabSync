@@ -2,27 +2,35 @@ import pyvisa
 from pyvisa import errors
 from serial import SerialException
 from Devices.storage import ParameterStorage
+from Devices.descriptors import Param
 # TODO - andere commands hinzufügen?
 
 ## class for core Omicron LuxX functions ##
 class OmicronLaser():
-	def __init__(self, simulate: bool) -> None:
+	firmware = Param("firmware", ["ND", "ND", "ND"])
+	specs = Param("specs", ["ND", "ND"])
+	max_power = Param("max_power", 1)
+	op_mode = Param("op_mode", 0)
+	control_mode = Param("control_mode", 0)
+	temp_power = Param("temp_power", 0.0)
+	emission = Param("emission", False)
+
+	def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
 		# connected variable to check connected status when trying to write data #
+		self.storage = _storage
 		self.connected = False
 		self.simulate = simulate
 		# create Recource Manager #
 		self.rm = pyvisa.ResourceManager("Devices/SimResp.yaml@sim" if self.simulate else "")
 
-		# create storage module #
-		self.storage = ParameterStorage()
-		self.storage._add_parameter("Laser", "firmware", ["ND", "ND", "ND"])
-		self.storage._add_parameter("Laser", "specs", ["ND", "ND"])
-		self.storage._add_parameter("Laser", "max_power", 1)
+		for param in type(self)._get_params():
+			_storage.add_parameter(name, param.name, param.default)
 
-		self.storage._add_parameter("Laser", "operating_mode", 0)
-		self.storage._add_parameter("Laser", "control_mode", 0)
-		self.storage._add_parameter("Laser", "temporary_power", 0.0)
-		self.storage._add_parameter("Laser", "if_active", False)
+	@classmethod
+	def _get_params(cls):
+		for attr in vars(cls).values():
+			if isinstance(attr, Param):
+				yield
 
 	# Function to write command to laser and read response #
 	def _ask(self, command: bytes) -> str:

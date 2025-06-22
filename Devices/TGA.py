@@ -14,7 +14,9 @@ lockmodes = ["indep", "master", "slave", "off"]
 class FrequencyGenerator():
     frequency = Param("frequency", 0.0)
     amplitude = Param("amplitude", 1.0)
+    offset = Param("offset", 0.0)
     waveform = Param("waveform", 0)
+
 
     def __init__(self, simulate: bool) -> None:
         # connected variable to check connected status when trying to write data #

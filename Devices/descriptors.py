@@ -8,10 +8,11 @@ self.frequency -> __get__
 self.frequency = 10.0 -> __set__
 '''
 class Param():
-	def __int__(self, name: str, default) -> None:
+	def __int__(self, name: str, default, type) -> None:
 		# set name and default value #
 		self.name = name
 		self.default = default
+		self.type = type
 
 	def __set_name__(self, owner, attr_name):
 		# is called when accesing param #
@@ -26,4 +27,6 @@ class Param():
 
 	def __set__(self, obj, value):
 		# set new value in storage
-		obj.storage.set(obj.name, self.name, value)
+		if isinstance(value, self.type):
+			obj.storage.set(obj.name, self.name, value)
+		raise ValueError
