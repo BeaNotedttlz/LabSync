@@ -13,7 +13,7 @@ from Classes.Widgets.TgaExpert import FrequencyGeneratorWidgetExpet
 from Classes.Widgets.LaserExpert import LaserWidgetExpert
 
 from Devices.storage import ParameterStorage
-from LabSyncapp_old import LaserInfoDialog
+from Classes.Widgets.Dialogs import LaserInfoWidget
 from signals import SignalHandler
 
 
@@ -389,7 +389,7 @@ class MainWindow(QMainWindow):
 			firmware = [self.Laser1.LuxX.firmware, self.Laser2.LuxX.firmware]
 			specs = [self.Laser1.LuxX.specs, self.Laser2.LuxX.specs]
 			max_power = [self.Laser1.LuxX.max_power, self.Laser2.LuxX.max_power]
-			self.laser_dialog = LaserInfoDialog(
+			self.laser_dialog = LaserInfoWidget(
 				firmware,
 				specs,
 				max_power
