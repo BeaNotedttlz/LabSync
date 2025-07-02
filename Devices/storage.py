@@ -35,6 +35,16 @@ class ParameterStorage():
 			for cb in self._listeners.get(key, []):
 				cb(param_name, value)
 
+	def get_all_parameters(self) -> dict:
+		return self._data
+
+	def load_data_dict(self, new_data) -> None:
+		if self._data.keys() != new_data.keys():
+			raise KeyError
+		else:
+			self._data = new_data
+			return None
+
 	# Function for adding listener #
 	def add_listener(self, device_name: str, param_name: str, callback) -> None:
 		key = (device_name, param_name)

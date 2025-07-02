@@ -7,23 +7,27 @@ from Devices.storage import ParameterStorage
 Factors to calculate encoder position and speed have been calculated experimentally, but seem to be of sufficient precision
 # TODO Factors to calculate encoder acceleration and deacceleration have also been calculated experimentally, but dont meet the precision needed
 
-Communication with the EcoVario-Controller usually follows the SDO communication protokoll. (The exact protokoll can found in ~/documentation/...). This needed a python 32-bit environment on windows only, which is not ideal, so the communication has been split up in raw serial communication using information bytes.
+Communication with the EcoVario-Controller usually follows the SDO communication protocol. (The exact protocol can found in ~/documentation/...). 
+This needed a python 32-bit environment on windows only, which is not ideal, so the communication has been split up in raw serial communication using information bytes.
 '''
 
 ## class for core EcoConnect functions ##
 class EcoConnect():
-    position = Param("position", 0.0, float)
-    speed = Param("speed", 35.0, float)
-    accelleration = Param("accel", 501.30, float)
-    deaccelleration = Param("deccel", 501.30, float)
+    position = Param("position", "set_position", 0.0, float)
+    speed = Param("speed", "set_speed", 35.0, float)
+    accell = Param("accel", "set_accel", 501.30, float)
+    deaccell = Param("deccel", "set_deaccel", 501.30, float)
 
     def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
         # connected variable to check connected status when trying to write data #
         self.storage = _storage
+        self.name = name
         self.connected = False
         self.simulate = simulate
         # create Recource Manager #
-        self.rm = pyvisa.ResourceManager("Devices/SimResp.yaml@sim" if self.simulate else "")
+        self.rm = pyvisa.ResourceManager(
+            "/home/merlin/Desktop/LabSync 2.2/Devices/SimResp.yaml@sim"
+            if self.simulate else "")
 
         # add attr to storage #
         for param in type(self)._get_params():
@@ -33,7 +37,7 @@ class EcoConnect():
     def _get_params(cls):
         for attr in vars(cls).values():
             if isinstance(attr, Param):
-                yield
+                yield attr
 
     # Function for opening serial port #
     def open_port(self, port: str, baudrate: int) -> None:
@@ -88,7 +92,7 @@ class EcoConnect():
             response_hex = self._invert_hex(response)
             return response_hex
         else:
-            raise ConnectionError
+            return None
 
     # Function for writing command without reading response #
     def _write_sdo(self, id: hex, object: hex, value: int) -> None:
@@ -106,103 +110,86 @@ class EcoConnect():
             # write message #
             self.eco.write_raw(message)
             _ = self.eco.read_bytes(20)
+        else:
+            return None
 
-    # Function for getting current stage position #
-    def _get_current_position(self) -> float:
+    def set_position(self, position: float) -> None:
         if self.simulate:
-            return float(self.eco.query("currpos")) * 0.00125328
-        try:
-            position_hex = self._read_sdo(0x01, 0x6063)
-            position_mm = int(position_hex, 16) * 0.001253258 # factor needed to get from encoer position to mm #
-            return position_mm
-        except ConnectionError:
-            return -1
+            print(self.eco.query(f"pos{position}"))
+            return None
+        else:
+            encoder_position = position / 0.001253258
+            encoder_position_int = round(encoder_position)
+            return self._write_sdo(0x01, 0x607A, encoder_position_int)
 
-    # Function for getting current status word #
-    def _get_status_word(self) -> hex:
-        if self.simulate:
-            return self.eco.query("currstatus")
-
-        try:
-            status_hex = self._read_sdo(0x01, 0x6041)
-            return status_hex
-        except ConnectionError:
-            return -1
-
-    # Function for getting last error code # TODO was genau gibt der zurück?
-    def _get_last_error(self) -> hex:
-        if self.simulate:
-            return self.eco.query("currerror")
-
-        try:
-            error_code = self._read_sdo(0x01, 0x603F)
-            return error_code
-        except ConnectionError:
-            return -1
-
-    # Function for writing new position to stage #
-    def _write_position(self, pos: float) -> None:
-        # check if position is out of max. range #
-        if pos >= 2530:
-            raise ValueError(f"Position: {pos} out of max. range!")
-
-        if self.simulate:
-            print(self.eco.query(f"pos{pos}"))
-            return
-
-        # calculate encoder position #
-        encoder_position = pos / 0.001253258
-        encoder_position_int = round(encoder_position)
-        self._write_sdo(0x01, 0x607A, encoder_position_int)
-
-
-    # Function for writing new speed to Stage #
-    def _write_speed(self, speed: float) -> None:
+    def set_speed(self, speed: float) -> None:
         if self.simulate:
             print(self.eco.query(f"speed{speed}"))
-            return
-        # Calculate encoder speed #
-        encoder_speed = speed / 0.000019585
-        encoder_speed_int = round(encoder_speed)
-        self._write_sdo(0x01, 0x6081, encoder_speed_int)
+            return None
+        else:
+            encoder_speed = speed / 0.000019585
+            encoder_speed_int = round(encoder_speed)
+            return self._write_sdo(0x01, 0x6081, encoder_speed_int)
 
-    # Function for writing new acceleration and deacceleration to stage #
-    def _write_accel_deaccel(self, accel: float, deaccel: float) -> None:
+    def set_accel(self, accel: float, deaccel: float, sync: bool) -> None:
         if self.simulate:
             print(self.eco.query(f"accel{accel}"))
+            return None
+        else:
+            encoder_accel = accel / 0.020059880
+            encoder_accel_int = round(encoder_accel)
+            return self._write_sdo(0x01, 0x6083, encoder_accel_int)
+
+    def set_deaccel(self, deaccel: float) -> None:
+        if self.simulate:
             print(self.eco.query(f"deaccel{deaccel}"))
-            return
-        # calculating encoder acceleration and deacceleraion #
-        encoder_accel = accel / 0.020059880
-        encoer_deaccel = deaccel / 0.020059880
-        encoder_accel_int = round(encoder_accel)
-        encoder_deaccel_int = round(encoer_deaccel)
+            return None
+        else:
+            encoder_deaccel = deaccel / 0.020059880
+            encoder_deaccel_int = round(encoder_deaccel)
+            return self._write_sdo(0x01, 0x6084, encoder_deaccel_int)
 
-        self._write_sdo(0x01, 0x6083, encoder_accel_int)
-        self._write_sdo(0x01, 0x6084, encoder_deaccel_int)
-
-    # Function for writing control word to stage #
-    def _write_control_word(self, control_word: hex) -> None:
+    def set_control_word(self, control_word: hex) -> None:
         if self.simulate:
             print(self.eco.query("control word"))
-            return
+            return None
+        else:
+            return self._write_sdo(0x01, 0x6040, control_word)
 
-        self._write_sdo(0x01, 0x6040, control_word)
+    def get_current_position(self) -> float:
+        if self.simulate:
+            return float(self.eco.query("currpos")) * 0.00125328
+        else:
+            position_hex = self._read_sdo(0x01, 0x6063)
+            position_mm = int(position_hex, 16) * 0.001253258  # factor needed to get from encoer position to mm #
+            return position_mm
+
+    def get_status_word(self) -> hex:
+        if self.simulate:
+            return self.eco.query("currstatus")
+        else:
+            status_hex = self._read_sdo(0x01, 0x6041)
+            return status_hex
+
+    def get_last_error(self) -> hex:
+        if self.simulate:
+            return self.eco.query("currerror")
+        else:
+            error_code = self._read_sdo(0x01, 0x603F)
+            return error_code
 
     # Function to start stage #
     def start(self) -> None:
         if self.simulate:
             print(self.eco.query("start"))
-            return
-
-        self._write_sdo(0x01, 0x6040, 0x003F)
+            return None
+        else:
+            return self._write_sdo(0x01, 0x6040, 0x003F)
 
     # Function to immediately stop stage #
     def stop(self) -> None:
         if self.simulate:
             print(self.eco.query("stop"))
-            return
-
-        self._write_sdo(0x01, 0x6040, 0x0037)
-
-
+            return None
+        else:
+            return self._write_sdo(0x01, 0x6040, 0x0037)

@@ -3,25 +3,30 @@ from pyvisa import errors
 from serial import SerialException
 from Devices.storage import ParameterStorage
 from Devices.descriptors import Param
+from exceptions import ParameterNotSetError
 # TODO - andere commands hinzufügen?
 
 ## class for core Omicron LuxX functions ##
 class OmicronLaser():
-	firmware = Param("firmware", ["ND", "ND", "ND"], list)
-	specs = Param("specs", ["ND", "ND"], list)
-	max_power = Param("max_power", 1, int)
-	op_mode = Param("op_mode", 0, int)
-	control_mode = Param("control_mode", 0, int)
-	temp_power = Param("temp_power", 0.0, float)
-	emission = Param("emission", False, bool)
+	firmware = Param("firmware", None, ["ND", "ND", "ND"], list)
+	specs = Param("specs", None, ["ND", "ND"], list)
+	max_power = Param("max_power", None, 1, int)
+	op_mode = Param("op_mode", "set_op_mode", 0, int)
+	temp_power = Param("temp_power","set_temp_power", 0.0, float)
+	power = Param("power", "set_power", 0.0, float)
+	emission = Param("emission", "set_emission", False, bool)
+	error_code = Param("error_code", "", "0x00", str)
 
 	def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
 		# connected variable to check connected status when trying to write data #
 		self.storage = _storage
+		self.name = name
 		self.connected = False
 		self.simulate = simulate
 		# create Recource Manager #
-		self.rm = pyvisa.ResourceManager("Devices/SimResp.yaml@sim" if self.simulate else "")
+		self.rm = pyvisa.ResourceManager(
+			"/home/merlin/Desktop/LabSync 2.2/Devices/SimResp.yaml@sim"
+			if self.simulate else "")
 
 		for param in type(self)._get_params():
 			_storage.add_parameter(name, param.name, param.default)
@@ -30,23 +35,21 @@ class OmicronLaser():
 	def _get_params(cls):
 		for attr in vars(cls).values():
 			if isinstance(attr, Param):
-				yield
+				yield attr
 
 	# Function to write command to laser and read response #
-	def _ask(self, command: bytes) -> str:
+	def _ask(self, command: str) -> list:
 		if self.connected:
 			response = self.Laser.query("?" + command)
 			return response[4:].split("|")
-		else:
-			raise ConnectionError
+		return [""]
 
 	# Function to write command to laser without reading direct response #
-	def _set(self, what: bytes, value: bytes) -> str:
+	def _set(self, what: str, value: str) -> str:
 		if self.connected:
 			response = self.Laser.query("?" + what + value)
 			return response[4:]
-		else:
-			raise ConnectionError
+		return ""
 
 	# Function for opening serial port and asking for firmware, specs and maximum power of laser diode #
 	def open_port(self, port: str, baudrate: int) -> None:
@@ -64,12 +67,9 @@ class OmicronLaser():
 			# get laser information #
 			self.firmware = self._ask("GFw|")
 			self.specs = self._ask("GSI")
-			self.max_power = self._ask("GMP")[0]
+			self.max_power = int(self._ask("GMP")[0])
 
 			# store laser information #
-			self.storage._set_parameter("Laser", "firmware", self.firmware)
-			self.storage._set_parameter("Laser", "specs", self.specs)
-			self.storage._set_parameter("Laser", "max_power", self.max_power)
 		except (errors.VisaIOError, SerialException) as e:
 			self.connected = False
 			raise ConnectionError(f"{e}")
@@ -79,114 +79,72 @@ class OmicronLaser():
 		if self.connected:
 			self.Laser.close()
 
-	# Function for getting laser operating mode #
-	def get_operating_mode(self) -> str:
-		try:
-			response = self._ask("ROM")
-			self.storage._set_parameter("Laser", "operating_mode", response)
-			return response
-		except ConnectionError:
-			return -1
 	'''
-	List of operating modes:
+		List of operating modes:
 
-	0 - Standby, no emission
-	1 - CW ACC
-	2 - CW APC
-	3 - Analog modulation, with ACC only
-	4 - Digial modulation, with ACC only
-	5 - Analog and Digital modulation, with ACC only
+		0 - Standby, no emission
+		1 - CW ACC
+		2 - CW APC
+		3 - Analog modulation, with ACC only
+		4 - Digital modulation, with ACC only
+		5 - Analog and Digital modulation, with ACC only
 	'''
+	def set_op_mode(self, value) -> None:
+		response = self._set("ROM", str(value))
+		if response != ">":
+			raise ParameterNotSetError("Operating mode could not be set")
+		else:
+			return None
+	'''
+		Permanent power can set and will stay after reboot or reset of the laser.
+		Though this should not be used most of the time! The memory can only be set a certain finite amount of times!
 
-	# Function for setting new operating mode #
-	def set_operating_mode(self, mode: int) -> bool:
-		try:
-			response = self._set("ROM", str(mode))
-			if response == ">":
-				# update storage if successful #
-				self.storage._set_parameter("Laser", "operating_mode", mode)
-			return response == ">"
-		except ConnectionError:
-			return -1
+		For most power setting operations, temporary power should be used!
+		(for further information please read ~/documentation/luxx_programmers_guide)
+		'''
 
-	# Function for getting current permament power #
+	def set_power(self, value) -> None:
+		response = self._set("SLP", str(value))
+		if response != ">":
+			raise ParameterNotSetError("Power could not be set")
+		else:
+			return None
+
+	def set_temp_power(self, value) -> None:
+		response = self._set("TTP", str(value))
+		if response != ">":
+			raise ParameterNotSetError("Temporary power could not be set")
+		else:
+			return None
+
+	def get_op_mode(self) -> str:
+		response = self._ask("ROM")[0]
+		return response
+
 	def get_power(self) -> str:
-		try:
-			response = self._ask("GLP")[0]
-			# update storage #
-			self.storage._set_parameter("Laser", "power",)
-			return response
-		except ConnectionError:
-			return -1
+		response = self._ask("GLP")[0]
+		return response
 
-	# Function for setting new permanent power #
-	def set_power(self, value: float) -> bool:
-		try:
-			response = self._set("SLP", hex(value)[2:])
-			if response == ">":
-				# update storage if successful #
-				self.storage._set_parameter("Laser", "power", value)
-			return response == ">"
-		except ConnectionError:
-			return -1
+	def get_temp_power(self) -> str:
+		response = self._ask("TTP")[0]
+		return response
 
-	'''
-	Permament power can set and will stay after reboot or reset of the laser.
-	Though this should not be used most of the time! The memory can only be set a certain finite amount of times!
-
-	For most power setting operations, temporary power should be used!
-	(for further information please read ~/documentation/luxx_programmers_guide)
-	'''
-
-	# Function for getting temporary power #
-	def get_temporary_power(self) -> str:
-		try:
-			response = self._ask("TPP")[0]
-			# update storage #
-			self.storage._set_parameter("Laser", "temporary_power", float(response))
-			return response
-		except ConnectionError:
-			return -1
-
-	# Function for setting temporary power #
-	def set_temporary_power(self, value: float) -> bool:
-		value = str(value)
-		try:
-			response = self._set('TPP',value)
-			if response == ">":
-				# update storage if successful #
-				self.storage._set_parameter("Laser", "temporary_power", value)
-			return response == ">"
-		except ConnectionError:
-			return -1
-
-	# Function for starting laser emission #
-	def laser_on(self) -> bool:
-		try:
-			response = self._ask("LOn")[0]
-			if response == ">":
-				# update storage if successful #
-				self.storage._set_parameter("Laser", "if_active", True)
-			return response == ">"
-		except ConnectionError:
-			return -1
-
-	# Function for stopping laser emission #
-	def laser_off(self) -> bool:
-		try:
+	def set_emission(self, value) -> None:
+		if value:
+			response = self._ask("LOn")
+			if response != ">":
+				raise ParameterNotSetError("Emission could not be set")
+			else:
+				return None
+		else:
 			response = self._ask("LOf")[0]
-			if response == ">":
-				# update storage if successful #
-				self.storage._set_parameter("Laser", "if_active", True)
-			return response == ">"
-		except ConnectionError:
-			return -1
+			if response != ">":
+				raise ParameterNotSetError("Emission could not be set")
+			else:
+				return None
 
-	# Function for getting current error byte #
-	def _get_error_byte(self) -> hex:
-		try:
-			response = self._ask("GLF")[0]
-			return bin(int(response, 16))
-		except ConnectionError:
-			return	-1
+	def get_error_byte(self) -> hex:
+		response = self._ask("GLF")[0]
+		return bin(int(response, 16))
+
 

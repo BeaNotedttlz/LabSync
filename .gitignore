@@ -10,3 +10,6 @@ eco_apl_note23_en.pdf
 
 # ignore all cache files
 *.pyc
+
+# ignore .idea
+.idea/

@@ -613,7 +613,7 @@ class LaserInfoWidgets(QWidget):
 		layout.addWidget(QLabel(str(max_power[1])), 5, 4)
 		layout.addWidget(QLabel(error_byte[1]), 6, 4)
 
-## class for creating control word window ##
+## class for creatigng control word window ##
 class ControlWordsWidgets(QWidget):
 	# creating signals #
 	apply_signal = Signal(tuple)
