@@ -36,6 +36,7 @@ class EcoConnect():
             self.eco.read_termination = "\r"
             self.eco.write_termination = "\r"
             self.connected = True
+            self._write_sdo(0x01, 0x6040, 0x003F)
         except (errors.VisaIOError, SerialException) as e:
             self.connected = False
             raise ConnectionError(f"{e}")
