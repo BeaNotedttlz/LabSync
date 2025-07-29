@@ -9,6 +9,7 @@ from exceptions import DeviceParameterError, ParameterOutOfRangeError, UIParamet
 class StageWidgetNormal(QWidget):
 	stop_signal = Signal()
 	start_signal = Signal(float, float, float, float)
+	update_param_signal = Signal(dict)
 
 	def __init__(self) -> None:
 		super().__init__()
@@ -37,28 +38,39 @@ class StageWidgetNormal(QWidget):
 
 		self.setLayout(layout)
 		start_button.clicked.connect(self._start)
-		self.in_new_position.returnPressed.connect(self._write_target_pos)
+		# self.in_new_position.returnPressed.connect(self._write_target_pos)
+		self.in_new_position.returnPressed.connect(
+			lambda: self.update_param_signal.emit({"position": self.in_new_position.text()})
+		)
+		self.in_speed.editingFinished.connect(
+			lambda: self.update_param_signal.emit({"speed": self.in_speed.text()})
+		)
 
-	@Slot()
-	def _write_target_pos(self) -> None:
-		self.out_target_position.clear()
-		self.out_target_position.setText(self.in_new_position.text())
-		return None
+	# @Slot()
+	# def _write_target_pos(self) -> None:
+	# 	self.out_target_position.clear()
+	# 	self.out_target_position.setText(self.in_new_position.text())
+	# 	self.update_param_signal.emit({"position": self.in_new_position.text()})
+	# 	return None
 
-	def _get_params(self, **kwargs) -> None:
+	def get_params(self, *argv, **kwargs) -> None:
 		supported_params = {
 			"position" : "out_target_position",
 			"speed" : "in_speed",
 			"accell" : "in_accell",
 			"deaccell": "in_deaccell",
 		}
+		if len(argv) == 1 and isinstance(argv[0], dict):
+			kwargs.update(argv[0])
+		elif argv:
+			raise TypeError("Only dict or named parameters accepted!")
 
 		for param, value in kwargs.items():
 			if param not in supported_params:
 				raise UIParameterError(param)
 
 			widget = getattr(self, supported_params[param])
-			widget.setText(value)
+			widget.setText(str(value))
 		return None
 
 	@Slot()

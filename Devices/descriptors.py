@@ -41,10 +41,11 @@ class Param():
 
 		if self.type is dict and isinstance(value, tuple):
 			key = value[0]
-			value = value[1]
+			act_value = value[1]
 			current_dict = obj.storage.get(obj.name, self.name)
-			if current_dict[key] == value:
+			if current_dict[key] == act_value:
 				return None
+			obj.storage.set(obj.name, self.name, value)
 
 			current_dict[key] = value
 			if self.method is not None:

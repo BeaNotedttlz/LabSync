@@ -80,11 +80,15 @@ class LaserWidgetExpert(QWidget):
 			return None
 
 
-	def get_params(self, **kwargs) -> None:
+	def get_params(self, *argv, **kwargs) -> None:
 		supported_params = {
 			"temp_power": "laser_power_percent",
 			"op_mode": "_map_modes"
 		}
+		if len(argv) == 1 and isinstance(argv[0], dict):
+			kwargs.update(argv[0])
+		elif argv:
+			raise TypeError("Only dict or named parameters accepted!")
 
 		for param, value in kwargs.items():
 			if param not in supported_params:

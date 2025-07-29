@@ -77,7 +77,7 @@ class FrequencyGeneratorWidgetExpet(QWidget):
 		)
 		return None
 
-	def get_params(self, **kwargs) -> None:
+	def get_params(self, *argv, **kwargs) -> None:
 		supported_params = {
 			"waveform": "waveform",
 			"amplitude": "amplitude",
@@ -87,7 +87,16 @@ class FrequencyGeneratorWidgetExpet(QWidget):
 			"lockmode": "lockmode",
 			"output": "output"
 		}
+		if len(argv) == 1 and isinstance(argv[0], dict):
+			kwargs.update(argv[0])
+		elif argv:
+			raise TypeError("Only dict or named parameters accepted!")
+
 		for param, value in kwargs.items():
+			# if value[0] != self.channel:
+			# 	return None
+			# value = value[1]
+			value = value[1]
 			if param not in supported_params:
 				raise UIParameterError(param)
 			if param == "waveform":

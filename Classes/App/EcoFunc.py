@@ -83,6 +83,26 @@ class EcoFunctions(QObject):
 		else:
 			return str(current_error_code)
 
+	def set_parameter(self, **kwargs) -> None:
+		allowed_params = [
+			"position",
+			"speed",
+			"accell",
+			"deaccell"
+		]
+		for param, value in kwargs.items():
+			if param not in allowed_params:
+				raise ParameterOutOfRangeError(f"Unsupported parameter: {param}")
+			else:
+				try:
+					setattr(self, param, value)
+				except Exception as e:
+					QMessageBox.information(
+						None,
+						"Error",
+						str(e)
+					)
+
 	@Slot(float, float, float, float)
 	def start(self, position, speed, accell, deaccell) -> None:
 		if position >= 2530:

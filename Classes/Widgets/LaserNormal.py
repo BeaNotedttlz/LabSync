@@ -118,7 +118,7 @@ class LaserWidgetNormal(QWidget):
 		return None
 
 
-	def get_params(self, **kwargs) -> None:
+	def get_params(self, *argv, **kwargs) -> None:
 		supported_params = {
 			"op_mode_1": None,
 			"op_mode_2": None,
@@ -127,6 +127,10 @@ class LaserWidgetNormal(QWidget):
 			"frequency_1": "frequency1",
 			"frequency_2": "frequency2",
 		}
+		if len(argv) == 1 and isinstance(argv[0], dict):
+			kwargs.update(argv[0])
+		elif argv:
+			raise TypeError("Only dict or named parameters accepted!")
 
 		for param, value in kwargs.items():
 			if param not in supported_params:

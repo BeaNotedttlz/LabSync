@@ -13,13 +13,11 @@ from Classes.Widgets.TgaExpert import FrequencyGeneratorWidgetExpet
 from Classes.Widgets.LaserExpert import LaserWidgetExpert
 
 from Devices.storage import ParameterStorage
-from Classes.Widgets.Dialogs import LaserInfoWidget
 from signals import SignalHandler
 
-
-from PySide6.QtCore import Qt, Signal, Slot, QObject
-from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget, QHBoxLayout,
-							   QSplitter, QMessageBox, QGridLayout, QVBoxLayout,
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout,
+							   QSplitter, QMessageBox, QGridLayout,
 							   QFileDialog, QTabWidget, QSizePolicy)
 import os, json
 
@@ -28,6 +26,9 @@ class MainWindow(QMainWindow):
 		super().__init__()
 		self.app = app
 		self.storage = ParameterStorage()
+		self.storage.add_parameter("EcoVario", "current_position", 0.0)
+		self.storage.add_parameter("EcoVario", "error_code",0x0000)
+
 		self.signal_handler = SignalHandler()
 		curr_file_dir = os.path.dirname(os.path.realpath(__file__))
 		self.file_dir = os.path.join(curr_file_dir, "files")
@@ -69,6 +70,7 @@ class MainWindow(QMainWindow):
 		self._setup_devices()
 		self._setup_menubar()
 		self._setup_widgets()
+		self._setup_listeners()
 		self._setup_connections()
 
 	def _setup_tabs(self) -> QTabWidget:
@@ -351,6 +353,11 @@ class MainWindow(QMainWindow):
 		self.stage_normal.stop_signal.connect(self.Stage.stop)
 		self.stage_expert.stop_signal.connect(self.Stage.stop)
 
+		self.stage_normal.update_param_signal.connect(self.stage_normal.get_params)
+		self.stage_normal.update_param_signal.connect(self.stage_expert.get_params)
+		self.stage_expert.update_param_signal.connect(self.stage_expert.get_params)
+		self.stage_expert.update_param_signal.connect(self.stage_normal.get_params)
+
 		self.freq_gen_expert1.apply_signal.connect(self.FrequencyGenerator.apply)
 		self.freq_gen_expert2.apply_signal.connect(self.FrequencyGenerator.apply)
 		self.freq_gen_expert3.apply_signal.connect(self.FrequencyGenerator.apply)
@@ -368,6 +375,58 @@ class MainWindow(QMainWindow):
 		self.FrequencyGenerator.__post_init__()
 		self.Laser1.__post_init__()
 		self.Laser2.__post_init__()
+		return None
+
+	def _setup_listeners(self) -> None:
+		self.storage.add_listener(
+			"EcoVario",
+			("position", "speed", "accel", "deaccel"),
+			callback=self.stage_normal.get_params
+		)
+		self.storage.add_listener(
+			"EcoVario",
+			("position", "speed", "accel", "deaccel"),
+			callback=self.stage_expert.get_params
+		)
+		self.storage.add_listener(
+			"TGA",
+			("waveform", "frequency", "amplitude", "offset", "phase","inputmode","lockmode"),
+			callback=self.freq_gen_expert1.get_params
+		)
+		self.storage.add_listener(
+			"TGA",
+			("waveform", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode"),
+			callback=self.freq_gen_expert2.get_params
+		)
+		self.storage.add_listener(
+			"TGA",
+			("waveform", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode"),
+			callback=self.freq_gen_expert3.get_params
+		)
+		self.storage.add_listener(
+			"TGA",
+			("waveform", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode"),
+			callback=self.freq_gen_expert4.get_params
+		)
+		self.storage.add_listener(
+			"LuxX1",
+			("op_mode", "temp_power"),
+			callback=self.laser_expert1.get_params
+		)
+		self.storage.add_listener(
+			"LuxX2",
+			("op_mode", "temp_power"),
+		callback = self.laser_expert2.get_params
+		)
+		return None
+
+	def _loop_calls(self) -> None:
+		current_position = self.Stage.get_current_position()
+		stage_error_code = self.Stage.get_current_error_code()
+
+		self.storage.set("EcoVario", "current_position", current_position)
+		self.storage.set("EcoVario", "error_code", stage_error_code)
+
 		return None
 
 	def _show_port_dialog(self) -> None:
