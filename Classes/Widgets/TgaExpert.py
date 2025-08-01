@@ -5,7 +5,7 @@ from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QCheckBox, QLabel
 
 from Classes.Widgets.fields import _create_combo_box, _create_input_field
-from exceptions import UIParameterError
+from Exceptions import UIParameterError
 
 
 class FrequencyGeneratorWidgetExpet(QWidget):

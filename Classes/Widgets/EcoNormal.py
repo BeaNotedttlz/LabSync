@@ -3,7 +3,7 @@ from PySide6.QtGui import QDoubleValidator, Qt
 from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QCheckBox, QSpacerItem, QLabel, QMessageBox
 
 from Classes.Widgets.fields import _create_input_field, _create_output_field
-from exceptions import UIParameterError, DeviceParameterError, ParameterOutOfRangeError
+from Exceptions import UIParameterError, DeviceParameterError, ParameterOutOfRangeError
 
 class StageWidgetExpert(QWidget):
 	stop_signal = Signal()

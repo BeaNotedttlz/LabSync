@@ -3,10 +3,10 @@ from pyvisa import errors
 from serial import SerialException
 from Devices.Storage import ParameterStorage
 from Devices.Descriptors import Parameter
-from exceptions import DeviceParameterError
+from Exceptions import DeviceParameterError
 
 ## class for core TGA 1244 functions ##
-class FrequencyGenerator():
+class FrequencyGenerator:
     waveform = Parameter(
         name="waveform",
         method="set_waveform",
@@ -61,7 +61,7 @@ class FrequencyGenerator():
             if self.simulate else "")
 
         for param in type(self)._get_params():
-            _storage.new_parameter(name, param.name, param.default)
+            self.storage.new_parameter(name, param.name, param.default)
 
 
     @classmethod

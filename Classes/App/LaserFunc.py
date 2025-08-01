@@ -4,9 +4,7 @@ Interface of backend OmicronLaser functions and PySide6 frontend
 from Devices.Omircon import OmicronLaser
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtWidgets import QMessageBox
-
-from Devices.Storage import ParameterStorage
-from exceptions import ParameterNotSetError, ParameterOutOfRangeError, DeviceParameterError
+from Exceptions import ParameterNotSetError, ParameterOutOfRangeError, DeviceParameterError
 
 
 class LaserFunctions(QObject):
@@ -61,7 +59,9 @@ class LaserFunctions(QObject):
 		if temp_power > 100.0:
 			raise ParameterOutOfRangeError("Laser power cant exceed max power!")
 		parameters = {
-
+			"temp_power": temp_power,
+			"op_mode": op_mode,
+			"emission": emission
 		}
 		for param, value in parameters.items():
 			if not hasattr(self.LuxX, param):
@@ -74,8 +74,8 @@ class LaserFunctions(QObject):
 			except ParameterNotSetError as e:
 				QMessageBox.information(
 					None,
-					f"Error while setting {param}",
-					f"Error: \n {e}"
+					"Error",
+					f"Could not set {param} to {value}!\n{e}"
 				)
 			except Exception as e:
 				QMessageBox.information(
@@ -107,3 +107,20 @@ class LaserFunctions(QObject):
 					"Error",
 					f"{e}\n Check error!"
 				)
+
+	@Slot()
+	def reset_error(self) -> None:
+		try:
+			self.LuxX.reset_controller()
+		except TimeoutError as e:
+			QMessageBox.information(
+				None,
+				"Error",
+				f"Reset Timeout reached!\n{e}"
+			)
+		except Exception as e:
+			QMessageBox.information(
+				None,
+				"Error",
+				f"Could not reset controller!\n{e}"
+			)

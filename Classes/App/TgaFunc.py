@@ -3,9 +3,10 @@ Interface of backend TGA1244 functions and PySide6 frontend
 '''
 from PySide6.QtCore import QObject, Slot, Signal
 from PySide6.QtWidgets import QMessageBox
-from Devices.TGA import FrequencyGenerator
+
 from Devices.Storage import ParameterStorage
-from exceptions import DeviceParameterError
+from Devices.TGA import FrequencyGenerator
+from Exceptions import DeviceParameterError
 
 class FrequencyGeneratorFunctions(QObject):
 	port_status_signal = Signal(str, bool)
@@ -100,35 +101,19 @@ class FrequencyGeneratorFunctions(QObject):
 			laser_index
 	) -> None:
 		values = self._calc_values(power)
-		if laser_index == 1:
-			amplitude = values[0]
-			offset = values[1]
-		else:
-			amplitude = values[2]
-			offset = values[3]
-		parameters = {
-			"waveform": waveform,
-			"amplitude": amplitude,
-			"offset": offset,
-			"phase": 0.0,
-			"frequency": frequency,
-			"inputmode": "Amp_Offset",
-			"lockmode": lockmode,
-			"output": output
-		}
-		self.TGA1244.current_channel = channel
-		for param, value in parameters.items():
-			if not hasattr(self.TGA1244, param):
-				raise DeviceParameterError(f"TGA1244: unsupported parameter {param}")
-			try:
-				value = (channel, value)
-				setattr(self.TGA1244, param, value)
-			except Exception as e:
-				QMessageBox.information(
-					None,
-					"Error",
-					str(e)
-				)
+		amplitude = values[0] if laser_index == 1 else values[2]
+		offset = values[1] if laser_index == 1 else values[3]
+
+		self.apply(channel=channel,
+				waveform=waveform,
+				amplitude=amplitude,
+				offset=offset,
+				phase=0.0,
+				frequency=frequency,
+				inputmode="Amp+Offset",
+				lockmode=lockmode,
+				output=output
+	)
 
 	@staticmethod
 	def _calc_values(power: float) -> [float, float, float, float]:

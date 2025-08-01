@@ -21,7 +21,7 @@ class Parameter:
 		if obj_type is None:
 			return self
 		else:
-			return obj.storgage.get_parameter(obj.name, self.name)
+			return obj.storage.get_parameter(obj.name, self.name)
 			# TODO check with actual attribute and diff
 
 	def __set__(self, obj, value):

@@ -5,7 +5,7 @@ from Devices.EcoConnect import EcoConnect
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtWidgets import QMessageBox
 import math
-from exceptions import ParameterOutOfRangeError, DeviceParameterError
+from Exceptions import ParameterOutOfRangeError, DeviceParameterError
 
 class EcoFunctions(QObject):
 	port_status_signal = Signal(str, bool)
@@ -83,26 +83,6 @@ class EcoFunctions(QObject):
 		else:
 			return str(current_error_code)
 
-	def set_parameter(self, **kwargs) -> None:
-		allowed_params = [
-			"position",
-			"speed",
-			"accell",
-			"deaccell"
-		]
-		for param, value in kwargs.items():
-			if param not in allowed_params:
-				raise ParameterOutOfRangeError(f"Unsupported parameter: {param}")
-			else:
-				try:
-					setattr(self, param, value)
-				except Exception as e:
-					QMessageBox.information(
-						None,
-						"Error",
-						str(e)
-					)
-
 	@Slot(float, float, float, float)
 	def start(self, position, speed, accell, deaccell) -> None:
 		if position >= 2530:
@@ -122,9 +102,28 @@ class EcoFunctions(QObject):
 				QMessageBox.information(
 					None,
 					"Error",
-					str(e)
+					f"Could not set {param} to {value}!\n{e}"
 				)
+		try:
+			self.EcoVario.start()
+		except Exception as e:
+			QMessageBox.information(
+				None,
+				"Error",
+				f"Could not start Stage!\n{e}"
+			)
 
 	@Slot()
 	def stop(self) -> None:
 		self.EcoVario.stop()
+
+	@Slot()
+	def reference_stage(self):
+		try:
+			self.EcoVario.set_homing()
+		except Exception as e:
+			QMessageBox.information(
+				None,
+				"Error",
+				f"Could not set reference position!\n{e}"
+			)
