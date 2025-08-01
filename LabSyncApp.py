@@ -12,7 +12,7 @@ from Classes.Widgets.LaserNormal import LaserWidgetNormal
 from Classes.Widgets.TgaExpert import FrequencyGeneratorWidgetExpet
 from Classes.Widgets.LaserExpert import LaserWidgetExpert
 
-from Devices.storage import ParameterStorage
+from Devices.Storage import ParameterStorage
 from signals import SignalHandler
 
 from PySide6.QtCore import Qt

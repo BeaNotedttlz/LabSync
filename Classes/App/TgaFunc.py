@@ -4,7 +4,7 @@ Interface of backend TGA1244 functions and PySide6 frontend
 from PySide6.QtCore import QObject, Slot, Signal
 from PySide6.QtWidgets import QMessageBox
 from Devices.TGA import FrequencyGenerator
-from Devices.storage import ParameterStorage
+from Devices.Storage import ParameterStorage
 from exceptions import DeviceParameterError
 
 class FrequencyGeneratorFunctions(QObject):

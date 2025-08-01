@@ -1,8 +1,8 @@
 import pyvisa
 from pyvisa import errors
 from serial import SerialException
-from Devices.descriptors import Param
-from Devices.storage import ParameterStorage
+from Devices.Descriptors import Parameter
+from Devices.Storage import ParameterStorage
 '''
 Factors to calculate encoder position and speed have been calculated experimentally, but seem to be of sufficient precision
 # TODO Factors to calculate encoder acceleration and deacceleration have also been calculated experimentally, but dont meet the precision needed
@@ -13,10 +13,10 @@ This needed a python 32-bit environment on windows only, which is not ideal, so 
 
 ## class for core EcoConnect functions ##
 class EcoConnect():
-    position = Param("position", "set_position", 0.0, float)
-    speed = Param("speed", "set_speed", 35.0, float)
-    accell = Param("accel", "set_accel", 501.30, float)
-    deaccell = Param("deccel", "set_deaccel", 501.30, float)
+    position = Parameter("position", "set_position", 0.0, float)
+    speed = Parameter("speed", "set_speed", 35.0, float)
+    accell = Parameter("accel", "set_accel", 501.30, float)
+    deaccell = Parameter("deccel", "set_deaccel", 501.30, float)
 
     def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
         # connected variable to check connected status when trying to write data #
@@ -31,12 +31,12 @@ class EcoConnect():
 
         # add attr to storage #
         for param in type(self)._get_params():
-            _storage.add_parameter(name, param.name, param.default)
+            _storage.new_parameter(name, param.name, param.default)
 
     @classmethod
     def _get_params(cls):
         for attr in vars(cls).values():
-            if isinstance(attr, Param):
+            if isinstance(attr, Parameter):
                 yield attr
 
     # Function for opening serial port #
@@ -184,7 +184,15 @@ class EcoConnect():
             print(self.eco.query("start"))
             return None
         else:
-            return self._write_sdo(0x01, 0x6040, 0x003F)
+            return self._write_sdo(0x01, 0x6040, 0x002F) # TODO This should only be 0x002F -> was 0x003F
+
+    # TODO this should set the reference position of the stage #
+    def set_homing(self) -> None:
+        if self.simulate:
+            print("homing...")
+            return None
+        else:
+            return self._write_sdo(0x01, 0x6040, 0x002F)
 
     # Function to immediately stop stage #
     def stop(self) -> None:

@@ -1,21 +1,23 @@
 import pyvisa
 from pyvisa import errors
 from serial import SerialException
-from Devices.storage import ParameterStorage
-from Devices.descriptors import Param
-from exceptions import ParameterNotSetError
+from Devices.Storage import ParameterStorage
+from Devices.Descriptors import Parameter
+from exceptions import ParameterNotSetError, ParameterOutOfRangeError
+
+
 # TODO - andere commands hinzufügen?
 
 ## class for core Omicron LuxX functions ##
 class OmicronLaser():
-	firmware = Param("firmware", None, ["ND", "ND", "ND"], list)
-	specs = Param("specs", None, ["ND", "ND"], list)
-	max_power = Param("max_power", None, 1, int)
-	op_mode = Param("op_mode", "set_op_mode", 0, int)
-	temp_power = Param("temp_power","set_temp_power", 0.0, float)
-	power = Param("power", "set_power", 0.0, float)
-	emission = Param("emission", "set_emission", False, bool)
-	error_code = Param("error_code", "", "0x00", str)
+	firmware = Parameter("firmware", None, ["ND", "ND", "ND"], list)
+	specs = Parameter("specs", None, ["ND", "ND"], list)
+	max_power = Parameter("max_power", None, 1, int)
+	op_mode = Parameter("op_mode", "set_op_mode", 0, int)
+	temp_power = Parameter("temp_power","set_temp_power", 0.0, float)
+	power = Parameter("power", "set_power", 0.0, float)
+	emission = Parameter("emission", "set_emission", False, bool)
+	error_code = Parameter("error_code", "", "0x00", str)
 
 	def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
 		# connected variable to check connected status when trying to write data #
@@ -29,12 +31,12 @@ class OmicronLaser():
 			if self.simulate else "")
 
 		for param in type(self)._get_params():
-			_storage.add_parameter(name, param.name, param.default)
+			_storage.new_parameter(name, param.name, param.default)
 
 	@classmethod
 	def _get_params(cls):
 		for attr in vars(cls).values():
-			if isinstance(attr, Param):
+			if isinstance(attr, Parameter):
 				yield attr
 
 	# Function to write command to laser and read response #
@@ -111,6 +113,8 @@ class OmicronLaser():
 			return None
 
 	def set_temp_power(self, value) -> None:
+		if value > 100.0:
+			raise ParameterOutOfRangeError(f"Temporary power {value} is out of range (0.0 - 100.0)")
 		response = self._set("TTP", str(value))
 		if response != ">":
 			raise ParameterNotSetError("Temporary power could not be set")

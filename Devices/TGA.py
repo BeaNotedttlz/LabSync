@@ -1,48 +1,48 @@
 import pyvisa
 from pyvisa import errors
 from serial import SerialException
-from Devices.storage import ParameterStorage
-from Devices.descriptors import Param
+from Devices.Storage import ParameterStorage
+from Devices.Descriptors import Parameter
 from exceptions import DeviceParameterError
 
 ## class for core TGA 1244 functions ##
 class FrequencyGenerator():
-    waveform = Param(
+    waveform = Parameter(
         name="waveform",
         method="set_waveform",
         default={1:"sine", 2:"sine", 3:"sine", 4:"sine"},
         type=dict)
-    frequency = Param(
+    frequency = Parameter(
         name="frequency",
         method="set_frequency",
         default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
         type=dict)
-    amplitude = Param(
+    amplitude = Parameter(
         name="amplitude",
         method="set_amplitude",
         default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
         type=dict)
-    offset = Param(
+    offset = Parameter(
         name="offset",
         method="set_offset",
         default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
         type=dict)
-    phase = Param(
+    phase = Parameter(
         name="phase",
         method="set_phase",
         default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
         type=dict)
-    inputmode = Param(
+    inputmode = Parameter(
         name="inputmode",
         method=None,
         default={1: "Amp+Offset", 2: "Amp+Offset", 3: "Amp+Offset", 4: "Amp+Offset"},
         type=dict)
-    lockmode = Param(
+    lockmode = Parameter(
         name="lockmode",
         method="set_lockmode",
         default={1:"indep", 2:"indep", 3:"indep", 4:"indep"},
         type=dict)
-    output = Param(
+    output = Parameter(
         name="output",
         method="set_output",
         default={1:False, 2:False, 3:False, 4:False},
@@ -61,13 +61,13 @@ class FrequencyGenerator():
             if self.simulate else "")
 
         for param in type(self)._get_params():
-            _storage.add_parameter(name, param.name, param.default)
+            _storage.new_parameter(name, param.name, param.default)
 
 
     @classmethod
     def _get_params(cls):
         for attr in vars(cls).values():
-            if isinstance(attr, Param):
+            if isinstance(attr, Parameter):
                 yield attr
 
     # Function for opening serial port #

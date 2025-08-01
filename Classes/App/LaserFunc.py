@@ -1,11 +1,11 @@
 '''
 Interface of backend OmicronLaser functions and PySide6 frontend
 '''
-from Devices.omicron import OmicronLaser
+from Devices.Omircon import OmicronLaser
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtWidgets import QMessageBox
 
-from Devices.storage import ParameterStorage
+from Devices.Storage import ParameterStorage
 from exceptions import ParameterNotSetError, ParameterOutOfRangeError, DeviceParameterError
 
 
