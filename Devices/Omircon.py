@@ -23,6 +23,7 @@ class OmicronLaser:
 
     def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
         # connected variable to check connected status when trying to write data #
+        self.Laser = None
         self.storage = _storage
         self.name = name
         self.connected = False

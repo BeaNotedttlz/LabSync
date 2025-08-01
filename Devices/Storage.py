@@ -10,7 +10,7 @@ class ParameterStorage:
 
 	def __init__(self):
 		self._storage = {}
-		self._listners = {}
+		self._listeners = {}
 
 	def new_parameter(self, device: str, parameter: str, init_value=None):
 		key = (device, parameter)
@@ -21,12 +21,12 @@ class ParameterStorage:
 
 	def new_listener(self, device: str, parameter: str, callback):
 		key = (device, parameter)
-		if key not in self._listners:
+		if key not in self._listeners:
 			if isinstance(callback, Iterable):
 				for cb in callback:
-					self._listners.setdefault(cb, []).append(cb)
+					self._listeners.setdefault(cb, []).append(cb)
 			else:
-				self._listners.setdefault(key, []).append(callback)
+				self._listeners.setdefault(key, []).append(callback)
 
 	def get_parameter(self, device: str, parameter: str):
 		key = (device, parameter)
@@ -45,11 +45,12 @@ class ParameterStorage:
 
 	def _notify_listeners(self, device, parameter, value):
 		key = (device, parameter)
-		if key in self._listners:
-			for callback in self._listners[key]:
+		if key in self._listeners:
+			for callback in self._listeners[key]:
 				callback(value)
 		else:
-			raise KeyError(f"No listeners for parameter {parameter} of device {device}.")
+			pass
+			#raise KeyError(f"No listeners for parameter {parameter} of device {device}.")
 
 
 

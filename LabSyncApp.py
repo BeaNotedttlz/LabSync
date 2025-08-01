@@ -68,7 +68,6 @@ class MainWindow(QMainWindow):
 		self._setup_devices()
 		self._setup_menubar()
 		self._setup_widgets()
-		self._setup_listeners()
 		self._setup_connections()
 
 	def _setup_tabs(self) -> QTabWidget:
@@ -373,49 +372,6 @@ class MainWindow(QMainWindow):
 		self.FrequencyGenerator.__post_init__()
 		self.Laser1.__post_init__()
 		self.Laser2.__post_init__()
-		return None
-
-	def _setup_listeners(self) -> None:
-		self.storage.add_listener(
-			"EcoVario",
-			("position", "speed", "accel", "deaccel"),
-			callback=self.stage_normal.get_params
-		)
-		self.storage.add_listener(
-			"EcoVario",
-			("position", "speed", "accel", "deaccel"),
-			callback=self.stage_expert.get_params
-		)
-		self.storage.add_listener(
-			"TGA",
-			("waveform", "frequency", "amplitude", "offset", "phase","inputmode","lockmode"),
-			callback=self.freq_gen_expert1.get_params
-		)
-		self.storage.add_listener(
-			"TGA",
-			("waveform", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode"),
-			callback=self.freq_gen_expert2.get_params
-		)
-		self.storage.add_listener(
-			"TGA",
-			("waveform", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode"),
-			callback=self.freq_gen_expert3.get_params
-		)
-		self.storage.add_listener(
-			"TGA",
-			("waveform", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode"),
-			callback=self.freq_gen_expert4.get_params
-		)
-		self.storage.add_listener(
-			"LuxX1",
-			("op_mode", "temp_power"),
-			callback=self.laser_expert1.get_params
-		)
-		self.storage.add_listener(
-			"LuxX2",
-			("op_mode", "temp_power"),
-		callback = self.laser_expert2.get_params
-		)
 		return None
 
 	def _loop_calls(self) -> None:

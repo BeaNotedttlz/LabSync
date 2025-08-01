@@ -55,7 +55,7 @@ class LaserWidgetExpert(QWidget):
 		operating_mode = self.operating_mode.currentIndex()
 		control_mode = self.control_mode.currentIndex()
 		op_mode = self._reverse_map_modes(operating_mode, control_mode)
-		emission = self.if_active.checkState()
+		emission = self.if_active.isChecked()
 
 		self.apply_signal.emit(
 			temp_power,
@@ -67,7 +67,7 @@ class LaserWidgetExpert(QWidget):
 
 	def _calc_power(self, from_percent: bool) -> None:
 		if from_percent:
-			self.laser_power_percent.clear()
+			self.laser_power_absolute.clear()
 			power = float(self.laser_power_percent.text().replace(",", "."))
 			power = power * self.max_power / 100
 			self.laser_power_absolute.setText(str(power))
@@ -119,7 +119,7 @@ class LaserWidgetExpert(QWidget):
 			self.control_mode.setCurrentIndex(0)
 
 	@staticmethod
-	def _reverse_map_modes(self, op_mode, control_mode) -> int:
+	def _reverse_map_modes(op_mode, control_mode) -> int:
 		if op_mode == 0:
 			return 0
 		elif op_mode == 1:

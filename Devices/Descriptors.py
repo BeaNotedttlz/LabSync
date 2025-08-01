@@ -31,7 +31,7 @@ class Parameter:
 				if self.method is not None:
 					getattr(obj, self.method)(value)
 				obj.storage.set_parameter(obj.name, self.name, value)
-		if isinstance(value, tuple):
+		elif isinstance(value, tuple):
 			old_dict = obj.storage.get_parameter(obj.name, self.name)
 			idx = value[0]
 			value = value[1]
