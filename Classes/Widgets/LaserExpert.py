@@ -118,6 +118,7 @@ class LaserWidgetExpert(QWidget):
 			self.operating_mode.setCurrentIndex(3)
 			self.control_mode.setCurrentIndex(0)
 
+	@staticmethod
 	def _reverse_map_modes(self, op_mode, control_mode) -> int:
 		if op_mode == 0:
 			return 0

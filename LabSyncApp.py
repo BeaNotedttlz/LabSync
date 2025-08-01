@@ -6,8 +6,8 @@ from Classes.App.LaserFunc import LaserFunctions
 
 from Classes.Widgets.Dialogs import LaserInfoWidget, PortSelectionWidget
 from Classes.Widgets.InfoPanel import InfoPanelWidget, LaserInfoWidget
-from Classes.Widgets.EcoExpert import StageWidgetNormal
-from Classes.Widgets.EcoNormal import StageWidgetExpert
+from Classes.Widgets.EcoNormal import StageWidgetNormal
+from Classes.Widgets.EcoExpert import StageWidgetExpert
 from Classes.Widgets.LaserNormal import LaserWidgetNormal
 from Classes.Widgets.TgaExpert import FrequencyGeneratorWidgetExpet
 from Classes.Widgets.LaserExpert import LaserWidgetExpert
@@ -26,8 +26,6 @@ class MainWindow(QMainWindow):
 		super().__init__()
 		self.app = app
 		self.storage = ParameterStorage()
-		self.storage.add_parameter("EcoVario", "current_position", 0.0)
-		self.storage.add_parameter("EcoVario", "error_code",0x0000)
 
 		self.signal_handler = SignalHandler()
 		curr_file_dir = os.path.dirname(os.path.realpath(__file__))
