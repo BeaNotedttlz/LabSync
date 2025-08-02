@@ -98,7 +98,7 @@ class LaserWidgetExpert(QWidget):
 			else:
 				widget = getattr(self, supported_params[param])
 				widget.clear()
-				widget.insert(value)
+				widget.insert(str(value))
 				self._calc_power(True)
 
 	def _map_modes(self, op_mode) -> None:

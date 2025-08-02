@@ -69,6 +69,7 @@ class MainWindow(QMainWindow):
 		self._setup_menubar()
 		self._setup_widgets()
 		self._setup_connections()
+		self._setup_listeners()
 
 	def _setup_tabs(self) -> QTabWidget:
 		tab_widget = QTabWidget()
@@ -124,8 +125,8 @@ class MainWindow(QMainWindow):
 				file_path = file_path + ".json"
 			with open(file_path, 'w') as file:
 				try:
-					parameters = self.storage.get_all_parameters()
-					parameters_list = [[list(key), value] for key, value in parameters.items()]
+					parameters = self.storage.get_all()
+					parameters_list = [[key, value] for key, value in parameters.items()]
 					json.dump(parameters_list, file, ensure_ascii=True, indent=4)
 					return None
 				except Exception as e:
@@ -148,7 +149,7 @@ class MainWindow(QMainWindow):
 				try:
 					parameters = json.load(file)
 					parameters_restored = {tuple(key): value for key, value in parameters}
-					self.storage.load_data_dict(parameters_restored)
+					self.storage.load_all(parameters_restored)
 					return None
 				except KeyError as e:
 					QMessageBox.critical(
@@ -372,6 +373,26 @@ class MainWindow(QMainWindow):
 		self.FrequencyGenerator.__post_init__()
 		self.Laser1.__post_init__()
 		self.Laser2.__post_init__()
+		return None
+
+	def _setup_listeners(self) -> None:
+		_stage_params = ["position", "speed", "accell", "deaccell"]
+		for param in _stage_params:
+			self.storage.new_listener("EcoVario", param,
+									  [self.stage_normal.get_params, self.stage_expert.get_params])
+
+		_tga_params = ["waveform", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode"]
+		for param in _tga_params:
+			self.storage.new_listener("TGA", param,
+									  [self.freq_gen_expert1.get_params, self.freq_gen_expert2.get_params,
+									   self.freq_gen_expert3.get_params, self.freq_gen_expert4.get_params])
+
+		_laser_params = ["op_mode", "temp_power"]
+		for param in _laser_params:
+			self.storage.new_listener("LuxX1", param,
+									  self.laser_expert1.get_params)
+			self.storage.new_listener("LuxX2", param,
+									  self.laser_expert2.get_params)
 		return None
 
 	def _loop_calls(self) -> None:

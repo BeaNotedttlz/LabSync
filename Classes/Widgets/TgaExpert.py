@@ -85,7 +85,8 @@ class FrequencyGeneratorWidgetExpet(QWidget):
 			"phase": "phase",
 			"frequency": "frequency",
 			"lockmode": "lockmode",
-			"output": "output"
+			"output": "output",
+			"inputmode": "inputmode",
 		}
 		if len(argv) == 1 and isinstance(argv[0], dict):
 			kwargs.update(argv[0])
@@ -93,28 +94,26 @@ class FrequencyGeneratorWidgetExpet(QWidget):
 			raise TypeError("Only dict or named parameters accepted!")
 
 		for param, value in kwargs.items():
-			# if value[0] != self.channel:
-			# 	return None
-			# value = value[1]
-			value = value[1]
+			actual_value = value[str(self.channel)]
+
 			if param not in supported_params:
 				raise UIParameterError(param)
 			if param == "waveform":
-				idx = self._map_wave(value)
+				idx = self._map_wave(actual_value)
 				self.waveform.setCurrentIndex(idx)
 				return None
 			elif param == "inputmode":
-				idx = self._map_input(value)
+				idx = self._map_input(actual_value)
 				self.input_mode.setCurrentIndex(idx)
 				return None
 			elif param == "lockmode":
-				idx = self._map_lock(value)
+				idx = self._map_lock(actual_value)
 				self.lockmode.setCurrentIndex(idx)
 				return None
-
-			widget = getattr(self, supported_params[param])
-			widget.clear()
-			widget.insert(value)
+			else:
+				widget = getattr(self, supported_params[param])
+				widget.clear()
+				widget.insert(str(actual_value))
 			return None
 
 	@staticmethod
