@@ -1,80 +1,252 @@
 [
-    {
-        "target_position": 0.0,
-        "speed": 0.0,
-        "accel": 0.0,
-        "deaccel": 0.0
-    },
-    {
-        "firmware": [
-            "ND",
-            "ND",
-            "ND"
+    [
+        [
+            "EcoVario",
+            "position"
         ],
-        "specs": [
-            "ND",
-            "ND"
+        100.0
+    ],
+    [
+        [
+            "EcoVario",
+            "speed"
         ],
-        "max_power": 1,
-        "operating_mode": 0,
-        "control_mode": 0,
-        "temporary_power": 0.0,
-        "if_active": false
-    },
-    {
-        "firmware": [
-            "ND",
-            "ND",
-            "ND"
+        200.0
+    ],
+    [
+        [
+            "EcoVario",
+            "accel"
         ],
-        "specs": [
-            "ND",
-            "ND"
+        501.3
+    ],
+    [
+        [
+            "EcoVario",
+            "deccel"
         ],
-        "max_power": 1,
-        "operating_mode": 0,
-        "control_mode": 0,
-        "temporary_power": 0.0,
-        "if_active": false
-    },
-    {
-        "wave": 0,
-        "frequency": 0.0,
-        "amplitude": 0.0,
-        "offset": 0.0,
-        "phase": 0.0,
-        "inputmode": 0,
-        "lockmode": 0,
-        "if_active": false
-    },
-    {
-        "wave": 0,
-        "frequency": 0.0,
-        "amplitude": 0.0,
-        "offset": 0.0,
-        "phase": 0.0,
-        "inputmode": 0,
-        "lockmode": 0,
-        "if_active": false
-    },
-    {
-        "wave": 0,
-        "frequency": 0.0,
-        "amplitude": 0.0,
-        "offset": 0.0,
-        "phase": 0.0,
-        "inputmode": 0,
-        "lockmode": 0,
-        "if_active": false
-    },
-    {
-        "wave": 0,
-        "frequency": 0.0,
-        "amplitude": 0.0,
-        "offset": 0.0,
-        "phase": 0.0,
-        "inputmode": 0,
-        "lockmode": 0,
-        "if_active": false
-    }
+        501.3
+    ],
+    [
+        [
+            "LuxX1",
+            "firmware"
+        ],
+        [
+            "SimDevice",
+            "18",
+            "42-1337"
+        ]
+    ],
+    [
+        [
+            "LuxX1",
+            "specs"
+        ],
+        [
+            "420",
+            "100"
+        ]
+    ],
+    [
+        [
+            "LuxX1",
+            "max_power"
+        ],
+        100
+    ],
+    [
+        [
+            "LuxX1",
+            "op_mode"
+        ],
+        2
+    ],
+    [
+        [
+            "LuxX1",
+            "temp_power"
+        ],
+        0.0
+    ],
+    [
+        [
+            "LuxX1",
+            "power"
+        ],
+        0.0
+    ],
+    [
+        [
+            "LuxX1",
+            "emission"
+        ],
+        false
+    ],
+    [
+        [
+            "LuxX1",
+            "error_code"
+        ],
+        "0x00"
+    ],
+    [
+        [
+            "LuxX2",
+            "firmware"
+        ],
+        [
+            "SimDevice",
+            "18",
+            "42-1337"
+        ]
+    ],
+    [
+        [
+            "LuxX2",
+            "specs"
+        ],
+        [
+            "420",
+            "100"
+        ]
+    ],
+    [
+        [
+            "LuxX2",
+            "max_power"
+        ],
+        100
+    ],
+    [
+        [
+            "LuxX2",
+            "op_mode"
+        ],
+        3
+    ],
+    [
+        [
+            "LuxX2",
+            "temp_power"
+        ],
+        0.0
+    ],
+    [
+        [
+            "LuxX2",
+            "power"
+        ],
+        0.0
+    ],
+    [
+        [
+            "LuxX2",
+            "emission"
+        ],
+        false
+    ],
+    [
+        [
+            "LuxX2",
+            "error_code"
+        ],
+        "0x00"
+    ],
+    [
+        [
+            "TGA",
+            "waveform"
+        ],
+        {
+            "1": "sine",
+            "2": "square",
+            "3": "dc",
+            "4": "sine"
+        }
+    ],
+    [
+        [
+            "TGA",
+            "frequency"
+        ],
+        {
+            "1": 3.0,
+            "2": 7.0,
+            "3": 11.0,
+            "4": 15.0
+        }
+    ],
+    [
+        [
+            "TGA",
+            "amplitude"
+        ],
+        {
+            "1": 1.0,
+            "2": 5.0,
+            "3": 9.0,
+            "4": 13.0
+        }
+    ],
+    [
+        [
+            "TGA",
+            "offset"
+        ],
+        {
+            "1": 2.0,
+            "2": 6.0,
+            "3": 10.0,
+            "4": 14.0
+        }
+    ],
+    [
+        [
+            "TGA",
+            "phase"
+        ],
+        {
+            "1": 4.0,
+            "2": 8.0,
+            "3": 12.0,
+            "4": 16.0
+        }
+    ],
+    [
+        [
+            "TGA",
+            "inputmode"
+        ],
+        {
+            "1": "Amp+Offset",
+            "2": "Low+High",
+            "3": "Amp+Offset",
+            "4": "Low+High"
+        }
+    ],
+    [
+        [
+            "TGA",
+            "lockmode"
+        ],
+        {
+            "1": "indep",
+            "2": "master",
+            "3": "slave",
+            "4": "off"
+        }
+    ],
+    [
+        [
+            "TGA",
+            "output"
+        ],
+        {
+            "1": false,
+            "2": false,
+            "3": false,
+            "4": false
+        }
+    ]
 ]

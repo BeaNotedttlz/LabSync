@@ -1,41 +1,83 @@
 import pyvisa
 from pyvisa import errors
 from serial import SerialException
-from Devices.storage import ParameterStorage
-
-# Posssible waveforms, inputmodes and lockmodes #
-# needed to convert combobox value to actual selection #
-waveforms = ["sine", "square", "triag", "dc"]
-inputmodes = ["Amp+Offset", "Low+High"]
-lockmodes = ["indep", "master", "slave", "off"]
+from Devices.Storage import ParameterStorage
+from Devices.Descriptors import Parameter
+from Exceptions import DeviceParameterError
 
 ## class for core TGA 1244 functions ##
-class FrequencyGenerator():
-    def __init__(self, simulate: bool) -> None:
+class FrequencyGenerator:
+    waveform = Parameter(
+        name="waveform",
+        method="set_waveform",
+        default={1:"sine", 2:"sine", 3:"sine", 4:"sine"},
+        type=dict)
+    frequency = Parameter(
+        name="frequency",
+        method="set_frequency",
+        default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
+        type=dict)
+    amplitude = Parameter(
+        name="amplitude",
+        method="set_amplitude",
+        default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
+        type=dict)
+    offset = Parameter(
+        name="offset",
+        method="set_offset",
+        default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
+        type=dict)
+    phase = Parameter(
+        name="phase",
+        method="set_phase",
+        default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
+        type=dict)
+    inputmode = Parameter(
+        name="inputmode",
+        method=None,
+        default={1: "Amp+Offset", 2: "Amp+Offset", 3: "Amp+Offset", 4: "Amp+Offset"},
+        type=dict)
+    lockmode = Parameter(
+        name="lockmode",
+        method="set_lockmode",
+        default={1:"indep", 2:"indep", 3:"indep", 4:"indep"},
+        type=dict)
+    output = Parameter(
+        name="output",
+        method="set_output",
+        default={1:False, 2:False, 3:False, 4:False},
+        type=dict)
+
+    def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
         # connected variable to check connected status when trying to write data #
+        self.name = name
         self.connected = False
         self.simulate = simulate
+        self.storage = _storage
+        self.current_channel = 1
         # create recource Manager #
-        self.rm = pyvisa.ResourceManager("Devices/SimResp.yaml@sim" if self.simulate else "")
+        self.rm = pyvisa.ResourceManager(
+            "/home/merlin/Desktop/LabSync 2.2/Devices/SimResp.yaml@sim"
+            if self.simulate else "")
 
-        # creating storage module #
-        self.storage = ParameterStorage()
-        for i in [1, 2, 3, 4]:
-            self.storage._add_parameter("C"+str(i), "wave", 0)
-            self.storage._add_parameter("C"+str(i), "frequency", 0.0)
-            self.storage._add_parameter("C"+str(i), "amplitude", 0.0)
-            self.storage._add_parameter("C"+str(i), "offset", 0.0)
-            self.storage._add_parameter("C"+str(i), "phase", 0.0)
-            self.storage._add_parameter("C"+str(i), "inputmode", 0)
-            self.storage._add_parameter("C"+str(i), "lockmode", 0)
-            self.storage._add_parameter("C"+str(i), "if_active", False)
+        for param in type(self)._get_params():
+            self.storage.new_parameter(name, param.name, param.default)
+
+
+    @classmethod
+    def _get_params(cls):
+        for attr in vars(cls).values():
+            if isinstance(attr, Parameter):
+                yield attr
 
     # Function for opening serial port #
     def open_port(self, port, baudrate) -> None:
         if self.simulate:
             port = "ASRL3::INSTR"
         try:
-            self.TGA = self.rm.open_resource(resource_name=port, open_timeout=2000)
+            self.TGA = self.rm.open_resource(
+                resource_name=port,
+                open_timeout=2000)
             self.TGA.baudrate = baudrate
             self.TGA.read_termination = "\r"
             self.TGA.write_termination = "\r"
@@ -50,73 +92,63 @@ class FrequencyGenerator():
             self.TGA.close()
 
     # Function to write data to TGA #
-    def _write(self, what: str, value: str) -> None:
+    def _write(self, channel: int, what: str, value: str) -> None:
         if self.simulate:
             print(self.TGA.query(what+value))
-            return
+            return None
         if self.connected:
-            self.TGA.write_raw(what.encode() + b" " + value.encode() + b"\n")
+            if channel != self.current_channel:
+                self.TGA.write_raw(b"SETUPCH"+str(channel).encode()+b"\n")
+            return self.TGA.write_raw(what.encode() + b" " + value.encode() + b"\n")
+        else:
+            return None
 
-    # Function for applying settings #
-    def apply(self, channel: int, wave: int, frequency: float, amplitude: float, offset: float, phase: float, inputmode: int, lockmode: int, if_active: bool) -> None:
-        # get actual selection #
-        wave = waveforms[wave]
-        inputmode = inputmodes[inputmode]
-        lockmode = lockmodes[lockmode]
+    def set_waveform(self, channel: int, waveform: str) -> None:
+        waveforms = ["sine", "square", "dc", "triag"]
+        if waveform not in waveforms:
+            raise DeviceParameterError(f"Wavefrom {waveform} is not supported!")
+        return self._write(channel, "WAVE", waveform)
 
-        # set channel to edit #
-        self._write('SETUPCH', str(channel))
+    def set_frequency(self, channel: int, frequency: float) -> None:
+        return self._write(channel, "WAVFREQ", str(frequency))
 
-        # set waveform and frequency #
-        self._write('WAVE', wave)
-        self._write('WAVFREQ', str(frequency))
+    def set_amplitude(self, channel: int, amplitude: float) -> None:
+        mode = self.inputmode[channel]
+        if mode == "Amp+Offset":
+            return self._write(channel, 'AMPL', str(amplitude))
+        else:
+            amplitude = self.offset - amplitude
+            return self._write(channel, 'AMPL', str(amplitude))
 
-        # set unit to be Voltage peak to peak and impedance of 50Ohm #
-        self._write('AMPUNIT', 'VPP')
-        self._write('ZLOAD', '50')
+    def set_offset(self, channel: int, offset: float) -> None:
+        mode = self.inputmode[channel]
+        if mode == "Amp+Offset":
+           return self._write(channel, 'DCOFFS', str(offset))
+        else:
+            offset = (offset+self.amplitude)/2
+            return self._write(channel, 'DCOFFS', str(offset))
 
-        # calculate amplitude and offset for inputmodes #
-        if inputmode == "Amp+Offset":
-            self._write('AMPL', str(amplitude))
-            self._write("DCOFFS", str(offset))
-        elif inputmode == "Low+High":
-            amplitude_temp = offset - amplitude
-            offset_temp = (offset+amplitude)/2
+    def set_phase(self, channel: int, phase: float) -> None:
+        return self._write(channel, "PHASE", str(phase))
 
-            self._write('AMPL', str(amplitude_temp))
-            self._write('DCOFFS', str(offset_temp))
-        self._write('PHASE', str(phase))
-
-        # set lockmode #
+    def set_lockmode(self, channel: int, lockmode: str) -> None:
+        lockmodes = ["indep", "master", "slave", "off"]
+        if lockmode not in lockmodes:
+            raise ValueError(f"Lockmode {lockmode} is not supported.")
         if lockmode == "indep":
-            self._write('LOCKMODE', 'INDEP')
-            self._write('LOCKSTAT', 'ON')
+            self._write(channel, 'LOCKMODE', 'INDEP')
+            return self._write(channel, 'LOCKSTAT', 'ON')
         elif lockmode == "master":
-            self._write('LOCKMODE', 'MASTER')
-            self._write('LOCKSTAT', 'ON')
+            self._write(channel, 'LOCKMODE', 'MASTER')
+            return self._write(channel, 'LOCKSTAT', 'ON')
         elif lockmode == "slave":
-            self._write('LOCKMODE', 'SLAVE')
-            self._write('LOCKSTAT', 'ON')
+            self._write(channel, 'LOCKMODE', 'SLAVE')
+            return self._write(channel, 'LOCKSTAT', 'ON')
         else:
-            self._write('LOCKSTAT', 'OFF')
+            return self._write(channel, 'LOCKSTAT', 'OFF')
 
-        # set channel output #
-        if if_active:
-            self._write('OUTPUT', 'ON')
+    def set_output(self, channel, output: bool) -> None:
+        if output:
+            return self._write(channel, 'OUTPUT', "ON")
         else:
-            self._write('OUTPUT', 'OFF')
-
-        # update storage #
-        #for param in ["wave", "frequency", "amplitude", "offset", "phase", "inputmode", "lockmode", "if_active"]:
-        #    self.storage._set_parameter("C"+str(channel), param, eval(param))
-
-    # Function to toggle just the output status of a channel #
-    def toggle_channel_output(self, channel: int, if_on: bool) -> None:
-        self._write('SETUPCH', str(channel))
-        if if_on:
-            self._write('OUTPUT', 'ON')
-        else:
-            self._write('OUTPUT', 'OFF')
-
-        # update storage #
-        self.storage._set_parameter("C"+str(channel), "if_active", if_on)
+            return self._write(channel, 'OUTPUT', "OFF")
