@@ -51,7 +51,7 @@ class EcoFunctions(QObject):
 		else:
 			self.EcoVario.close_port()
 			self.open_port = False
-			self.port_status_signal.emit("Eco", False)
+			self.port_status_signal.emit("EcoVarioPort", False)
 			return None
 
 	@staticmethod

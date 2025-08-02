@@ -52,7 +52,7 @@ class LaserFunctions(QObject):
 		else:
 			self.LuxX.close_port()
 			self.connected = False
-			self.port_status_signal.emit("LuxX", False)
+			self.port_status_signal.emit(f"Laser{self.index}Port", False)
 
 	@Slot( float, int, bool)
 	def apply(self, temp_power, op_mode, emission) -> None:

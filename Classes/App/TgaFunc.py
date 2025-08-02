@@ -51,7 +51,7 @@ class FrequencyGeneratorFunctions(QObject):
 		else:
 			self.TGA1244.close_port()
 			self.connected = False
-			self.port_status_signal.emit("TGA", False)
+			self.port_status_signal.emit("TGAPort", False)
 
 	@Slot(int, str, float, float, float, float, str, str, bool)
 	def apply(

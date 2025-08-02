@@ -345,6 +345,11 @@ class MainWindow(QMainWindow):
 		self.Laser2.port_status_signal.connect(self.info_panel.update_indicator)
 		self.FrequencyGenerator.port_status_signal.connect(self.info_panel.update_indicator)
 
+		self.info_panel.stage_port_signal.connect(self.Stage.manage_port)
+		self.info_panel.freq_gen_port_signal.connect(self.FrequencyGenerator.manage_port)
+		self.info_panel.laser1_port_signal.connect(self.Laser1.manage_port)
+		self.info_panel.laser2_port_signal.connect(self.Laser2.manage_port)
+
 
 		self.stage_normal.start_signal.connect(self.Stage.start)
 		self.stage_expert.start_signal.connect(self.Stage.start)
