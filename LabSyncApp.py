@@ -5,7 +5,7 @@ from Classes.App.TgaFunc import FrequencyGeneratorFunctions
 from Classes.App.LaserFunc import LaserFunctions
 
 from Classes.Widgets.Dialogs import LaserInfoWidget, PortSelectionWidget
-from Classes.Widgets.InfoPanel import InfoPanelWidget, LaserInfoWidget
+from Classes.Widgets.InfoPanel import InfoPanelWidget
 from Classes.Widgets.EcoNormal import StageWidgetNormal
 from Classes.Widgets.EcoExpert import StageWidgetExpert
 from Classes.Widgets.LaserNormal import LaserWidgetNormal

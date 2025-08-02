@@ -106,33 +106,3 @@ class InfoPanelWidget(QWidget):
 			current_indicator["frame"].setStyleSheet("background-color: red")
 			current_indicator["status"].setText(current_indicator["text"][0])
 			return None
-
-class LaserInfoWidget(QWidget):
-	def __init__(self, 
-				 layout, 
-				 firmware=[["","",""],["","",""]], 
-				 specs=["",""], max_power=["",""],
-				 error_byte=["",""]) -> None:
-		super().__init__()
-		for i in [1, 2]:
-			layout.addWidget(QLabel("Laser %d: "%i), 0, i-1 if i == 1 else i+1)
-			layout.addWidget(QLabel("Model code: "), 1, i-1 if i == 1 else i+1)
-			layout.addWidget(QLabel("Device id: "), 2, i-1 if i == 1 else i+1)
-			layout.addWidget(QLabel("Firmware version: "), 3, i-1 if i == 1 else i+1)
-			layout.addWidget(QLabel("Wavelenght: "), 4, i-1 if i == 1 else i+1)
-			layout.addWidget(QLabel("Max power: "), 5, i-1 if i == 1 else i+1)
-			layout.addWidget(QLabel("Status: "), 6, i-1 if i == 1 else i+1)
-
-		layout.addWidget(QLabel(firmware[0][0]), 1, 1)
-		layout.addWidget(QLabel(firmware[0][1]), 2, 1)
-		layout.addWidget(QLabel(firmware[0][2]), 3, 1)
-		layout.addWidget(QLabel(specs[0][0]), 4, 1)
-		layout.addWidget(QLabel(str(max_power[0])), 5, 1)
-		layout.addWidget(QLabel(error_byte[0]), 6, 1)
-
-		layout.addWidget(QLabel(firmware[1][0]), 1, 4)
-		layout.addWidget(QLabel(firmware[1][1]), 2, 4)
-		layout.addWidget(QLabel(firmware[1][2]), 3, 4)
-		layout.addWidget(QLabel(specs[1][0]), 4, 4)
-		layout.addWidget(QLabel(str(max_power[1])), 5, 4)
-		layout.addWidget(QLabel(error_byte[1]), 6, 4)
