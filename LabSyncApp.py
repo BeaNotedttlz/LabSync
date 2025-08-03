@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QSpacerItem
 from Classes.App.EcoFunc import EcoFunctions
 from Classes.App.TgaFunc import FrequencyGeneratorFunctions
 from Classes.App.LaserFunc import LaserFunctions
+from Classes.App.FsvFunc import FsvFunctions
 
 from Classes.Widgets.Dialogs import LaserInfoWidget, PortSelectionWidget
 from Classes.Widgets.InfoPanel import InfoPanelWidget
@@ -11,6 +12,7 @@ from Classes.Widgets.EcoExpert import StageWidgetExpert
 from Classes.Widgets.LaserNormal import LaserWidgetNormal
 from Classes.Widgets.TgaExpert import FrequencyGeneratorWidgetExpet
 from Classes.Widgets.LaserExpert import LaserWidgetExpert
+from Classes.Widgets.FsvNormal import FsvNormalWidget
 
 from Devices.Storage import ParameterStorage
 from signals import SignalHandler
@@ -70,31 +72,6 @@ class MainWindow(QMainWindow):
 		self._setup_widgets()
 		self._setup_connections()
 		self._setup_listeners()
-
-	def _setup_tabs(self) -> QTabWidget:
-		tab_widget = QTabWidget()
-
-		normal_tab = QWidget()
-		self.normal_tab_layout = QHBoxLayout()
-		normal_tab.setLayout(self.normal_tab_layout)
-		tab_widget.addTab(normal_tab, "LabSync Controller")
-
-		stage_tab = QWidget()
-		self.stage_tab_layout = QHBoxLayout()
-		stage_tab.setLayout(self.stage_tab_layout)
-		self.stage_tab_index = tab_widget.addTab(stage_tab, "EcoVario Controller")
-
-		freq_gen_tab = QWidget()
-		self.freq_gen_tab_layout = QHBoxLayout()
-		freq_gen_tab.setLayout(self.freq_gen_tab_layout)
-		self.freq_gen_tab_index = tab_widget.addTab(freq_gen_tab, "TGA 1244 Controller")
-
-		laser_tab = QWidget()
-		self.laser_tab_layout = QHBoxLayout()
-		laser_tab.setLayout(self.laser_tab_layout)
-		self.laser_tab_index = tab_widget.addTab(laser_tab, "LuxX+ Controller")
-
-		return tab_widget
 
 	def closeEvent(self, event) -> None:
 		response = QMessageBox.question(
@@ -176,12 +153,14 @@ class MainWindow(QMainWindow):
 				self.def_laser1_port = ports["Laser1"]
 				self.def_laser2_port = ports["Laser2"]
 				self.def_freq_gen_port = ports["TGA1244"]
+				self.def_fsv_port = ports["FSV3000"]
 				return None
 		except (FileNotFoundError, json.JSONDecodeError, Exception) as e:
 			self.def_stage_port = "COM0"
 			self.def_laser1_port = "COM1"
 			self.def_laser2_port = "COM2"
 			self.def_freq_gen_port = "COM3"
+			self.def_fsv_port = "TCPIP::141.99.144.147::INSTR"
 			QMessageBox.critical(
 				self,
 				"Error",
@@ -189,7 +168,7 @@ class MainWindow(QMainWindow):
 			)
 			return None
 
-	def _set_default_ports(self, stage: str, TGA1244: str, laser1: str, laser2: str) -> None:
+	def _set_default_ports(self, stage: str, TGA1244: str, laser1: str, laser2: str, fsv: str) -> None:
 		ports_dir = os.path.join(self.file_dir, "ports/default_ports.json")
 		try:
 			with open(ports_dir, "w") as file:
@@ -197,7 +176,8 @@ class MainWindow(QMainWindow):
 					"EcoVario": stage,
 					"Laser1": laser1,
 					"Laser2": laser2,
-					"TGA1244": TGA1244
+					"TGA1244": TGA1244,
+					"FSV3000": fsv
 				}
 				json.dump(ports, file, ensure_ascii=True, indent=4)
 				return None
@@ -235,6 +215,10 @@ class MainWindow(QMainWindow):
 			port=self.def_freq_gen_port,
 			_storage=self.storage
 		)
+		self.SpectrumAnylyzer = FsvFunctions(
+			ip=self.def_fsv_port,
+			_storage=self.storage
+		)
 		return None
 
 	def _setup_tabs(self) -> QTabWidget:
@@ -263,6 +247,11 @@ class MainWindow(QMainWindow):
 		self.laser_tab_layout = QHBoxLayout()
 		laser_tab.setLayout(self.laser_tab_layout)
 		self.laser_tab_index = tab_widget.addTab(laser_tab, "LuxX+ Controller")
+
+		fsv_tab = QWidget()
+		self.fsv_tab_layout = QHBoxLayout()
+		fsv_tab.setLayout(self.fsv_tab_layout)
+		self.fsv_tab_index = tab_widget.addTab(fsv_tab, "FSV3000 Controller")
 
 		return tab_widget
 
@@ -310,6 +299,10 @@ class MainWindow(QMainWindow):
 		self.freq_gen_expert4 = FrequencyGeneratorWidgetExpet(channel=4)
 		self.freq_gen_expert1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
+		self.fsv_normal = FsvNormalWidget()
+		self.fsv_normal.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.fsv_tab_layout.addWidget(self.fsv_normal)
+
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert1)
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert2)
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert3)
@@ -328,6 +321,7 @@ class MainWindow(QMainWindow):
 
 		self.laser_tab_layout.addWidget(self.laser_expert1)
 		self.laser_tab_layout.addWidget(self.laser_expert2)
+
 		return None
 
 	def _toggle_expert_mode(self) -> None:
@@ -344,11 +338,13 @@ class MainWindow(QMainWindow):
 		self.Laser1.port_status_signal.connect(self.info_panel.update_indicator)
 		self.Laser2.port_status_signal.connect(self.info_panel.update_indicator)
 		self.FrequencyGenerator.port_status_signal.connect(self.info_panel.update_indicator)
+		self.SpectrumAnylyzer.port_status_signal.connect(self.info_panel.update_indicator)
 
 		self.info_panel.stage_port_signal.connect(self.Stage.manage_port)
 		self.info_panel.freq_gen_port_signal.connect(self.FrequencyGenerator.manage_port)
 		self.info_panel.laser1_port_signal.connect(self.Laser1.manage_port)
 		self.info_panel.laser2_port_signal.connect(self.Laser2.manage_port)
+		self.info_panel.fsv_port_signal.connect(self.SpectrumAnylyzer.manage_port)
 
 
 		self.stage_normal.start_signal.connect(self.Stage.start)
@@ -374,10 +370,13 @@ class MainWindow(QMainWindow):
 		self.laser_normal.freq_gen_apply_ch1.connect(self.FrequencyGenerator.apply_on_normal)
 		self.laser_normal.freq_gen_apply_ch2.connect(self.FrequencyGenerator.apply_on_normal)
 
+		self.fsv_normal.start_signal.connect(self.SpectrumAnylyzer.start_measurement)
+
 		self.Stage.__post_init__()
 		self.FrequencyGenerator.__post_init__()
 		self.Laser1.__post_init__()
 		self.Laser2.__post_init__()
+		self.SpectrumAnylyzer.__post_init__()
 		return None
 
 	def _setup_listeners(self) -> None:
@@ -398,6 +397,10 @@ class MainWindow(QMainWindow):
 									  self.laser_expert1.get_params)
 			self.storage.new_listener("LuxX2", param,
 									  self.laser_expert2.get_params)
+
+		_fsv_params = ["center_frequency", "span", "bandwidth", "sweep_points", "sweep_type", "meas_type", "unit"]
+		for param in _fsv_params:
+			self.storage.new_listener("FSV", param, self.fsv_normal.get_params)
 		return None
 
 	def _loop_calls(self) -> None:
@@ -416,6 +419,7 @@ class MainWindow(QMainWindow):
 				self.def_freq_gen_port,
 				self.def_laser1_port,
 				self.def_laser2_port,
+				self.def_fsv_port
 			)
 			self.port_dialog.apply_signal.connect(self._set_ports)
 			self.port_dialog.default_signal.connect(self._set_default_ports)

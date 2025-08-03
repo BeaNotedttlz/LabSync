@@ -31,7 +31,7 @@ class LaserFunctions(QObject):
 			self.port_status_signal.emit(f"Laser{self.index}Port", True)
 		except ConnectionError:
 			self.connected = False
-			self.port_status_signal.emit(f"Laser{index}Port", False)
+			self.port_status_signal.emit(f"Laser{self.index}Port", False)
 
 	@Slot(bool)
 	def manage_port(self, state: bool) -> None:
