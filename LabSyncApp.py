@@ -4,8 +4,10 @@ from Classes.App.EcoFunc import EcoFunctions
 from Classes.App.TgaFunc import FrequencyGeneratorFunctions
 from Classes.App.LaserFunc import LaserFunctions
 from Classes.App.FsvFunc import FsvFunctions
+from Classes.App.Bode import BodePlot
 
 from Classes.Widgets.Dialogs import LaserInfoWidget, PortSelectionWidget
+from Classes.Widgets.FsvBodeplot import BodePlotWindow
 from Classes.Widgets.InfoPanel import InfoPanelWidget
 from Classes.Widgets.EcoNormal import StageWidgetNormal
 from Classes.Widgets.EcoExpert import StageWidgetExpert
@@ -35,6 +37,8 @@ class MainWindow(QMainWindow):
 
 		self.port_dialog = None
 		self.laser_dialog = None
+		self.bode_window = None
+		self.bode_plotter = None
 
 		self.setWindowTitle("LabSync")
 
@@ -274,6 +278,11 @@ class MainWindow(QMainWindow):
 		port_select = mode_menu.addAction("Select Ports")
 		port_select.triggered.connect(self._show_port_dialog)
 
+		# BodePlot window #
+		window_menu = menu_bar.addMenu("&Windows")
+		bode_window = window_menu.addAction("BodePlot")
+		bode_window.triggered.connect(self.open_bode_window)
+
 	def _setup_widgets(self) -> None:
 
 		self.stage_normal = StageWidgetNormal()
@@ -440,6 +449,18 @@ class MainWindow(QMainWindow):
 			self.laser_dialog.show()
 		else:
 			self.laser_dialog.raise_()
+
+	def open_bode_window(self):
+		if self.bode_window is None or not self.bode_window.isVisible():
+			self.bode_window = BodePlotWindow()
+			self.bode_plotter = BodePlot(self.FrequencyGenerator.TGA1244, self.SpectrumAnylyzer.FSV)
+			self.bode_window.start_signal.connect(self.bode_plotter.get_bode)
+			self.bode_plotter.data_signal.connect(self.bode_window.plot_bode)
+			self.bode_window.show()
+		else:
+			self.bode_window.raise_()
+
+
 
 
 

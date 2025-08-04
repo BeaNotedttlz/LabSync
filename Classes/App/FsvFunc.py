@@ -101,7 +101,7 @@ class FsvFunctions(QObject):
 			trace_data, trace_points, nr_sweep_points = self.FSV.start_single_measurement()
 		else:
 			trace_data, trace_points, nr_sweep_points = self.FSV.start_avg_measurement()
-		if not trace_data:
+		if trace_data is None:
 			QMessageBox.information(
 				None,
 				"Error",
