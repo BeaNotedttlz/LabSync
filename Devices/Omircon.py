@@ -138,7 +138,7 @@ class OmicronLaser:
 
     def set_emission(self, value) -> None:
         if value:
-            response = self._ask("LOn")
+            response = self._ask("LOn")[0]
             if response != ">":
                 raise ParameterNotSetError("Emission could not be set")
             else:

@@ -66,13 +66,13 @@ class EcoFunctions(QObject):
 		current_position = self.EcoVario.get_current_position()
 		if current_position is None:
 			return 0.0
-		current_position = self.trunctate(current_position, 4)
-		target_position = self.EcoVario.position
+		current_position = float(self.trunctate(current_position, 4))
+		target_position = float(self.EcoVario.position)
 
 		if target_position-0.002 <= current_position <= target_position+0.002:
-			self.position_status_signal.emit("Eco", True)
+			self.position_status_signal.emit("EcoVarioStatus", True)
 		else:
-			self.position_status_signal.emit("Eco", False)
+			self.position_status_signal.emit("EcoVarioStatus", False)
 
 		return current_position
 

@@ -348,6 +348,10 @@ class MainWindow(QMainWindow):
 		return None
 
 	def _setup_connections(self) -> None:
+		self.Laser1.emission_status_signal.connect(self.info_panel.update_indicator)
+		self.Laser2.emission_status_signal.connect(self.info_panel.update_indicator)
+		self.Stage.position_status_signal.connect(self.info_panel.update_indicator)
+
 		self.info_panel.laser_info_signal.connect(self._show_laser_info_dialog)
 		self.Stage.port_status_signal.connect(self.info_panel.update_indicator)
 		self.Laser1.port_status_signal.connect(self.info_panel.update_indicator)
@@ -418,12 +422,14 @@ class MainWindow(QMainWindow):
 			self.storage.new_listener("FSV", param, self.fsv_normal.get_params)
 		return None
 
-	def _loop_calls(self) -> None:
+	def loop_calls(self) -> None:
 		current_position = self.Stage.get_current_position()
-		stage_error_code = self.Stage.get_current_error_code()
+		self.stage_normal.out_current_position.setText(str(current_position))
+		self.stage_expert.out_current_position.setText(str(current_position))
 
-		self.storage.set("EcoVario", "current_position", current_position)
-		self.storage.set("EcoVario", "error_code", stage_error_code)
+		stage_error_code = self.Stage.get_current_error_code()
+		self.stage_normal.out_error_code.setText(str(stage_error_code))
+		self.stage_expert.out_error_code.setText(str(stage_error_code))
 
 		return None
 
