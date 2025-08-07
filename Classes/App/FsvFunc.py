@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 class FsvFunctions(QObject):
 	port_status_signal = Signal(str, bool)
 
-	def __init__(self, ip: str, _storage) -> None:
+	def __init__(self, ip: str, _storage, _simulate) -> None:
 		super().__init__()
 		self.ip = ip
 		self.storage = _storage
@@ -18,7 +18,7 @@ class FsvFunctions(QObject):
 		self.FSV = SpectrumAnalyzer(
 			name="FSV",
 			_storage=self.storage,
-			simulate=True
+			simulate=_simulate
 		)
 
 	def __post_init__(self) -> None:
@@ -39,7 +39,7 @@ class FsvFunctions(QObject):
 				self.port_status_signal.emit("FsvPort", True)
 			except ConnectionError as e:
 				self.connected = False
-				self.port_status_signal.emit("FSVPort", False)
+				self.port_status_signal.emit("FsvPort", False)
 				QMessageBox.information(
 					None,
 					"Error",

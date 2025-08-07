@@ -11,7 +11,7 @@ class LaserFunctions(QObject):
 	port_status_signal = Signal(str, bool)
 	emission_status_signal = Signal(str, bool)
 
-	def __init__(self, port: str, _storage, index) -> None:
+	def __init__(self, port: str, _storage, index, _simulate: bool) -> None:
 		super().__init__()
 
 		self.port = port
@@ -21,7 +21,7 @@ class LaserFunctions(QObject):
 		self.LuxX = OmicronLaser(
 			name="LuxX"+str(index),
 			_storage=self.storage,
-			simulate=True
+			simulate=_simulate
 		)
 
 	def __post_init__(self) -> None:

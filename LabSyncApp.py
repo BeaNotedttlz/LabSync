@@ -26,9 +26,10 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout,
 import os, json
 
 class MainWindow(QMainWindow):
-	def __init__(self, app) -> None:
+	def __init__(self, app, _simulate: bool) -> None:
 		super().__init__()
 		self.app = app
+		self.simulate = _simulate
 		self.storage = ParameterStorage()
 
 		self.signal_handler = SignalHandler()
@@ -204,24 +205,29 @@ class MainWindow(QMainWindow):
 		self.Stage = EcoFunctions(
 			port=self.def_stage_port,
 			_storage=self.storage,
+			_simulate=self.simulate
 		)
 		self.Laser1 = LaserFunctions(
 			port=self.def_laser1_port,
 			_storage=self.storage,
-			index=1
+			index=1,
+			_simulate=self.simulate
 		)
 		self.Laser2 = LaserFunctions(
 			port=self.def_laser2_port,
 			_storage=self.storage,
-			index=2
+			index=2,
+			_simulate=self.simulate
 		)
 		self.FrequencyGenerator = FrequencyGeneratorFunctions(
 			port=self.def_freq_gen_port,
-			_storage=self.storage
+			_storage=self.storage,
+			_simulate=self.simulate
 		)
 		self.SpectrumAnylyzer = FsvFunctions(
 			ip=self.def_fsv_port,
-			_storage=self.storage
+			_storage=self.storage,
+			_simulate=self.simulate
 		)
 		return None
 

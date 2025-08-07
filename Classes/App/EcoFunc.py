@@ -11,7 +11,7 @@ class EcoFunctions(QObject):
 	port_status_signal = Signal(str, bool)
 	position_status_signal = Signal(str, bool)
 
-	def __init__(self, port: str, _storage) -> None:
+	def __init__(self, port: str, _storage, _simulate: bool) -> None:
 		super().__init__()
 
 		self.open_port = False
@@ -20,7 +20,7 @@ class EcoFunctions(QObject):
 		self.EcoVario = EcoConnect(
 		    name="EcoVario",
 		    _storage=self.storage,
-		    simulate=True
+		    simulate=_simulate
 		)
 
 	def __post_init__(self) -> None:
@@ -28,7 +28,7 @@ class EcoFunctions(QObject):
 			self.EcoVario.open_port(self.port, baudrate=9600)
 			self.open_port = True
 			self.port_status_signal.emit("EcoVarioPort", True)
-		except ConnectionRefusedError:
+		except ConnectionError:
 			self.open_port = False
 			self.port_status_signal.emit("EcoVarioPort", False)
 
