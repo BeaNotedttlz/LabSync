@@ -11,7 +11,7 @@ from Exceptions import DeviceParameterError
 class FrequencyGeneratorFunctions(QObject):
 	port_status_signal = Signal(str, bool)
 
-	def __init__(self, port: str, _storage) -> None:
+	def __init__(self, port: str, _storage, _simulate) -> None:
 		super().__init__()
 
 		self.port = port
@@ -20,7 +20,7 @@ class FrequencyGeneratorFunctions(QObject):
 		self.TGA1244 = FrequencyGenerator(
 			name="TGA",
 			_storage=self.storage,
-			simulate=True
+			simulate=_simulate
 		)
 
 	def __post_init__(self) -> None:

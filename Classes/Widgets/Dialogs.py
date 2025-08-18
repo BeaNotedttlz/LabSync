@@ -45,8 +45,8 @@ class LaserInfoWidget(QWidget):
 		self.setLayout(layout)
 
 class PortSelectionWidget(QWidget):
-	apply_signal = Signal(str, str, str, str)
-	default_signal = Signal(str, str, str, str)
+	apply_signal = Signal(str, str, str, str, str)
+	default_signal = Signal(str, str, str, str, str)
 
 
 	def __init__(
@@ -55,6 +55,7 @@ class PortSelectionWidget(QWidget):
 			freq_gen_port,
 			laser1_port,
 			laser2_port,
+			fsv_port,
 			parent=None
 	) -> None:
 		super().__init__(parent, Qt.Window)
@@ -71,13 +72,15 @@ class PortSelectionWidget(QWidget):
 		self.laser1_port.setAlignment(Qt.AlignLeft)
 		self.laser2_port = _create_input_field(layout, "Laser 2 Port:", laser2_port, "", 6, 0)
 		self.laser2_port.setAlignment(Qt.AlignLeft)
+		self.fsv_port = _create_input_field(layout, "FSV Port:", fsv_port, "", 8, 0)
+		self.fsv_port.setAlignment(Qt.AlignLeft)
 
 		apply_button = QPushButton("Apply")
 		def_button = QPushButton("Set as default")
 
 		layout.addItem(QSpacerItem(100, 10), 7, 0)
-		layout.addWidget(apply_button, 8, 0)
-		layout.addWidget(def_button, 8, 1)
+		layout.addWidget(apply_button, 10, 0)
+		layout.addWidget(def_button, 10, 1)
 
 		self.setLayout(layout)
 		apply_button.clicked.connect(self._apply_ports)
@@ -88,8 +91,9 @@ class PortSelectionWidget(QWidget):
 		freq_gen = self.freq_gen_port.text()
 		laser1 = self.laser1_port.text()
 		laser2 = self.laser2_port.text()
+		fsv = self.fsv_port.text()
 
-		self.apply_signal.emit(stage, freq_gen, laser1, laser2)
+		self.apply_signal.emit(stage, freq_gen, laser1, laser2, fsv)
 		return None
 
 	def _set_default(self) -> None:
@@ -97,7 +101,8 @@ class PortSelectionWidget(QWidget):
 		freq_gen = self.freq_gen_port.text()
 		laser1 = self.laser1_port.text()
 		laser2 = self.laser2_port.text()
+		fsv = self.fsv_port.text()
 
-		self.default_signal.emit(stage, freq_gen, laser1, laser2)
+		self.default_signal.emit(stage, freq_gen, laser1, laser2, fsv)
 		return None
 

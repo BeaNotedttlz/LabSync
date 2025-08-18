@@ -118,7 +118,7 @@ class OmicronLaser:
     def set_temp_power(self, value) -> None:
         if value > 100.0:
             raise ParameterOutOfRangeError(f"Temporary power {value} is out of range (0.0 - 100.0)")
-        response = self._set("TTP", str(value))
+        response = self._set("TPP", str(value))
         if response != ">":
             raise ParameterNotSetError("Temporary power could not be set")
         else:
@@ -138,7 +138,7 @@ class OmicronLaser:
 
     def set_emission(self, value) -> None:
         if value:
-            response = self._ask("LOn")
+            response = self._ask("LOn")[0]
             if response != ">":
                 raise ParameterNotSetError("Emission could not be set")
             else:

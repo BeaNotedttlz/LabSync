@@ -11,7 +11,7 @@ class LaserFunctions(QObject):
 	port_status_signal = Signal(str, bool)
 	emission_status_signal = Signal(str, bool)
 
-	def __init__(self, port: str, _storage, index) -> None:
+	def __init__(self, port: str, _storage, index, _simulate: bool) -> None:
 		super().__init__()
 
 		self.port = port
@@ -21,7 +21,7 @@ class LaserFunctions(QObject):
 		self.LuxX = OmicronLaser(
 			name="LuxX"+str(index),
 			_storage=self.storage,
-			simulate=True
+			simulate=_simulate
 		)
 
 	def __post_init__(self) -> None:
@@ -31,7 +31,7 @@ class LaserFunctions(QObject):
 			self.port_status_signal.emit(f"Laser{self.index}Port", True)
 		except ConnectionError:
 			self.connected = False
-			self.port_status_signal.emit(f"Laser{index}Port", False)
+			self.port_status_signal.emit(f"Laser{self.index}Port", False)
 
 	@Slot(bool)
 	def manage_port(self, state: bool) -> None:
@@ -68,7 +68,8 @@ class LaserFunctions(QObject):
 				raise DeviceParameterError(f"LuxX: unsupported parameter {param}")
 			try:
 				if param == "emission":
-					self.manage_emission(value)
+					if op_mode != 0:
+						self.manage_emission(value)
 				else:
 					setattr(self.LuxX, param, value)
 			except ParameterNotSetError as e:
@@ -88,9 +89,9 @@ class LaserFunctions(QObject):
 		if state and not self.LuxX.emission:
 			try:
 				self.LuxX.emission = True
-				self.emission_status_signal.emit("LuxX", True)
+				self.emission_status_signal.emit(f"Laser{self.index}Status", True)
 			except ParameterNotSetError as e:
-				self.emission_status_signal.emit("LuxX", False)
+				self.emission_status_signal.emit(f"Laser{self.index}Status", False)
 				QMessageBox.information(
 					None,
 					"Error",
@@ -99,9 +100,9 @@ class LaserFunctions(QObject):
 		elif self.LuxX.emission and not state:
 			try:
 				self.LuxX.emission = False
-				self.emission_status_signal.emit("LuxX", False)
+				self.emission_status_signal.emit(f"Laser{self.index}Status", False)
 			except ParameterNotSetError as e:
-				self.emission_status_signal.emit("LuxX", True)
+				self.emission_status_signal.emit(f"Laser{self.index}Status", True)
 				QMessageBox.information(
 					None,
 					"Error",

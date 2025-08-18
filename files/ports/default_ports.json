@@ -1,6 +1,7 @@
 {
-    "EcoVario": "ASRL/dev/ttyUSB0::INSTR",
-    "Laser1": "ASRL/dev/ttyUSB8::INSTR",
-    "Laser2": "ASRL/dev/ttyUSB9::INSTR",
-    "TGA1244": "ASRL/dev/ttyUSB1::INSTR"
+    "EcoVario": "COM0",
+    "Laser1": "COM1",
+    "Laser2": "COM2",
+    "TGA1244": "COM3",
+    "FSV3000": "TCPIP::141.99.144.147::INSTR"
 }
