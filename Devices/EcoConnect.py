@@ -184,7 +184,7 @@ class EcoConnect():
             print(self.eco.query("start"))
             return None
         else:
-            return self._write_sdo(0x01, 0x6040, 0x002F) # TODO This should only be 0x002F -> was 0x003F
+            return self._write_sdo(0x01, 0x6040, 0x003F) # TODO This should only be 0x002F -> was 0x003F
 
     # TODO this should set the reference position of the stage #
     def set_homing(self) -> None:
