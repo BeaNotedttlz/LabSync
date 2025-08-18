@@ -372,6 +372,9 @@ class MainWindow(QMainWindow):
 		self.stage_normal.stop_signal.connect(self.Stage.stop)
 		self.stage_expert.stop_signal.connect(self.Stage.stop)
 
+		self.stage_expert.reset_signal.connect(self.Stage.EcoVario.reset_error)
+		self.stage_expert.homing_signal.connect(self.Stage.EcoVario.set_homing)
+
 		self.stage_normal.update_param_signal.connect(self.stage_normal.get_params)
 		self.stage_normal.update_param_signal.connect(self.stage_expert.get_params)
 		self.stage_expert.update_param_signal.connect(self.stage_expert.get_params)
