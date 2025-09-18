@@ -21,7 +21,7 @@ devices:
       - q: "?GSI"
         r: "!GSI420|100"
       - q: "?GMP"
-        r: "!GMP100"
+        r: "!GMP400"
       - q: "?LOn"
         r: "!LOn>"
       - q: "?LOf"

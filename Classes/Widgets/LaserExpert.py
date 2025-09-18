@@ -12,7 +12,7 @@ class LaserWidgetExpert(QWidget):
 	modulation_modes = ["Standby", "CW", "Digital", "Analog"]
 	control_modes = ["ACC", "APC"]
 
-	def __init__(self, index, max_power) -> None:
+	def __init__(self, index, max_power=1) -> None:
 		super().__init__()
 		self.index = index
 		self.max_power = max_power
@@ -83,7 +83,8 @@ class LaserWidgetExpert(QWidget):
 	def get_params(self, *argv, **kwargs) -> None:
 		supported_params = {
 			"temp_power": "laser_power_percent",
-			"op_mode": "_map_modes"
+			"op_mode": "_map_modes",
+			"max_power": "max_power",
 		}
 		if len(argv) == 1 and isinstance(argv[0], dict):
 			kwargs.update(argv[0])
@@ -93,6 +94,8 @@ class LaserWidgetExpert(QWidget):
 		for param, value in kwargs.items():
 			if param not in supported_params:
 				raise UIParameterError(param)
+			if param == "max_power":
+				self.max_power = value
 			if param == "op_mode":
 				self._map_modes(value)
 			else:

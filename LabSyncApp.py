@@ -325,13 +325,11 @@ class MainWindow(QMainWindow):
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert4)
 
 		self.laser_expert1 = LaserWidgetExpert(
-			index=1,
-			max_power=self.Laser1.LuxX.max_power
+			index=1
 		)
 		self.laser_expert1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.laser_expert2 = LaserWidgetExpert(
-			index=2,
-			max_power=self.Laser2.LuxX.max_power
+			index=2
 		)
 		self.laser_expert2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
@@ -417,7 +415,7 @@ class MainWindow(QMainWindow):
 									  [self.freq_gen_expert1.get_params, self.freq_gen_expert2.get_params,
 									   self.freq_gen_expert3.get_params, self.freq_gen_expert4.get_params])
 
-		_laser_params = ["op_mode", "temp_power"]
+		_laser_params = ["op_mode", "temp_power", "max_power"]
 		for param in _laser_params:
 			self.storage.new_listener("LuxX1", param,
 									  self.laser_expert1.get_params)
