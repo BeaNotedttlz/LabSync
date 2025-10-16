@@ -39,6 +39,7 @@ class ParameterStorage:
 		key = (device, parameter)
 		if key in self._storage:
 			self._storage[key] = value
+			self._notify_listeners(device, parameter, value)
 		else:
 			raise KeyError(f"Parameter {parameter} for device {device} does not exist.")
 

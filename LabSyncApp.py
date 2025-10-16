@@ -78,6 +78,7 @@ class MainWindow(QMainWindow):
 		self._setup_connections()
 		self._setup_listeners()
 
+
 	def closeEvent(self, event) -> None:
 		response = QMessageBox.question(
 			self,
@@ -324,13 +325,11 @@ class MainWindow(QMainWindow):
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert4)
 
 		self.laser_expert1 = LaserWidgetExpert(
-			index=1,
-			max_power=self.Laser1.LuxX.max_power
+			index=1
 		)
 		self.laser_expert1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.laser_expert2 = LaserWidgetExpert(
-			index=2,
-			max_power=self.Laser2.LuxX.max_power
+			index=2
 		)
 		self.laser_expert2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
@@ -371,6 +370,9 @@ class MainWindow(QMainWindow):
 		self.stage_normal.stop_signal.connect(self.Stage.stop)
 		self.stage_expert.stop_signal.connect(self.Stage.stop)
 
+		self.stage_expert.reset_signal.connect(self.Stage.EcoVario.reset_error)
+		self.stage_expert.homing_signal.connect(self.Stage.EcoVario.set_homing)
+
 		self.stage_normal.update_param_signal.connect(self.stage_normal.get_params)
 		self.stage_normal.update_param_signal.connect(self.stage_expert.get_params)
 		self.stage_expert.update_param_signal.connect(self.stage_expert.get_params)
@@ -395,6 +397,9 @@ class MainWindow(QMainWindow):
 		self.FrequencyGenerator.__post_init__()
 		self.Laser1.__post_init__()
 		self.Laser2.__post_init__()
+		# TODO this works but prob is really inconsistent, need to find a better way
+		self.laser_expert1.max_power = self.Laser1.LuxX.max_power
+		self.laser_expert2.max_power = self.Laser2.LuxX.max_power
 		self.SpectrumAnylyzer.__post_init__()
 		return None
 
@@ -410,7 +415,7 @@ class MainWindow(QMainWindow):
 									  [self.freq_gen_expert1.get_params, self.freq_gen_expert2.get_params,
 									   self.freq_gen_expert3.get_params, self.freq_gen_expert4.get_params])
 
-		_laser_params = ["op_mode", "temp_power"]
+		_laser_params = ["op_mode", "temp_power", "max_power"]
 		for param in _laser_params:
 			self.storage.new_listener("LuxX1", param,
 									  self.laser_expert1.get_params)

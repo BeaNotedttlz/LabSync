@@ -12,9 +12,9 @@ if __name__ == "__main__":
 	window = MainWindow(app, simulate_devices)
 
 	# Timer for continous calling of functions #
-	# timer = QTimer()
-	# timer.timeout.connect(window.loop_calls)
-	# timer.start(2000)
+	timer = QTimer()
+	timer.timeout.connect(window.loop_calls)
+	timer.start(2000)
 
 	# show Main window and execute loop #
 	window.show()
