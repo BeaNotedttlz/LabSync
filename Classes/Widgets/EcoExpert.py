@@ -9,6 +9,8 @@ class StageWidgetExpert(QWidget):
 	stop_signal = Signal()
 	start_signal = Signal(float, float, float, float)
 	update_param_signal = Signal(dict)
+	reset_signal = Signal()
+	homing_signal = Signal()
 
 	def __init__(self) -> None:
 		super().__init__()
@@ -18,10 +20,10 @@ class StageWidgetExpert(QWidget):
 
 		start_button = QPushButton("Start")
 		stop_button = QPushButton("Stop")
-		send_control_word = QPushButton("Send \n control word")
+		home_stage_button = QPushButton("Home Stage \n to position")
 		self.sync = QCheckBox("Sync Accel. \n and Deaccel.")
 		self.sync.setChecked(True)
-		show_control_word = QPushButton("Get control word")
+		reset_error_button = QPushButton("Reset \n Error")
 
 		layout.addWidget(QLabel("Stage Controls"), 0, 0)
 		self.out_current_position = _create_output_field(layout, "Current position", "0.0", "mm", 1, 0)
@@ -40,18 +42,20 @@ class StageWidgetExpert(QWidget):
 		self.in_accell.setValidator(QDoubleValidator())
 		self.in_deaccell = _create_input_field(layout, "Deacceleration", "501.30", "mm/s^2", 3, 2)
 		self.in_deaccell.setValidator(QDoubleValidator())
-		self.in_control_word = _create_input_field(layout, "Control word", "0x3F", "", 7, 2)
 		self.out_error_code = _create_output_field(layout, "Error code", "", "", 10, 2)
 		self.out_error_code.setAlignment(Qt.AlignLeft)
 
-		layout.addWidget(send_control_word, 9, 2)
+		layout.addWidget(home_stage_button, 9, 2)
 		layout.addWidget(self.sync, 5, 2)
-		layout.addWidget(show_control_word, 8, 3)
+		layout.addWidget(reset_error_button, 8, 2)
 		self.setLayout(layout)
 
 		# signal routing #
 		stop_button.clicked.connect(self.stop_signal.emit)
 		start_button.clicked.connect(self._start)
+		reset_error_button.clicked.connect(self.reset_signal.emit)
+		home_stage_button.clicked.connect(self.homing_signal.emit)
+
 		# self.in_new_position.returnPressed.connect(self._write_target_pos)
 		self.in_new_position.returnPressed.connect(
 			lambda: self.update_param_signal.emit({"position": self.in_new_position.text()})

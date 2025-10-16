@@ -94,7 +94,7 @@ class FrequencyGeneratorWidgetExpet(QWidget):
 			raise TypeError("Only dict or named parameters accepted!")
 
 		for param, value in kwargs.items():
-			actual_value = value[str(self.channel)]
+			actual_value = value[self.channel]
 
 			if param not in supported_params:
 				raise UIParameterError(param)

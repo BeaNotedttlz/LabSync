@@ -87,7 +87,7 @@ class FrequencyGeneratorFunctions(QObject):
 				QMessageBox.information(
 					None,
 					"Error",
-					str(e)
+					"TGA ERROR" + str(e)
 				)
 	@Slot(int, str, float, float, str, bool, int)
 	def apply_on_normal(

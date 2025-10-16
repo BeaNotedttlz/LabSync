@@ -21,11 +21,13 @@ devices:
       - q: "?GSI"
         r: "!GSI420|100"
       - q: "?GMP"
-        r: "!GMP100"
+        r: "!GMP400"
       - q: "?LOn"
         r: "!LOn>"
       - q: "?LOf"
         r: "!LOf>"
+      - q: "?POn"
+        r: "!POn>"
     properties:
       temporarypower:
         default: 50.0
@@ -53,6 +55,19 @@ devices:
         specs:
           min: 0
           max: 5
+          type: int
+      hex_op_mode:
+        default: 0
+        getter:
+          q: "?GOM"
+          r: "!GOM{:#X}"
+        setter:
+          q: "?SOM{:#X}"
+          r: "!SOM>"
+          e: "!SOMx"
+        specs:
+          min: 0
+          max: 65535
           type: int
 
   tga:

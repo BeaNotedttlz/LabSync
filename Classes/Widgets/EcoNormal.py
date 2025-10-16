@@ -38,6 +38,7 @@ class StageWidgetNormal(QWidget):
 
 		self.setLayout(layout)
 		start_button.clicked.connect(self._start)
+		stop_button.clicked.connect(self.stop_signal.emit)
 		# self.in_new_position.returnPressed.connect(self._write_target_pos)
 		self.in_new_position.returnPressed.connect(
 			lambda: self.update_param_signal.emit({"position": self.in_new_position.text()})
