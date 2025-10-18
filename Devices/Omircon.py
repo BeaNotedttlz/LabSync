@@ -5,7 +5,7 @@ from Devices.Storage import ParameterStorage
 from Devices.Descriptors import Parameter
 import time
 
-from Exceptions import ParameterNotSetError, ParameterOutOfRangeError
+from utils import ParameterNotSetError, ParameterOutOfRangeError
 
 
 # TODO - andere commands hinzufügen?

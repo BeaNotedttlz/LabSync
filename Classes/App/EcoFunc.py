@@ -5,7 +5,7 @@ from Devices.EcoConnect import EcoConnect
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtWidgets import QMessageBox
 import math
-from Exceptions import ParameterOutOfRangeError, DeviceParameterError
+from utils import ParameterOutOfRangeError, DeviceParameterError
 
 class EcoFunctions(QObject):
 	port_status_signal = Signal(str, bool)

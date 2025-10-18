@@ -1,5 +1,3 @@
-from PySide6.QtWidgets import QSpacerItem
-
 from Classes.App.EcoFunc import EcoFunctions
 from Classes.App.TgaFunc import FrequencyGeneratorFunctions
 from Classes.App.LaserFunc import LaserFunctions
@@ -17,12 +15,13 @@ from Classes.Widgets.LaserExpert import LaserWidgetExpert
 from Classes.Widgets.FsvNormal import FsvNormalWidget
 
 from Devices.Storage import ParameterStorage
-from signals import SignalHandler
+from utils import SignalHandler
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout,
 							   QSplitter, QMessageBox, QGridLayout,
-							   QFileDialog, QTabWidget, QSizePolicy)
+							   QFileDialog, QTabWidget, QSizePolicy,
+							   QSpacerItem)
 import os, json
 
 class MainWindow(QMainWindow):

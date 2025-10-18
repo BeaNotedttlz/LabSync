@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QMessageBox
 
 from Devices.Storage import ParameterStorage
 from Devices.TGA import FrequencyGenerator
-from Exceptions import DeviceParameterError
+from utils import DeviceParameterError
 
 class FrequencyGeneratorFunctions(QObject):
 	port_status_signal = Signal(str, bool)

@@ -3,7 +3,7 @@ utils.py provides necessary utility functions for LabSync application.
 """
 
 from PySide6.QtCore import QObject
-import os, pathlib, platform, subprocess, tempfile, json
+import os, platform, subprocess, json
 
 # SignalHandler class #
 class SignalHandler(QObject):
@@ -55,3 +55,33 @@ class FilesUtils:
 		except (json.JSONDecodeError, OSError):
 			# fallback if corrupted
 			return self.default_settings.copy()
+
+# Exception classes #
+class ParameterNotSetError(Exception):
+	def __init__(self, message) -> None:
+		self.message = message
+		super().__init__(self.message)
+	def __str__(self) -> str:
+		return self.message
+
+class DeviceParameterError(Exception):
+	def __init__(self, message) -> None:
+		self.message = message
+		super().__init__(self.message)
+	def __str__(self) -> str:
+		return self.message
+
+class ParameterOutOfRangeError(Exception):
+	def __init__(self, message) -> None:
+		self.message = message
+		super().__init__(self.message)
+	def __str__(self) -> str:
+		return self.message
+
+class UIParameterError(Exception):
+	def __init__(self, message) -> None:
+		self.message = message
+		super().__init__(self.message)
+
+	def __str__(self) -> str:
+		return self.message
