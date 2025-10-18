@@ -3,7 +3,7 @@ utils.py provides necessary utility functions for LabSync application.
 """
 
 from PySide6.QtCore import QObject
-import os, platform, subprocess, json
+import os, platform, subprocess, json, tempfile
 
 # SignalHandler class #
 class SignalHandler(QObject):
@@ -18,43 +18,57 @@ class SignalHandler(QObject):
 
 # Checking files #
 class FilesUtils:
-	def __init__(self):
+	def __init__(self, file_name: str = "settings.json"):
 		self.default_settings = {
-			"version": 2.5,
+			"version": "2.5.0",
 			"usnername": "",
 			"simulate_devices": False,
 		}
+		self.filename = file_name
+		self.system = platform.system()
+		self.cwd = os.getcwd()
+		self.folder = os.path.join(self.cwd, "settings" if self.system == "Windows" else ".settings")
+		self.settings_path = os.path.join(self.folder, self.filename)
+		os.makedirs(self.folder, exist_ok=True)
 
-	def ensure_hidden_settings(self, filename: str = "settings.json") -> dict:
-		system = platform.system()
-		cwd = os.getcwd()
-
-		if system == "Windows":
-			folder =os.path.join(cwd, "settings")
-		else:
-			folder = os.path.join(cwd, ".settings")
-
-		os.makedirs(folder, exist_ok=True)
-
-		settings_path = os.path.join(folder, filename)
-
-		if not os.path.exists(settings_path):
-			with open(settings_path, "w", encoding="utf-8") as f:
-				json.dump(self.default_settings, f, indent=2)
-
-		if system == "Windows":
+		if self.system == "Windows":
 			try:
-				subprocess.run(["attrib", "+H", folder], check=True)
-			except Exception as e:
-				print(f"Warning: could not hide folder ({e})")
+				subprocess.run(["attrib", "+H", self.folder], check=True)
+			except Exception:
+				pass
 
+	def ensure_hidden_settings(self) -> dict:
+		if not os.path.exists(self.settings_path):
+			with open(self.settings_path, "w", encoding="utf-8") as f:
+				json.dump(self.default_settings, f, indent=2)
 		try:
-			with open(settings_path, "r", encoding="utf-8") as f:
+			with open(self.settings_path, "r", encoding="utf-8") as f:
 				data = json.load(f)
 			return data
 		except (json.JSONDecodeError, OSError):
-			# fallback if corrupted
 			return self.default_settings.copy()
+
+	def edit_settings(self, setting_name: str, value) -> dict:
+		settings = self.ensure_hidden_settings()
+		settings[setting_name] = value
+
+		# Atomic write
+		fd, tmp_path = tempfile.mkstemp(dir=self.folder, prefix="settings_", text=True)
+		try:
+			with os.fdopen(fd, "w", encoding="utf-8") as f:
+				json.dump(settings, f, indent=2)
+				f.flush()
+				os.fsync(f.fileno())
+			os.replace(tmp_path, self.settings_path)
+		finally:
+			if os.path.exists(tmp_path):
+				try:
+					os.remove(tmp_path)
+				except OSError:
+					pass
+
+		return settings
+
 
 # Exception classes #
 class ParameterNotSetError(Exception):

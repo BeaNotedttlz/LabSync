@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
 	settings = file.ensure_hidden_settings()
 
-	window = MainWindow(app, settings["simulate_devices"])
+	window = MainWindow(app, file, settings["simulate_devices"])
 
 	# Timer for continous calling of functions #
 	timer = QTimer()

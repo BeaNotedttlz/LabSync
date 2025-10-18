@@ -25,11 +25,26 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout,
 import os, json
 
 class MainWindow(QMainWindow):
-	def __init__(self, app, _simulate: bool) -> None:
+	def __init__(self, app, _settings, _simulate: bool) -> None:
 		super().__init__()
 		self.app = app
 		self.simulate = _simulate
 		self.storage = ParameterStorage()
+		self.settings = _settings
+
+		if self.simulate:
+			response = QMessageBox.information(
+						self,
+					"Debug Mode Warning",
+					"LabSync is running in debug mode with simulated devices.\n Deactivate?",
+						QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+						QMessageBox.StandardButton.No
+			)
+			if response == QMessageBox.StandardButton.Yes:
+				self.simulate = False
+			else:
+				pass
+
 
 		self.signal_handler = SignalHandler()
 		curr_file_dir = os.path.dirname(os.path.realpath(__file__))

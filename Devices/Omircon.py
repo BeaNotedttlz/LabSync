@@ -30,7 +30,7 @@ class OmicronLaser:
 		self.simulate = simulate
 		# create Recource Manager #
 		self.rm = pyvisa.ResourceManager(
-			"/home/merlin/Desktop/LabSync 2.2/Devices/SimResp.yaml@sim"
+			"/home/merlin/Desktop/LabSync/Devices/SimResp.yaml@sim"
 			if self.simulate else "")
 
 		# Save attributes to storage #

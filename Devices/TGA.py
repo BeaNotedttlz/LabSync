@@ -57,7 +57,7 @@ class FrequencyGenerator:
 		self.current_channel = 1
 		# create recource Manager #
 		self.rm = pyvisa.ResourceManager(
-			"/home/merlin/Desktop/LabSync 2.2/Devices/SimResp.yaml@sim"
+			"/home/merlin/Desktop/LabSync/Devices/SimResp.yaml@sim"
 			if self.simulate else "")
 
 		for param in type(self)._get_params():
