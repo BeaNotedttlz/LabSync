@@ -104,6 +104,7 @@ class LaserWidgetNormal(QWidget):
 		channel_1 = int(self.channels[self.channel1.currentIndex()])
 		channel_2 = int(self.channels[self.channel2.currentIndex()])
 
+
 		lockmode_1 = self.lockmodes[self.lockmode1.currentIndex()]
 		lockmode_2 = self.lockmodes[self.lockmode2.currentIndex()]
 

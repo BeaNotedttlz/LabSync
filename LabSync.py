@@ -7,7 +7,7 @@ from LabSyncApp import MainWindow
 if __name__ == "__main__":
 	app = QApplication(sys.argv)
 	app.setWindowIcon(QIcon(os.path.join("img", "hqe_logo.png")))
-	simulate_devices = False
+	simulate_devices = True
 
 	window = MainWindow(app, simulate_devices)
 

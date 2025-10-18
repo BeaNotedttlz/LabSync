@@ -126,14 +126,13 @@ class FrequencyGenerator:
 		   return self._write(channel, 'DCOFFS', str(offset))
 		else:
 			offset = (offset+self.amplitude)/2
-			return self._write(channel, 'DCOFFS', str(offset))
+			return self._write(channel, 'DCOFF		print(lockmode)S', str(offset))
 
 	def set_phase(self, channel: int, phase: float) -> None:
 		return self._write(channel, "PHASE", str(phase))
 
 	def set_lockmode(self, channel: int, lockmode: str) -> None:
 		lockmodes = ["indep", "master", "slave", "off"]
-		print(lockmode)
 		if lockmode not in lockmodes:
 			raise ValueError(f"Lockmode {lockmode} is not supported.")
 		if lockmode == "indep":
