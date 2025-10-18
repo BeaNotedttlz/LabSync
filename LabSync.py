@@ -8,11 +8,11 @@ from utils import FilesUtils
 if __name__ == "__main__":
 	app = QApplication(sys.argv)
 	app.setWindowIcon(QIcon(os.path.join("img", "hqe_logo.png")))
-	file = FilesUtils()
+	files = FilesUtils()
 
-	settings = file.ensure_hidden_settings()
+	settings = files.ensure_hidden_settings()
 
-	window = MainWindow(app, file, settings["simulate_devices"])
+	window = MainWindow(app, files, settings["simulate_devices"])
 
 	# Timer for continous calling of functions #
 	timer = QTimer()

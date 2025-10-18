@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
 		self.app = app
 		self.simulate = _simulate
 		self.storage = ParameterStorage()
-		self.settings = _settings
+		self.files = _settings
 
 		if self.simulate:
 			response = QMessageBox.information(
@@ -148,13 +148,6 @@ class MainWindow(QMainWindow):
 					parameters_restored = {tuple(key): value for key, value in parameters}
 					self.storage.load_all(parameters_restored)
 					return None
-				except KeyError as e:
-					QMessageBox.critical(
-						self,
-						"Error",
-						"Stored Parameters damaged, could not load file!"
-					)
-					return None
 				except Exception as e:
 					QMessageBox.critical(
 						self,
@@ -165,17 +158,15 @@ class MainWindow(QMainWindow):
 
 
 	def _load_default_ports(self) -> None:
-		ports_dir = os.path.join(self.file_dir, "ports/default_ports.json")
 		try:
-			with open(ports_dir, "r") as file:
-				ports = json.load(file)
-				self.def_stage_port = ports["EcoVario"]
-				self.def_laser1_port = ports["Laser1"]
-				self.def_laser2_port = ports["Laser2"]
-				self.def_freq_gen_port = ports["TGA1244"]
-				self.def_fsv_port = ports["FSV3000"]
-				return None
-		except (FileNotFoundError, json.JSONDecodeError, Exception) as e:
+			ports = self.files.read_port_file()
+			self.def_stage_port = ports["EcoVario"]
+			self.def_laser1_port = ports["Laser1"]
+			self.def_laser2_port = ports["Laser2"]
+			self.def_freq_gen_port = ports["TGA1244"]
+			self.def_fsv_port = ports["FSV3000"]
+			return None
+		except Exception as e:
 			self.def_stage_port = "COM0"
 			self.def_laser1_port = "COM1"
 			self.def_laser2_port = "COM2"
@@ -184,11 +175,30 @@ class MainWindow(QMainWindow):
 			QMessageBox.critical(
 				self,
 				"Error",
-				f"Default ports file not found or broken\n{e}\n"
+				f"Default ports file not found or broken\n{e}"
 			)
 			return None
 
+
 	def _set_default_ports(self, stage: str, TGA1244: str, laser1: str, laser2: str, fsv: str) -> None:
+		try:
+			self.files.set_ports(
+				stage,
+				TGA1244,
+				laser1,
+				laser2,
+				fsv
+			)
+		except Exception as e:
+			QMessageBox.critical(
+				self,
+				"Error",
+				f"Could not set default ports:\n{e}"
+			)
+			return None
+
+
+
 		ports_dir = os.path.join(self.file_dir, "ports/default_ports.json")
 		try:
 			with open(ports_dir, "w") as file:

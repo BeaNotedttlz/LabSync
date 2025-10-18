@@ -5,6 +5,9 @@ utils.py provides necessary utility functions for LabSync application.
 from PySide6.QtCore import QObject
 import os, platform, subprocess, json, tempfile
 
+from spyder.plugins.explorer.widgets.explorer import ExplorerTreeWidgetActions
+
+
 # SignalHandler class #
 class SignalHandler(QObject):
 	def __init__(self) -> None:
@@ -69,6 +72,24 @@ class FilesUtils:
 
 		return settings
 
+	def read_port_file(self) -> dict:
+		ports_dir = os.path.join(self.cwd, "files", "ports", "default_ports.json")
+		with open(ports_dir, "r", encoding="utf-8") as f:
+			ports = json.load(f)
+		return ports
+
+	def set_ports(self, stage: str, TGA: str, laser1: str, laser2: str, fsv: str):
+		ports_dir = os.path.join(self.cwd, "files", "ports", "default_ports.json")
+		ports = {
+			"stage": stage,
+			"TGA": TGA,
+			"laser1": laser1,
+			"laser2": laser2,
+			"fsv": fsv
+		}
+		with open(ports_dir, "w", encoding="utf-8") as f:
+			json.dump(ports, f, indent=2)
+		return ports
 
 # Exception classes #
 class ParameterNotSetError(Exception):
