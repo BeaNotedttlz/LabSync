@@ -2,14 +2,11 @@
 __pycache__/
 Devices/__pycache__/
 
-# ignore test file
-test.py
-
-# ignore EcoVario note
-eco_apl_note23_en.pdf
-
 # ignore all cache files
 *.pyc
 
 # ignore .idea
 .idea/
+
+# ignore test file
+files/test_preset.json
