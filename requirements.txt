@@ -1,0 +1,8 @@
+#### Requirements to run LabSync ####
+pyside6
+numpy
+pandas
+matplotlib
+PySerial
+pyvisa
+pyvisa-sim
