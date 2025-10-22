@@ -7,3 +7,6 @@ Devices/__pycache__/
 
 # ignore .idea
 .idea/
+
+# ignore test file
+files/test_preset.json

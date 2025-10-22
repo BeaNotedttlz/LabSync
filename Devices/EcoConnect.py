@@ -1,4 +1,4 @@
-import pyvisa
+import pyvisa, os
 from pyvisa import errors
 from serial import SerialException
 from Devices.Descriptors import Parameter
@@ -25,9 +25,14 @@ class EcoConnect():
 		self.connected = False
 		self.simulate = simulate
 		# create Recource Manager #
+		sim_path = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			"SimResp.yaml"
+		)
 		self.rm = pyvisa.ResourceManager(
-			"/home/merlin/Desktop/LabSync/Devices/SimResp.yaml@sim"
-			if self.simulate else "")
+			f"{sim_path}@sim"
+			if self.simulate else ""
+		)
 
 		# add attr to storage #
 		for param in type(self)._get_params():
@@ -161,7 +166,10 @@ class EcoConnect():
 			return float(self.eco.query("currpos")) * 0.00125328
 		else:
 			position_hex = self._read_sdo(0x01, 0x6063)
-			position_mm = int(position_hex, 16) * 0.001253258  # factor needed to get from encoer position to mm #
+			try:
+				position_mm = int(position_hex, 16) * 0.001253258 # factor needed to get from encoer position to mm #
+			except TypeError:
+				position_mm = 0.0
 			return position_mm
 
 	def get_status_word(self) -> hex:

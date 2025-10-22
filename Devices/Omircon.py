@@ -1,11 +1,9 @@
-import pyvisa
+import pyvisa, os, time
 from pyvisa import errors
 from serial import SerialException
 from Devices.Storage import ParameterStorage
 from Devices.Descriptors import Parameter
-import time
-
-from utils import ParameterNotSetError, ParameterOutOfRangeError
+from Exceptions import ParameterNotSetError, ParameterOutOfRangeError
 
 
 # TODO - andere commands hinzufügen?
@@ -29,9 +27,14 @@ class OmicronLaser:
 		self.connected = False
 		self.simulate = simulate
 		# create Recource Manager #
+		sim_path = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			"SimResp.yaml"
+		)
 		self.rm = pyvisa.ResourceManager(
-			"/home/merlin/Desktop/LabSync/Devices/SimResp.yaml@sim"
-			if self.simulate else "")
+			f"{sim_path}@sim"
+			if self.simulate else ""
+		)
 
 		# Save attributes to storage #
 		for param in type(self)._get_params():
