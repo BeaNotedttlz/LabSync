@@ -3,7 +3,7 @@ from pyvisa import errors
 from serial import SerialException
 from Devices.Storage import ParameterStorage
 from Devices.Descriptors import Parameter
-from Exceptions import DeviceParameterError
+from src.utils import DeviceParameterError
 
 ## class for core TGA 1244 functions ##
 class FrequencyGenerator:

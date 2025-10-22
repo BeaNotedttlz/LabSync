@@ -1,9 +1,7 @@
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import Qt
-from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QSpacerItem, QGridLayout
-
+from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QSpacerItem, QGridLayout, QCheckBox
 from Classes.Widgets.fields import _create_input_field
-
 
 class LaserInfoWidget(QWidget):
 	def __init__(
@@ -48,7 +46,6 @@ class PortSelectionWidget(QWidget):
 	apply_signal = Signal(str, str, str, str, str)
 	default_signal = Signal(str, str, str, str, str)
 
-
 	def __init__(
 			self,
 			stage_port,
@@ -86,6 +83,7 @@ class PortSelectionWidget(QWidget):
 		apply_button.clicked.connect(self._apply_ports)
 		def_button.clicked.connect(self._set_default)
 
+	@Slot()
 	def _apply_ports(self) -> None:
 		stage = self.stage_port.text()
 		freq_gen = self.freq_gen_port.text()
@@ -96,6 +94,7 @@ class PortSelectionWidget(QWidget):
 		self.apply_signal.emit(stage, freq_gen, laser1, laser2, fsv)
 		return None
 
+	@Slot()
 	def _set_default(self) -> None:
 		stage = self.stage_port.text()
 		freq_gen = self.freq_gen_port.text()
@@ -106,3 +105,34 @@ class PortSelectionWidget(QWidget):
 		self.default_signal.emit(stage, freq_gen, laser1, laser2, fsv)
 		return None
 
+class SettingsWidget(QWidget):
+	apply_signal = Signal(str, bool)
+	def __init__(self,username: str, debug_mode: bool, parent=None) -> None:
+		super().__init__()
+		layout = QGridLayout()
+		layout.setVerticalSpacing(10)
+		self.setWindowTitle("Port Selection")
+		self.setMinimumSize(300, 150)
+
+		self.username = username
+		self.debug_mode = debug_mode
+
+		self.username_input = _create_input_field(layout, "Username:", username, "", 0, 0)
+		self.username_input.setAlignment(Qt.AlignLeft)
+		self.debug_mode_box = QCheckBox("Debug Mode")
+		self.apply_button = QPushButton("Apply")
+
+		layout.addItem(QSpacerItem(10, 100), 4, 0)
+		layout.addWidget(self.debug_mode_box, 5, 0)
+		layout.addWidget(self.apply_button, 6, 0)
+
+		self.setLayout(layout)
+		self.apply_button.clicked.connect(self._apply)
+
+	@Slot()
+	def _apply(self) -> None:
+		username = self.username_input.text()
+		debug_mode = self.debug_mode_box.isChecked()
+
+		self.apply_signal.emit(username, debug_mode)
+		return None

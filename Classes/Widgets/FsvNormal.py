@@ -2,12 +2,10 @@ import os
 
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QDoubleValidator
-from PySide6.QtWidgets import QWidget, QSpacerItem, QLabel, QPushButton, QGridLayout, QMessageBox, QComboBox, \
-	QFileDialog
+from PySide6.QtWidgets import QWidget, QSpacerItem, QLabel, QPushButton, QGridLayout, QFileDialog
 
 from Classes.Widgets.fields import _create_input_field, _create_combo_box
-from Exceptions import UIParameterError
-from os import path
+from src.utils import UIParameterError
 from pathlib import Path
 
 

@@ -3,7 +3,7 @@ from pyvisa import errors
 from serial import SerialException
 from Devices.Storage import ParameterStorage
 from Devices.Descriptors import Parameter
-from Exceptions import ParameterNotSetError, ParameterOutOfRangeError
+from src.utils import ParameterNotSetError, ParameterOutOfRangeError
 
 
 # TODO - andere commands hinzufügen?

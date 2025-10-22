@@ -1,12 +1,10 @@
-from PySide6.QtWidgets import QSpacerItem
-
 from Classes.App.EcoFunc import EcoFunctions
 from Classes.App.TgaFunc import FrequencyGeneratorFunctions
 from Classes.App.LaserFunc import LaserFunctions
 from Classes.App.FsvFunc import FsvFunctions
 from Classes.App.Bode import BodePlot
 
-from Classes.Widgets.Dialogs import LaserInfoWidget, PortSelectionWidget
+from Classes.Widgets.Dialogs import LaserInfoWidget, PortSelectionWidget, SettingsWidget
 from Classes.Widgets.FsvBodeplot import BodePlotWindow
 from Classes.Widgets.InfoPanel import InfoPanelWidget
 from Classes.Widgets.EcoNormal import StageWidgetNormal
@@ -17,28 +15,30 @@ from Classes.Widgets.LaserExpert import LaserWidgetExpert
 from Classes.Widgets.FsvNormal import FsvNormalWidget
 
 from Devices.Storage import ParameterStorage
-from signals import SignalHandler
+from src.utils import SignalHandler, FilesUtils
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout,
 							   QSplitter, QMessageBox, QGridLayout,
-							   QFileDialog, QTabWidget, QSizePolicy)
-import os, json
+							   QFileDialog, QTabWidget, QSizePolicy,
+							   QSpacerItem)
+import os, json, sys
 
 class MainWindow(QMainWindow):
-	def __init__(self, app, _simulate: bool, _file_dir: str) -> None:
+	def __init__(self, app, _file_util, _file_dir: str, _simulate: bool) -> None:
 		super().__init__()
 		self.app = app
-		self.simulate = _simulate
 		self.storage = ParameterStorage()
-
 		self.signal_handler = SignalHandler()
+		self.file_util = _file_util
 		self.file_dir = _file_dir
 
 		self.port_dialog = None
 		self.laser_dialog = None
+		self.settings_dialog = None
 		self.bode_window = None
 		self.bode_plotter = None
+		self.simulate = _simulate
 
 		self.setWindowTitle("LabSync")
 
@@ -76,7 +76,6 @@ class MainWindow(QMainWindow):
 		self._setup_widgets()
 		self._setup_connections()
 		self._setup_listeners()
-
 
 	def closeEvent(self, event) -> None:
 		response = QMessageBox.question(
@@ -189,13 +188,27 @@ class MainWindow(QMainWindow):
 		except Exception as e:
 			return print(f"{e}")
 
-	def _set_ports(self, stage, freq_gen, laser1, laser) -> None:
+	@Slot(str, str, str, str)
+	def _set_ports(self, stage, freq_gen, laser1, laser2) -> None:
 		self.Stage.port = stage
 		self.FrequencyGenerator.port = freq_gen
 		self.Laser1.port = laser1
-		self.Laser2.port = laser1
+		self.Laser2.port = laser2
 
 		self.port_dialog.close()
+		return None
+
+	@Slot(str, bool)
+	def _set_settings(self, username: str, debug_mode: bool):
+		self.file_util.edit_settings(
+			setting_name="username",
+			value=username
+		)
+		self.file_util.edit_settings(
+			setting_name="debug_mode",
+			value=debug_mode
+		)
+		self.settings_dialog.close()
 		return None
 
 	def _setup_devices(self) -> None:
@@ -283,6 +296,9 @@ class MainWindow(QMainWindow):
 
 		port_select = mode_menu.addAction("Select Ports")
 		port_select.triggered.connect(self._show_port_dialog)
+
+		settings = mode_menu.addAction("Settings")
+		settings.triggered.connect(self._show_settings_dialog)
 
 		# BodePlot window #
 		window_menu = menu_bar.addMenu("&Windows")
@@ -437,6 +453,7 @@ class MainWindow(QMainWindow):
 
 		return None
 
+	@Slot()
 	def _show_port_dialog(self) -> None:
 		if self.port_dialog is None or not self.port_dialog.isVisible():
 			self.port_dialog = PortSelectionWidget(
@@ -452,6 +469,7 @@ class MainWindow(QMainWindow):
 		else:
 			self.port_dialog.raise_()
 
+	@Slot()
 	def _show_laser_info_dialog(self) -> None:
 		if self.laser_dialog is None or not self.laser_dialog.isVisible():
 			firmware = [self.Laser1.LuxX.firmware, self.Laser2.LuxX.firmware]
@@ -465,6 +483,19 @@ class MainWindow(QMainWindow):
 			self.laser_dialog.show()
 		else:
 			self.laser_dialog.raise_()
+
+	@Slot()
+	def _show_settings_dialog(self) -> None:
+		if self.settings_dialog is None or not self.settings_dialog.isVisible():
+			username = ""
+			self.settings_dialog = SettingsWidget(
+				username,
+				self.simulate
+			)
+			self.settings_dialog.show()
+			self.settings_dialog.apply_signal.connect(self._set_settings)
+		else:
+			self.settings_dialog.raise_()
 
 	def open_bode_window(self):
 		if self.bode_window is None or not self.bode_window.isVisible():

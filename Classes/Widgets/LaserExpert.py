@@ -3,7 +3,7 @@ from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QCheckBox, QLabel, QSpacerItem
 
 from Classes.Widgets.fields import _create_input_field, _create_combo_box
-from Exceptions import UIParameterError
+from src.utils import UIParameterError
 
 
 class LaserWidgetExpert(QWidget):
