@@ -1,12 +1,8 @@
 """
 utils.py provides necessary utility functions for LabSync application.
 """
-
 from PySide6.QtCore import QObject
 import os, platform, subprocess, json, tempfile
-
-from sympy import false
-
 
 # SignalHandler class #
 class SignalHandler(QObject):
