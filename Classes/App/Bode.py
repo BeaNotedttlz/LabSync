@@ -1,5 +1,5 @@
 import numpy as np
-from PyQt5.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox
 from PySide6.QtCore import Signal, Slot, QObject
 
 from Devices.TGA import FrequencyGenerator

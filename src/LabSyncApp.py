@@ -26,15 +26,14 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout,
 import os, json
 
 class MainWindow(QMainWindow):
-	def __init__(self, app, _simulate: bool) -> None:
+	def __init__(self, app, _simulate: bool, _file_dir: str) -> None:
 		super().__init__()
 		self.app = app
 		self.simulate = _simulate
 		self.storage = ParameterStorage()
 
 		self.signal_handler = SignalHandler()
-		curr_file_dir = os.path.dirname(os.path.realpath(__file__))
-		self.file_dir = os.path.join(curr_file_dir, "files")
+		self.file_dir = _file_dir
 
 		self.port_dialog = None
 		self.laser_dialog = None
