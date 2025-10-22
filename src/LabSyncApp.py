@@ -22,16 +22,15 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout,
 							   QSplitter, QMessageBox, QGridLayout,
 							   QFileDialog, QTabWidget, QSizePolicy,
 							   QSpacerItem)
-import os, json
+import os, json, sys
 
 class MainWindow(QMainWindow):
-	def __init__(self, app, _simulate: bool, _file_dir: str) -> None:
+	def __init__(self, app, _file_util, _file_dir: str, _simulate: bool) -> None:
 		super().__init__()
 		self.app = app
-		self.simulate = _simulate
 		self.storage = ParameterStorage()
 		self.signal_handler = SignalHandler()
-		self.file_util = FilesUtils(file_path=_file_dir)
+		self.file_util = _file_util
 		self.file_dir = _file_dir
 
 		self.port_dialog = None
@@ -39,6 +38,7 @@ class MainWindow(QMainWindow):
 		self.settings_dialog = None
 		self.bode_window = None
 		self.bode_plotter = None
+		self.simulate = _simulate
 
 		self.setWindowTitle("LabSync")
 
@@ -76,7 +76,6 @@ class MainWindow(QMainWindow):
 		self._setup_widgets()
 		self._setup_connections()
 		self._setup_listeners()
-
 
 	def closeEvent(self, event) -> None:
 		response = QMessageBox.question(

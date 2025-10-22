@@ -5,6 +5,9 @@ utils.py provides necessary utility functions for LabSync application.
 from PySide6.QtCore import QObject
 import os, platform, subprocess, json, tempfile
 
+from sympy import false
+
+
 # SignalHandler class #
 class SignalHandler(QObject):
 	def __init__(self) -> None:
@@ -36,9 +39,9 @@ class FilesUtils:
 			except Exception:
 				pass
 
-		self.ensure_hidden_settings()
+		_ = self._ensure_hidden_settings()
 
-	def ensure_hidden_settings(self) -> dict:
+	def _ensure_hidden_settings(self) -> dict:
 		if not os.path.exists(self.settings_path):
 			with open(self.settings_path, "w", encoding="utf-8") as f:
 				json.dump(self.default_settings, f, indent=2)
@@ -49,8 +52,13 @@ class FilesUtils:
 		except (json.JSONDecodeError, OSError):
 			return self.default_settings.copy()
 
+	def read_settings(self, setting:str):
+		settings = self._ensure_hidden_settings()
+		value = settings[setting]
+		return value
+
 	def edit_settings(self, setting_name: str, value) -> dict:
-		settings = self.ensure_hidden_settings()
+		settings = self._ensure_hidden_settings()
 		settings[setting_name] = value
 
 		# Atomic write
