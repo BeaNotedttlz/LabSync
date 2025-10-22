@@ -1,11 +1,9 @@
-from cmath import phase
-
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QCheckBox, QLabel
 
 from Classes.Widgets.fields import _create_combo_box, _create_input_field
-from utils import UIParameterError
+from src.utils import UIParameterError
 
 
 class FrequencyGeneratorWidgetExpet(QWidget):

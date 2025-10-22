@@ -5,9 +5,6 @@ utils.py provides necessary utility functions for LabSync application.
 from PySide6.QtCore import QObject
 import os, platform, subprocess, json, tempfile
 
-from spyder.plugins.explorer.widgets.explorer import ExplorerTreeWidgetActions
-
-
 # SignalHandler class #
 class SignalHandler(QObject):
 	def __init__(self) -> None:
@@ -21,16 +18,15 @@ class SignalHandler(QObject):
 
 # Checking files #
 class FilesUtils:
-	def __init__(self, file_name: str = "settings.json"):
+	def __init__(self, file_path: str, file_name: str = "settings.json"):
 		self.default_settings = {
-			"version": "2.5.0",
-			"usnername": "",
-			"simulate_devices": False,
+			"version": "2.5.2",
+			"username": "",
+			"debug_mode": False,
 		}
 		self.filename = file_name
 		self.system = platform.system()
-		self.cwd = os.getcwd()
-		self.folder = os.path.join(self.cwd, "settings" if self.system == "Windows" else ".settings")
+		self.folder = os.path.join(file_path, "settings" if self.system == "Windows" else ".settings")
 		self.settings_path = os.path.join(self.folder, self.filename)
 		os.makedirs(self.folder, exist_ok=True)
 
@@ -39,6 +35,8 @@ class FilesUtils:
 				subprocess.run(["attrib", "+H", self.folder], check=True)
 			except Exception:
 				pass
+
+		self.ensure_hidden_settings()
 
 	def ensure_hidden_settings(self) -> dict:
 		if not os.path.exists(self.settings_path):

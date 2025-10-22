@@ -4,9 +4,8 @@ Interface of backend TGA1244 functions and PySide6 frontend
 from PySide6.QtCore import QObject, Slot, Signal
 from PySide6.QtWidgets import QMessageBox
 
-from Devices.Storage import ParameterStorage
 from Devices.TGA import FrequencyGenerator
-from utils import DeviceParameterError
+from src.utils import DeviceParameterError
 
 class FrequencyGeneratorFunctions(QObject):
 	port_status_signal = Signal(str, bool)
