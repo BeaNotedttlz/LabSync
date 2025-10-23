@@ -6,3 +6,4 @@ matplotlib
 PySerial
 pyvisa
 pyvisa-sim
+RsInstrument
