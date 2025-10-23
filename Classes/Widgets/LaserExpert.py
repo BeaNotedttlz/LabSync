@@ -96,6 +96,7 @@ class LaserWidgetExpert(QWidget):
 				raise UIParameterError(param)
 			if param == "max_power":
 				self.max_power = value
+				continue
 			if param == "op_mode":
 				self._map_modes(value)
 			else:

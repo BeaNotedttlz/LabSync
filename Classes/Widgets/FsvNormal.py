@@ -67,9 +67,6 @@ class FsvNormalWidget(QWidget):
 			"unit": "unit",
 		}
 
-		#TODO meas_type is not stored in storage, so it is not saved into file
-		# This means it cant be loaded from file! -> FIX!!!!!
-
 		if len(argv) == 1 and isinstance(argv[0], dict):
 			kwargs.update(argv[0])
 		elif argv:

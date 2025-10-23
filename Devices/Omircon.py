@@ -5,9 +5,6 @@ from Devices.Storage import ParameterStorage
 from Devices.Descriptors import Parameter
 from src.utils import ParameterNotSetError, ParameterOutOfRangeError
 
-
-# TODO - andere commands hinzufügen?
-
 ## class for core Omicron LuxX functions ##
 class OmicronLaser:
 	firmware = Parameter("firmware", None, ["ND", "ND", "ND"], list)

@@ -11,6 +11,7 @@ class SpectrumAnalyzer:
 	unit = Parameter("unit", "set_unit", "DBM", str)
 	sweep_points = Parameter("sweep_points", "set_sweep_points", 2001, int)
 	avg_count = Parameter("avg_count", "set_avg_count", 64, int)
+	meas_type = Parameter("meas_type", None, "single", str)
 
 	def __init__(self, name: str, _storage: ParameterStorage, simulate: bool) -> None:
 		self.FSV3000 = None

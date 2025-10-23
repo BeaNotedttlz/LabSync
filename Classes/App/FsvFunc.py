@@ -79,7 +79,7 @@ class FsvFunctions(QObject):
 		}
 		for param, value in parameters.items():
 			if param == "meas_type":
-				continue
+				self.FSV.meas_type = value
 			if param == "fig_name":
 				continue
 			if param == "save_path":

@@ -22,7 +22,6 @@ class Parameter:
 			return self
 		else:
 			return obj.storage.get_parameter(obj.name, self.name)
-			# TODO check with actual attribute and diff
 
 	def __set__(self, obj, value):
 		if isinstance(value, self.type):

@@ -78,7 +78,6 @@ class EcoConnect():
 		return inverse_hex
 
 	# Function for writing command and reading response #
-	# TODO subindex nicht fest sondern in object? muss nicht zwingend 0x00 sein! #
 	def _read_sdo(self, id: hex, object: hex) -> hex:
 		if self.connected:
 			# calculate message bytes #
@@ -192,9 +191,8 @@ class EcoConnect():
 			print(self.eco.query("start"))
 			return None
 		else:
-			return self._write_sdo(0x01, 0x6040, 0x003F) # TODO This should only be 0x002F -> was 0x003F
+			return self._write_sdo(0x01, 0x6040, 0x003F)
 
-	# TODO this should set the reference position of the stage #
 	def set_homing(self) -> None:
 		if self.simulate:
 			print("homing...")
