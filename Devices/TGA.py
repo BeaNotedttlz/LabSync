@@ -128,7 +128,7 @@ class FrequencyGenerator:
 	def set_offset(self, channel: int, offset: float) -> None:
 		mode = self.inputmode[channel]
 		if mode == "Amp+Offset":
-		   return self._write(channel, 'DCOFFS', str(offset))
+			return self._write(channel, 'DCOFFS', str(offset))
 		else:
 			offset = (offset+self.amplitude)/2
 			return self._write(channel, 'DCOFFS', str(offset))

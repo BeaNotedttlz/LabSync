@@ -92,7 +92,7 @@ class FrequencyGeneratorWidgetExpet(QWidget):
 			raise TypeError("Only dict or named parameters accepted!")
 
 		for param, value in kwargs.items():
-			actual_value = value[str(self.channel)]
+			actual_value = value[self.channel]
 
 			if param not in supported_params:
 				raise UIParameterError(param)
@@ -142,15 +142,3 @@ class FrequencyGeneratorWidgetExpet(QWidget):
 			return 0
 		else:
 			return 1
-
-
-# import pytest
-# from pytestqt.qtbot import QtBot
-#
-# def test_apply(qtbot: QtBot):
-# 	test = FrequencyGeneratorWidgetExpet(channel=1)
-#
-# 	with qtbot.wait_signal(test.apply_signal, timeout=100) as blocker:
-# 		test._apply()
-# 		assert blocker.args == [1, "sine", 0.0, 0.0, 0.0, 0.0, "Amp+Offset", "indep", False]
-
