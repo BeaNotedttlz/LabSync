@@ -31,7 +31,7 @@ For this the following device backends are included:
 
 To run the following needs to be installed:
 
-
+* Python 3.13 (Recommended) or lower 
 * pip (Python Package installer)
 
 (Python 3.13 is the latest version compatible with PySide6)
