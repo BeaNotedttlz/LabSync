@@ -1,5 +1,13 @@
 #! /usr/bin/env python
 
+"""
+Main module for LabSync application.
+@author: Merlin Schmidt
+@date: 2024-06-10
+@file: LabSync.py
+@note: Use at your own risk.
+"""
+
 from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QTimer
@@ -12,7 +20,7 @@ def main() -> None:
 	"""
 	Starts the LabSync application.
 
-	:returns None
+	:return: None
 	"""
 
 	# create application and define file paths

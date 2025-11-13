@@ -1,3 +1,11 @@
+"""
+Main application window for LabSync.
+@autor: Merlin Schmidt
+@date: 2024-06-10
+@file: LabSyncApp.py
+@note: Use at your own risk.
+"""
+
 from Classes.App.EcoFunc import EcoFunctions
 from Classes.App.TgaFunc import FrequencyGeneratorFunctions
 from Classes.App.LaserFunc import LaserFunctions
@@ -28,11 +36,15 @@ class MainWindow(QMainWindow):
 	"""
 	Main window class for the LabSync application.
 
-	:param app: The QApplication instance.
+	:param app: The application instance.
+	:type app: QApplication
 	:param _file_util: Utility for file operations.
+	:type _file_util: FilesUtils
 	:param _file_dir: Directory path for file storage.
+	:type _file_dir: str
 	:param _simulate: Flag to indicate simulation mode.
-	:returns None
+	:type _simulate: bool
+	:return: None
 	"""
 	def __init__(self, app, _file_util, _file_dir: str, _simulate: bool) -> None:
 		super().__init__()
@@ -103,11 +115,11 @@ class MainWindow(QMainWindow):
 		"""
 		closeEvent handler to manage port closing on application exit.
 
-		:param event: The QEvent instance at window close.
-		:returns None
+		:param event: The event at window close.
+		:type event: QCloseEvent
+		:return: None
 		"""
-
-		# Makde QMessageBox to ask for confirmation
+		# Make QMessageBox to ask for confirmation
 		response = QMessageBox.question(
 			self,
 			"Close LabSync?",
@@ -130,7 +142,7 @@ class MainWindow(QMainWindow):
 		"""
 		private save_preset method to save current parameters to a json file.
 
-		:returns None
+		:return: None
 		"""
 		# Get saev file path
 		file_path = QFileDialog.getSaveFileName(
@@ -162,7 +174,7 @@ class MainWindow(QMainWindow):
 		"""
 		private load_preset method to load parameters from a json file.
 
-		:return None
+		:return: None
 		"""
 		# Get load file path
 		file_path = QFileDialog.getOpenFileName(
@@ -199,7 +211,7 @@ class MainWindow(QMainWindow):
 		"""
 		private load_default_ports method to load default device ports from json file.
 
-		:returns: None
+		:return: None
 		"""
 		# set default ports file path
 		ports_dir = os.path.join(self.file_dir, "ports/default_ports.json")
@@ -232,10 +244,15 @@ class MainWindow(QMainWindow):
 		private set_default_ports method to save default device ports to json file.
 
 		:param stage: Stage port from dialog window
+		:type stage: str
 		:param TGA1244: TGA1244 port from dialog window
+		:type stage: str
 		:param laser1: Laser 1 port from dialog window
+		:type laser1: str
 		:param laser2: Laser 2 port from dialog window
+		:type laser2: str
 		:param fsv:	FSV3000 port from dialog window
+		:type fsv: str
 		:return: None
 		"""
 		# get default ports file path
@@ -261,10 +278,15 @@ class MainWindow(QMainWindow):
 		private set_ports slot to set device ports from dialog window.
 
 		:param stage: Stage port from dialog window
+		:type stage: str
 		:param TGA1244: TGA1244 port from dialog window
+		:type TGA1244: str
 		:param laser1: Laser 1 port from dialog window
+		:type laser1: str
 		:param laser2: Laser 2 port from dialog window
+		:type laser2: str
 		:param fsv:	FSV3000 port from dialog window
+		:type fsv: str
 		:return: None
 		"""
 		# set ports to device functions
@@ -282,8 +304,10 @@ class MainWindow(QMainWindow):
 		"""
 		private set_settings slot to set application settings from dialog window.
 
-		:param username: Username string from dialog window
+		:param username: Username from dialog window
+		:type username: str
 		:param debug_mode: debug mode flag from dialog window
+		:type debug_mode: bool
 		:return: None
 		"""
 		# pass username to file utility
@@ -347,7 +371,8 @@ class MainWindow(QMainWindow):
 		"""
 		private setup_tabs method to create tab widget with normal and expert mode tabs.
 
-		:return: QTabWidget
+		:return: Tab widget object
+		:rtype: QTabWidget
 		"""
 		# create tab widget
 		tab_widget = QTabWidget()
@@ -672,7 +697,7 @@ class MainWindow(QMainWindow):
 		"""
 		private show_settings_dialog slot to open settings dialog.
 
-		:return: None
+		:return None
 		"""
 		# create dialog if not already open
 		if self.settings_dialog is None or not self.settings_dialog.isVisible():
