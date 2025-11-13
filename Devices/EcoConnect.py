@@ -112,7 +112,7 @@ class EcoConnect:
 		return None
 
 	@staticmethod
-	def _calculate_checksum(self, message) -> int:
+	def _calculate_checksum(message) -> int:
 		"""
 		Private method to calculate checksum for EcoVario communication protocol.
 
@@ -128,7 +128,7 @@ class EcoConnect:
 		return checksum
 
 	@staticmethod
-	def _invert_hex(self, hex_string: str) -> str:
+	def _invert_hex(hex_string: str) -> str:
 		"""
 		Private method to invert byte order of hex string.
 
