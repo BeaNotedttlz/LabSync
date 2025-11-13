@@ -2,7 +2,7 @@
 Main application window for LabSync.
 @autor: Merlin Schmidt
 @date: 2024-06-10
-@file: LabSyncApp.py
+@file: scr/LabSyncApp.py
 @note: Use at your own risk.
 """
 
@@ -45,6 +45,7 @@ class MainWindow(QMainWindow):
 	:param _simulate: Flag to indicate simulation mode.
 	:type _simulate: bool
 	:return: None
+	:rtype: None
 	"""
 	def __init__(self, app, _file_util, _file_dir: str, _simulate: bool) -> None:
 		super().__init__()
@@ -118,6 +119,7 @@ class MainWindow(QMainWindow):
 		:param event: The event at window close.
 		:type event: QCloseEvent
 		:return: None
+		:rtype: None
 		"""
 		# Make QMessageBox to ask for confirmation
 		response = QMessageBox.question(
@@ -143,6 +145,7 @@ class MainWindow(QMainWindow):
 		private save_preset method to save current parameters to a json file.
 
 		:return: None
+		:rtype: None
 		"""
 		# Get saev file path
 		file_path = QFileDialog.getSaveFileName(
@@ -175,6 +178,7 @@ class MainWindow(QMainWindow):
 		private load_preset method to load parameters from a json file.
 
 		:return: None
+		:rtype: None
 		"""
 		# Get load file path
 		file_path = QFileDialog.getOpenFileName(
@@ -212,6 +216,7 @@ class MainWindow(QMainWindow):
 		private load_default_ports method to load default device ports from json file.
 
 		:return: None
+		:rtype: None
 		"""
 		# set default ports file path
 		ports_dir = os.path.join(self.file_dir, "ports/default_ports.json")
@@ -254,6 +259,7 @@ class MainWindow(QMainWindow):
 		:param fsv:	FSV3000 port from dialog window
 		:type fsv: str
 		:return: None
+		:rtype: None
 		"""
 		# get default ports file path
 		ports_dir = os.path.join(self.file_dir, "ports/default_ports.json")
@@ -288,6 +294,7 @@ class MainWindow(QMainWindow):
 		:param fsv:	FSV3000 port from dialog window
 		:type fsv: str
 		:return: None
+		:rtype: None
 		"""
 		# set ports to device functions
 		self.Stage.port = stage
@@ -309,6 +316,7 @@ class MainWindow(QMainWindow):
 		:param debug_mode: debug mode flag from dialog window
 		:type debug_mode: bool
 		:return: None
+		:rtype: None
 		"""
 		# pass username to file utility
 		self.file_util.edit_settings(
@@ -329,6 +337,7 @@ class MainWindow(QMainWindow):
 		private setup_devices method to initialize device functions
 
 		:return: None
+		:rtype: None
 		"""
 		# only check for stage port and load all ports if necessary
 		if self.def_stage_port is None:
@@ -414,6 +423,7 @@ class MainWindow(QMainWindow):
 		private setup_menubar method to create menubar with preset, mode and window entries.
 
 		:return: None
+		:rtype: None
 		"""
 		# create menubar
 		menu_bar = self.menuBar()
@@ -450,6 +460,7 @@ class MainWindow(QMainWindow):
 		private setup_widgets method to create and add all widgets to the tab panels.
 
 		:return: None
+		:rtype: None
 		"""
 
 		# normal mode stage widgets
@@ -509,6 +520,7 @@ class MainWindow(QMainWindow):
 		private toggle_expert_mode method to show/hide expert mode tabs.
 
 		:return: None
+		:rtype: None
 		"""
 		# check for current visibility and toggle tabs
 		visible = self.tab_panel.isTabVisible(self.stage_tab_index)
@@ -523,6 +535,7 @@ class MainWindow(QMainWindow):
 		private setup_connections method to connect all signals and slots between widgets and device functions.
 
 		:return: None
+		:rtype: None
 		"""
 		# connect indicator signals and slots
 		self.Laser1.emission_status_signal.connect(self.info_panel.update_indicator)
@@ -600,6 +613,7 @@ class MainWindow(QMainWindow):
 		private setup_listeners method to create parameter listeners for all device parameters.
 
 		:return: None
+		:rtype: None
 		"""
 		# add listeners for stage parameters
 		_stage_params = ["position", "speed", "accell", "deaccell"]
@@ -633,6 +647,7 @@ class MainWindow(QMainWindow):
 		loop_calls method to be called periodically for continuous updates.
 
 		:return: None
+		:rtype: None
 		"""
 		# get and update current stage position
 		current_position = self.Stage.get_current_position()
@@ -652,6 +667,7 @@ class MainWindow(QMainWindow):
 		private show_port_dialog slot to open port selection dialog.
 
 		:return: None
+		:rtype: None
 		"""
 		# create dialog if not already open
 		if self.port_dialog is None or not self.port_dialog.isVisible():
@@ -676,6 +692,7 @@ class MainWindow(QMainWindow):
 		private show_laser_info_dialog slot to open laser information dialog.
 
 		:return: None
+		:rtype: None
 		"""
 		# create dialog if not already open
 		if self.laser_dialog is None or not self.laser_dialog.isVisible():
@@ -698,6 +715,7 @@ class MainWindow(QMainWindow):
 		private show_settings_dialog slot to open settings dialog.
 
 		:return None
+		:rtype: None
 		"""
 		# create dialog if not already open
 		if self.settings_dialog is None or not self.settings_dialog.isVisible():
@@ -720,6 +738,7 @@ class MainWindow(QMainWindow):
 		open_bode_window slot to open Bode Plot window.
 
 		:return: None
+		:rtype: None
 		"""
 		# create window if not already open
 		if self.bode_window is None or not self.bode_window.isVisible():

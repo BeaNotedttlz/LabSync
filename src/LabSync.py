@@ -4,7 +4,7 @@
 Main module for LabSync application.
 @author: Merlin Schmidt
 @date: 2024-06-10
-@file: LabSync.py
+@file: scr/LabSync.py
 @note: Use at your own risk.
 """
 
@@ -21,6 +21,7 @@ def main() -> None:
 	Starts the LabSync application.
 
 	:return: None
+	:rtype: None
 	"""
 
 	# create application and define file paths
