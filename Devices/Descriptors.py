@@ -19,6 +19,7 @@ class Parameter:
 	:param type: Expected type of the parameter value. Defaults to None
 	:type type: type or None
 	:return Parameter descriptor instance.
+	:rtype: Parameter
 	"""
 	def __init__(self, name: str, method = None, default=None, type=None):
 		"""Constructor method
@@ -37,6 +38,7 @@ class Parameter:
 		:param attr_name: Name of the attribute in the owner class.
 		:type attr_name: str
 		:return: None
+		:rtype: None
 		"""
 		self.attr_name = attr_name
 
@@ -68,6 +70,7 @@ class Parameter:
 		:type value: any
 		:raises ValueError: if the value type does not match the expected type.
 		:return: None
+		:rtype: None
 		"""
 		if isinstance(value, self.type):
 			# single value assignment if types match
