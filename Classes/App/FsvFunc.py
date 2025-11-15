@@ -35,10 +35,8 @@ class FsvFunctions(QObject):
 		super().__init__()
 
 		# save port and storage in self
-		# TODO connected variable completely useless
 		self.ip = ip
 		self.storage = _storage
-		self.connected = False
 		# create SpectrumAnalyzer backend driver
 		self.FSV = SpectrumAnalyzer(
 			name="FSV",
@@ -56,11 +54,9 @@ class FsvFunctions(QObject):
 		try:
 			# try to open device port
 			self.FSV.open_port(ip=self.ip)
-			self.connected = True
 			# emit status signal to change indicator
 			self.port_status_signal.emit("FsvPort", True)
 		except ConnectionError:
-			self.connected = False
 			# if it fails send closed signal
 			self.port_status_signal.emit("FsvPort", False)
 
@@ -77,10 +73,8 @@ class FsvFunctions(QObject):
 		if state:
 			try:
 				self.FSV.open_port(ip=self.ip)
-				self.connected = True
 				self.port_status_signal.emit("FsvPort", True)
 			except ConnectionError as e:
-				self.connected = False
 				self.port_status_signal.emit("FsvPort", False)
 				QMessageBox.information(
 					None,
@@ -90,7 +84,6 @@ class FsvFunctions(QObject):
 				return
 		else:
 			self.FSV.close_port()
-			self.connected = False
 			self.port_status_signal.emit("FsvPort", False)
 
 	@Slot(str, str, str, float, float, str, float, str, int, int)

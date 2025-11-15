@@ -33,9 +33,6 @@ class EcoFunctions(QObject):
 		"""Constructor method
 		"""
 		super().__init__()
-
-		# TODO open port variable completely useless?
-		self.open_port = False
 		# save port and storage in self
 		self.port = port
 		self.storage = _storage
@@ -56,11 +53,9 @@ class EcoFunctions(QObject):
 		try:
 			# try to open device port
 			self.EcoVario.open_port(self.port, baudrate=9600)
-			self.open_port = True
 			# emit port status signal to change indicator
 			self.port_status_signal.emit("EcoVarioPort", True)
 		except ConnectionError:
-			self.open_port = False
 			# if it fails send closed signal
 			self.port_status_signal.emit("EcoVarioPort", False)
 
@@ -77,10 +72,8 @@ class EcoFunctions(QObject):
 		if state:
 			try:
 				self.EcoVario.open_port(self.port, baudrate=9600)
-				self.open_port = True
 				self.port_status_signal.emit("EcoVarioPort", True)
 			except ConnectionError as e:
-				self.open_port = False
 				self.port_status_signal.emit("EcoVarioPort", False)
 				QMessageBox.information(
 					None,
@@ -90,7 +83,6 @@ class EcoFunctions(QObject):
 			return None
 		else:
 			self.EcoVario.close_port()
-			self.open_port = False
 			self.port_status_signal.emit("EcoVarioPort", False)
 			return None
 

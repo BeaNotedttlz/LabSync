@@ -2,7 +2,7 @@
 
 A cross-platform PySide6 application that manages laboratory equipment.
 
-![Python Version](https://img.shields.io/badge/python-3.13%2B-blue)
+![Python Version](https://img.shields.io/badge/python-3.13-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/BeaNotedttlz/LabSync)
 
@@ -31,8 +31,10 @@ For this the following device backends are included:
 
 To run the following needs to be installed:
 
-* Python 3.13 or higher (Recommended)
+
 * pip (Python Package installer)
+
+(Python 3.13 is the latest version compatible with PySide6)
 
 ### 1. Install
 ```bash

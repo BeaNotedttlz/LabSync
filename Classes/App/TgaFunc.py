@@ -33,10 +33,8 @@ class FrequencyGeneratorFunctions(QObject):
 		super().__init__()
 
 		# save port and storage in self
-		# TODO connected variable completely useless?
 		self.port = port
 		self.storage = _storage
-		self.connected = False
 		# create OmicronLaser backend driver
 		self.TGA1244 = FrequencyGenerator(
 			name="TGA",
@@ -54,11 +52,9 @@ class FrequencyGeneratorFunctions(QObject):
 		try:
 			# try to open device port
 			self.TGA1244.open_port(self.port, baudrate=9600)
-			self.connected = True
 			# emit port status signal to change indicator
 			self.port_status_signal.emit("TGAPort", True)
 		except ConnectionError:
-			self.connected = False
 			# if it fails send close signal
 			self.port_status_signal.emit("TGAPort", False)
 
@@ -75,10 +71,8 @@ class FrequencyGeneratorFunctions(QObject):
 		if state:
 			try:
 				self.TGA1244.open_port(self.port, baudrate=9600)
-				self.connected = True
 				self.port_status_signal.emit("TGAPort", True)
 			except ConnectionError as e:
-				self.connected = False
 				self.port_status_signal.emit("TGAPort", False)
 				QMessageBox.information(
 					None,
@@ -88,7 +82,6 @@ class FrequencyGeneratorFunctions(QObject):
 			return None
 		else:
 			self.TGA1244.close_port()
-			self.connected = False
 			self.port_status_signal.emit("TGAPort", False)
 			return None
 

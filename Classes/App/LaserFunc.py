@@ -35,11 +35,9 @@ class LaserFunctions(QObject):
 		super().__init__()
 
 		# save port and storage in self
-		# TODO connected variable completely useless?
 		self.port = port
 		self.storage = _storage
 		self.index = index
-		self.connected = False
 		# create OmicronLaser backend driver
 		self.LuxX = OmicronLaser(
 			name="LuxX"+str(index),
@@ -57,11 +55,9 @@ class LaserFunctions(QObject):
 		try:
 			# try to open device port
 			self.LuxX.open_port(self.port, baudrate=500000)
-			self.connected = True
 			# emit port status signal to change indicator
 			self.port_status_signal.emit(f"Laser{self.index}Port", True)
 		except ConnectionError:
-			self.connected = False
 			# if it fails send closed signal
 			self.port_status_signal.emit(f"Laser{self.index}Port", False)
 
@@ -78,10 +74,8 @@ class LaserFunctions(QObject):
 		if state:
 			try:
 				self.LuxX.open_port(self.port, baudrate=500000)
-				self.connected = True
 				self.port_status_signal.emit(f"Laser{self.index}Port", True)
 			except ConnectionError as e:
-				self.connected = False
 				self.port_status_signal.emit(f"Laser{self.index}Port", False)
 				QMessageBox.information(
 					None,
@@ -91,7 +85,6 @@ class LaserFunctions(QObject):
 			return None
 		else:
 			self.LuxX.close_port()
-			self.connected = False
 			self.port_status_signal.emit(f"Laser{self.index}Port", False)
 			return None
 
@@ -176,6 +169,7 @@ class LaserFunctions(QObject):
 					f"{e}\n Check error!"
 				)
 			return None
+		return None
 
 	@Slot()
 	def reset_error(self) -> None:
