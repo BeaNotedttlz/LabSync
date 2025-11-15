@@ -53,7 +53,7 @@
             "LuxX1",
             "max_power"
         ],
-        100
+        400
     ],
     [
         [
@@ -116,7 +116,7 @@
             "LuxX2",
             "max_power"
         ],
-        100
+        400
     ],
     [
         [
@@ -254,48 +254,55 @@
             "FSV",
             "center_frequency"
         ],
-        1.0
+        1000.0
     ],
     [
         [
             "FSV",
             "span"
         ],
-        2.0
+        1000.0
     ],
     [
         [
             "FSV",
             "sweep_type"
         ],
-        "FFT"
+        "Sweep"
     ],
     [
         [
             "FSV",
             "bandwidth"
         ],
-        3.0
+        100
     ],
     [
         [
             "FSV",
             "unit"
         ],
-        "dBmV"
+        "dBm"
     ],
     [
         [
             "FSV",
             "sweep_points"
         ],
-        4
+        2001
     ],
     [
         [
             "FSV",
             "avg_count"
         ],
-        5
+        64
+    ],
+    [
+        [
+            "FSV",
+            "meas_type"
+        ],
+        "Average"
     ]
 ]

@@ -142,15 +142,3 @@ class FrequencyGeneratorWidgetExpet(QWidget):
 			return 0
 		else:
 			return 1
-
-
-# import pytest
-# from pytestqt.qtbot import QtBot
-#
-# def test_apply(qtbot: QtBot):
-# 	test = FrequencyGeneratorWidgetExpet(channel=1)
-#
-# 	with qtbot.wait_signal(test.apply_signal, timeout=100) as blocker:
-# 		test._apply()
-# 		assert blocker.args == [1, "sine", 0.0, 0.0, 0.0, 0.0, "Amp+Offset", "indep", False]
-
