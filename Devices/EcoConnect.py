@@ -109,6 +109,7 @@ class EcoConnect:
 		if self.connected:
 			# only try to close port if connected
 			self.eco.close()
+			self.connected = False
 		return None
 
 	@staticmethod
@@ -315,27 +316,30 @@ class EcoConnect:
 			# write control word to stage and ignore return
 			return self._write_sdo(0x01, 0x6040, control_word)
 
-	def get_current_position(self) -> float:
+	def get_current_position(self) -> float | None:
 		"""
 		Get current position of EcoVario stage.
 
 		:raises: TypeError: if position cannot be converted to mm
-		:return: Current Stage position in mm
-		:rtype: float
+		:return: Current Stage position in mm, or None if the device is not conncted
+		:rtype: float | NOne
 		"""
-		if self.simulate:
-			# only print command and response in simulation mode
-			return float(self.eco.query("currpos")) * 0.00125328
+		if self.connected:
+			if self.simulate:
+				# only print command and response in simulation mode
+				return float(self.eco.query("currpos")) * 0.00125328
+			else:
+				# get current hex position
+				position_hex = self._read_sdo(0x01, 0x6063)
+				try:
+					# convert hex position to mm
+					position_mm = int(position_hex, 16) * 0.001253258
+				except TypeError:
+					# set position to 0.0 if conversion fails
+					position_mm = 0.0
+				return position_mm
 		else:
-			# get current hex position
-			position_hex = self._read_sdo(0x01, 0x6063)
-			try:
-				# convert hex position to mm
-				position_mm = int(position_hex, 16) * 0.001253258
-			except TypeError:
-				# set position to 0.0 if conversion fails
-				position_mm = 0.0
-			return position_mm
+			return None
 
 	def get_status_word(self) -> str:
 		"""
@@ -344,30 +348,36 @@ class EcoConnect:
 		:return: Hex status word
 		:rtype: str
 		"""
-		if self.simulate:
-			# only print command and response in simulation mode
-			return self.eco.query("currstatus")
+		if self.connected:
+			if self.simulate:
+				# only print command and response in simulation mode
+				return self.eco.query("currstatus")
+			else:
+				# get current hex status word
+				status_hex = self._read_sdo(0x01, 0x6041)
+				return status_hex
 		else:
-			# get current hex status word
-			status_hex = self._read_sdo(0x01, 0x6041)
-			return status_hex
+			return "not connected"
 
-	def get_last_error(self) -> str:
+	def get_last_error(self) -> str | None:
 		"""
 		Get last error code from stage.
 		The value is a hex string, therefore further interpretation is necessary.
 		This is not currently supported.
 
-		:return: Hex value of last error code
-		:rtype: str
+		:return: Hex value of last error code, or None if the device is not connected
+		:rtype: str | None
 		"""
-		if self.simulate:
-			# only print command and response in simulation mode
-			return self.eco.query("currerror")
+		if self.connected:
+			if self.simulate:
+				# only print command and response in simulation mode
+				return self.eco.query("currerror")
+			else:
+				# get last error code hex value
+				error_code = self._read_sdo(0x01, 0x603F)
+				return error_code
 		else:
-			# get last error code hex value
-			error_code = self._read_sdo(0x01, 0x603F)
-			return error_code
+			return None
 
 	def start(self) -> None:
 		"""
