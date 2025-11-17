@@ -8,7 +8,8 @@ Additionally listeners for update signals are supported
 """
 
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, Callable
+Callback = Callable[[Any], Any]
 
 class Parameter:
 	"""
@@ -76,7 +77,7 @@ class Parameter:
 		:return: None
 		:rtype: None
 		"""
-		if isinstance(value, self.type):
+		if isinstance(value, self.type) or isinstance(value, None):
 			# single value assignment if types match
 			old_value = obj.storage.get_parameter(obj.name, self.name)
 			if old_value != value:
@@ -104,26 +105,28 @@ class Parameter:
 			# type mismatch
 			raise ValueError(f"Expected type {self.type} for parameter {self.name}, got {type(value)} instead.")
 
+
+
 class ParameterStorage:
 	"""
-	ParameterStorage class for storing device parameters.
+	ParameterStorage class for saving and handling device parameters.
 
 	:return: None
 	:rtype: None
 	"""
-	def __init__(self):
-		# initialize storage and listener dictionaries
-		self._storage = {}
-		self._listeners = {}
+	def __ini__(self) -> None:
+		# initialize storage and listener dicts
+		self.__storage = dict()
+		self.__listeners = dict()
 
-	def new_parameter(self, device: str, parameter: str, init_value: Any=None) -> None:
+	def new_parameter(self, device: str, name: str, init_value: Any=None) -> None:
 		"""
 		Add new parameter to the storage.
 
 		:param device: Device name. This is mostly used to allow for multiple parameters with the same name.
 		:type device: str
-		:param parameter: Parameter name. This must match the Attribute name.
-		:type parameter: str
+		:param name: Parameter name. This must match the Attribute name.
+		:type name: str
 		:param init_value: Initial value of the new parameter. This defaults to None
 		:type init_value: None | any
 		:raises KeyError: If the new parameter already exists.
@@ -131,23 +134,22 @@ class ParameterStorage:
 		:rtype: None
 		"""
 		# generate key
-		key = (device, parameter)
-		if key not in self._storage:
+		key = (device, name)
+		if key not in self.__storage:
 			# add new parameter to storage
-			self._storage[key] = init_value
+			self.__storage[key] = init_value
 			return None
 		else:
-			# raise error if key already exists
-			raise KeyError(f"Parameter {parameter} for device {device} already exists.")
+			raise KeyError(f"Parameter {name} for device {device} already exists.")
 
-	def new_listener(self, device: str, parameter: str, callback) -> None:
+	def new_listener(self, device: str, name: str, callback: Callback) -> None:
 		"""
 		Add new listener to parameter.
 
 		:param device: Device name. This is mostly used to allow for multiple parameters with the same name.
 		:type device: str
-		:param parameter: Parameter name. This must match the Attribute name.
-		:type parameter: str
+		:param name: Parameter name. This must match the Attribute name.
+		:type name: str
 		:param callback: Callback method to call if the parameter changed.
 		:type callback: callback
 		:raises KeyError: If the listener already exists
@@ -155,46 +157,43 @@ class ParameterStorage:
 		:rtype: None
 		"""
 		# generate key
-		key = (device, parameter)
-		if key not in self._listeners:
-			# for adding multiple listeners at once
-			# they can be passed as a iterable
+		key = (device, name)
+		if key not in self.__listeners:
+			# for adding mutiple liestners at once
+			# they can be passes as an iterable
 			if isinstance(callback, Iterable):
 				for cb in callback:
-					# add listener and callback method
-					self._listeners.setdefault(key, []).append(cb)
+					self.__listeners.setdefault(key, []).append(cb)
 			else:
-				# add listener and callback method
-				self._listeners.setdefault(key, []).append(callback)
+				self.__listeners.setdefault(key, []).append(callback)
 
-	def get_parameter(self, device: str, parameter: str) -> Any:
+	def get_parameter(self, device: str, name: str) -> Any:
 		"""
 		Get parameter value from the storage.
 
 		:param device: Device name. This is mostly used to allow for multiple parameters with the same name.
 		:type device: str
-		:param parameter: Parameter name. This must match the Attribute name.
-		:type parameter: str
+		:param name: Parameter name. This must match the Attribute name.
+		:type name: str
 		:raises KeyError: If the parameter does not exist.
 		:return: Returns the current value of the selected parameter
 		:rtype: Any
 		"""
 		# generate key
-		key = (device, parameter)
-		if key in self._storage:
-			# return value if key exists
-			return self._storage[key]
+		key = (device, name)
+		if key in self.__storage:
+			return self.__storage[key]
 		else:
-			raise KeyError(f"Parameter {parameter} for device {device} does not exist.")
+			raise KeyError(f"Parameter {name} for device {device} does not exist.")
 
-	def set_parameter(self, device: str, parameter: str, value: Any) -> None:
+	def set_parameter(self, device: str, name: str, value: Any) -> None:
 		"""
 		Set new parameter value in the storage.
 
 		:param device: Device name. This is mostly used to allow for multiple parameters with the same name.
 		:type device: str
-		:param parameter: Parameter name. This must match the Attribute name.
-		:type parameter: str
+		:param name: Parameter name. This must match the Attribute name.
+		:type name: str
 		:param value: New value of the parameter
 		:type value: Any
 		:raises KeyError: If the parameter does not exist.
@@ -202,33 +201,33 @@ class ParameterStorage:
 		:rtype: None
 		"""
 		# generate key
-		key = (device, parameter)
-		if key in self._storage:
+		key = (device, name)
+		if key in self.__storage:
 			# update value if key exists
-			self._storage[key] = value
-			# notify listeners of change
-			self._notify_listeners(device, parameter, value)
-			return None
+			self.__storage[key] = value
+			# notify listeners
+			self._notify_listeners(device, name, value)
 		else:
-			raise KeyError(f"Parameter {parameter} for device {device} does not exist.")
+			raise KeyError(f"Parameter {name} for device {device} does not exist.")
 
-	def _notify_listeners(self, device: str, parameter: str, value: Any) -> None:
+
+	def _notify_listeners(self, device: str, name: str, value: Any) -> None:
 		"""
-
+		Notify listeners about changes.
 
 		:param device: Device name. This is mostly used to allow for multiple parameters with the same name.
 		:type device: str
-		:param parameter: Parameter name. This must match the Attribute name.
-		:type parameter: str
+		:param name: Parameter name. This must match the Attribute name.
+		:type name: str
 		:param value: New value of the parameter
 		:type value: Any
 		:return: None
 		:rtype: None
 		"""
-		key = (device, parameter)
-		if key in self._listeners:
-			for callback in self._listeners[key]:
-				callback(**{parameter: value})
+		key = (device, name)
+		if key in self.__listeners:
+			for callback in self.__listeners[key]:
+				callback(**{name: value})
 			return None
 		else:
 			return None
@@ -240,7 +239,7 @@ class ParameterStorage:
 		:return: The storage dictionary
 		:rtype: dict
 		"""
-		return self._storage
+		return self.__storage
 
 	def load_all(self, parameters: dict) -> None:
 		"""
@@ -255,8 +254,8 @@ class ParameterStorage:
 		:rtype: None
 		"""
 		for key in parameters.keys():
-			if key in self._storage:
-				self._storage[key] = parameters[key]
+			if key in self.__storage:
+				self.__storage[key] = parameters[key]
 				self._notify_listeners(key[0], key[1], parameters[key])
 			else:
 				raise KeyError(f"Parameter {key} does not exist in storage.")
