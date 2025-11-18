@@ -8,18 +8,28 @@ Main window module for the PySide6 LabSync application.
 
 from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget,
 							   QHBoxLayout, QSplitter, QGridLayout,
-							   QMessageBox)
+							   QMessageBox, QTabWidget)
 from PySide6.QtCore import QEvent, Signal, Slot
+from src.frontend.widgets.info_panel import InfoPanelWidget
 
 
 class MainWindow(QMainWindow):
+	"""
+	Main window class for the PySide6 LabSync application.
 
+	:param app: Application instance.
+	:rtype: QApplication
+	"""
+	# create signals
 	requestClose = Signal()
+	savePreset = Signal()
+	loadPreset = Signal()
 
-
-	def __ini__(self, app):
+	def __init__(self, app) -> None:
+		"""Constructor method
+		"""
 		super().__init__()
-
+		# save the application instance to self.
 		self.app = app
 
 		# set window title
@@ -55,6 +65,9 @@ class MainWindow(QMainWindow):
 		container.setLayout(self.main_layout)
 		self.setCentralWidget(container)
 
+		self._setup_menubar()
+		self._setup_tabs()
+
 	def closeEvent(self, event) -> None:
 		"""
 		closeEvent handler to manage port closing on application exit.
@@ -79,6 +92,98 @@ class MainWindow(QMainWindow):
 		else:
 			# ignore event otherwise
 			event.ignore()
+
+	def _setup_menubar(self) -> None:
+		"""
+		Create the menubar of the LabSync application.
+
+		:return: None
+		:rtype: None
+		"""
+		# create menubar
+		menu_bar = self.menuBar()
+
+		# create preset entry #
+		preset_menu = menu_bar.addMenu("&Presets")
+		save_preset = preset_menu.addAction("Save Preset")
+		save_preset.triggered.connect(self.savePreset)
+
+		load_preset = preset_menu.addAction("Load Preset")
+		load_preset.triggered.connect(self.loadPreset)
+
+		# create expert mode toggle and port #
+		mode_menu = menu_bar.addMenu("&Menu")
+		expert_mode = mode_menu.addAction("Expert Mode")
+		expert_mode.triggered.connect(self.toggle_expert_mode)
+
+		# create port secltion and settings entrires
+		port_select = mode_menu.addAction("Select Ports")
+		port_select.triggered.connect(self._show_port_dialog)
+
+		settings = mode_menu.addAction("Settings")
+		settings.triggered.connect(self._show_settings_dialog)
+
+		# BodePlot window #
+		window_menu = menu_bar.addMenu("&Windows")
+		bode_window = window_menu.addAction("BodePlot")
+		bode_window.triggered.connect(self.open_bode_window)
+		return
+
+	def toggle_expert_mode(self) -> None:
+		"""
+		Toggle the application expert mode.
+
+		:return: None
+		:rtype: None
+		"""
+		is_visible = self.tab_panel.isTabVisible(self.stage_tab_index)
+
+		self.tab_panel.setTabVisible(self.stage_tab_index, not is_visible)
+		self.tab_panel.setTabVisible(self.freq_gen_tab_index, not is_visible)
+		self.tab_panel.setTabVisible(self.laser_tab_index, not is_visible)
+		return
+
+	def _setup_tabs(self) -> QTabWidget:
+		"""
+		private setup_tabs method to create tab widget with normal and expert mode tabs.
+
+		:return: Tab widget object
+		:rtype: QTabWidget
+		"""
+		# create tab widget
+		tab_widget = QTabWidget()
+
+		# normal mode tab #
+		normal_tab = QWidget()
+		self.normal_tab_layout = QHBoxLayout()
+		normal_tab.setLayout(self.normal_tab_layout)
+		tab_widget.addTab(normal_tab, "LabSync Controller")
+
+		# EcoVario expert mode tab #
+		stage_tab = QWidget()
+		self.stage_tab_layout = QHBoxLayout()
+		stage_tab.setLayout(self.stage_tab_layout)
+		self.stage_tab_index = tab_widget.addTab(stage_tab, "EcoVario Controller")
+
+		# Frequency Generator expert mode tab #
+		freq_gen_tab = QWidget()
+		self.freq_gen_tab_layout = QHBoxLayout()
+		freq_gen_tab.setLayout(self.freq_gen_tab_layout)
+		self.freq_gen_tab_index = tab_widget.addTab(freq_gen_tab, "TGA 1244 Controller")
+
+		# Omicron LuxX+ expert mode tab #
+		laser_tab = QWidget()
+		self.laser_tab_layout = QHBoxLayout()
+		laser_tab.setLayout(self.laser_tab_layout)
+		self.laser_tab_index = tab_widget.addTab(laser_tab, "LuxX+ Controller")
+
+		fsv_tab = QWidget()
+		self.fsv_tab_layout = QHBoxLayout()
+		fsv_tab.setLayout(self.fsv_tab_layout)
+		self.fsv_tab_index = tab_widget.addTab(fsv_tab, "FSV3000 Controller")
+
+		# return widget for layout
+		return tab_widget
 
 
 
