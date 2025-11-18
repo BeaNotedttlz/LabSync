@@ -12,7 +12,6 @@ import os, pyvisa
 from typing import Any
 from pyvisa import errors
 from serial import SerialException
-from src.core.storage import Parameter, ParameterStorage
 from src.backend.connection_status import ConnectionStatus
 
 class EcoConnect:
@@ -21,29 +20,20 @@ class EcoConnect:
 
 	:param name: Name of the device instance.
 	:type name: str
-	:param _storage: ParameterStorage instance for storing device parameters.
-	:type _storage: ParameterStorage
-	:param _simulate: Flag to indicate simulation mode.
-	:type _simulate: bool
+	:param simulate: Flag to indicate simulation mode.
+	:type simulate: bool
 	:return None
 	:rtype: None
 	"""
-	# device parameters
-	target_position = Parameter("position", "set_position", 0.0, float)
-	target_speed = Parameter("speed", "set_speed", 35.0, float)
-	target_acceleration = Parameter("acceleration", "set_acceleration", 501.30, float)
-	target_deceleration = Parameter("deceleration", "set_deceleration", 501.30, float)
-
-	def __init__(self, name: str, _storage: ParameterStorage, _simulate: bool) -> None :
+	def __init__(self, name: str, simulate: bool) -> None :
 		"""Constructor method
 		"""
 		# save variables to self
-		self.storage = _storage
 		self.name = name
-		self.simulate = _simulate
+		self.simulate = simulate
 		self.EcoVario = None
 		# connection status
-		self.status = ConnectionStatus.CONNECTED
+		self.status = ConnectionStatus.DISCONNECTED
 
 		sim_path = os.path.join(
 			os.path.dirname(os.path.abspath(__file__)),
@@ -54,22 +44,6 @@ class EcoConnect:
 			f"{sim_path}@sim"
 			if self.simulate else ""
 		)
-
-		for param in type(self)._get_params():
-			self.storage.new_parameter(self.name, param.name, param.default)
-
-	@classmethod
-	def _get_params(cls):
-		"""
-		Get all Parameter attributes of the class.
-
-		:param cls: Class reference.
-		:return: attributes of type Parameter.
-		:rtype: generator
-		"""
-		for attr in vars(cls).values():
-			if isinstance(attr, Parameter):
-				yield attr
 
 	def open_port(self, port: str, baudrate: int) -> None:
 		"""
