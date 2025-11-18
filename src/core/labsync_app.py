@@ -20,6 +20,7 @@ import os, json
 
 from src.core.storage import InstrumentCache
 from src.core.utilities import ValueHandler
+from src.core.mapping import Parameter, DeviceProfile
 
 from typing import Any, Dict
 
@@ -168,20 +169,140 @@ class LabSync(QObject):
 		fsv_instance = EcoConnect(name="FSV3000", simulate=self.simulate)
 		self.FSV = WorkerHandler(fsv_instance, self.fsv_port, None)
 
+		self._make_profile()
+		return
 
+	def _make_profile(self) -> None:
+		"""
+		Creating the device profiles.
+		Used for mapping and parameter management.
 
+		:return: None
+		:rtype: None
+		"""
+		self.device_profile = DeviceProfile()
+		ecovario_keys = {
+			"target_pos": ["set_position", 0.0, 2530.0, "mm", float],
+			"target_vel": ["set_speed", 0.0, 100.0, "mm/s", float],
+			"target_acc": ["set_acceleration", 0.0, 1000.0, "mm/s2", float],
+			"target_deacc": ["set_deacceleration", 0.0, 1000.0, "mm/s2", float],
+			"current_pos": [None, 0.0, 2530.0, "mm", float],
+		}
+		laser_keys = {
+			"temp_power": ["set_temp_power", 0.0, 100.0, "%", float],
+			"operating_mode": ["set_op_mode", 0, 5, "", int],
+			"emission_status": ["set_emission", None, None, "", bool]
+		}
+		freq_gen_keys = {
+			"amplitude": ["set_amplitude", 0.0, 10.0, "V", float],
+			"offset": ["set_offset", 0, 0, 10.0, "V", float],
+			"frequency": ["set_frequency", 0, 0, 40e6, "Hz", float],
+			"phase": ["set_phase", 0, 0, 360, "deg", float],
+			"waveform": ["set_waveform", None, None, "", str],
+			"lockmode": ["set_lockmode", None, None, "", str],
+			"output": ["set_output", None, None, "", bool]
+		}
+		fsv_keys = {
+			"center_freq": ["set_center_frequency", 0.0, 13.6e6, "Hz", float],
+			"freq_span": ["set_span", 0.0, 13.6e6, "Hz", float],
+			"bandwidth": ["set_bandwidth", 0.0, 13.6e6, "Hz", float],
+			"unit": ["set_unit", None, None, "", str],
+			"sweep_type": ["set_sweep_type", None, None, "", str],
+			"sweep_points": ["set_sweep_points", 0, 1e6, "", int],
+			"avg_count": ["set_avg_count", 0, 1e3, "", int]
+		}
+		for key, params in ecovario_keys.items():
+			self.device_profile.add(
+				Parameter(
+					key=("EcoVario", key),
+					handler=self.Stage,
+					method=params[0],
+					min_value=params[1],
+					max_value=params[2],
+					unit=params[3],
+					data_type=params[4],
+				))
+		for key, params in laser_keys.items():
+			self.device_profile.add(
+				Parameter(
+					key=("Laser1", key),
+					method=params[0],
+					handler=self.Laser1,
+					min_value=params[1],
+					max_value=params[2],
+					unit=params[3],
+					data_type=params[4],
+				))
+			self.device_profile.add(
+				Parameter(
+					key=("Laser2", key),
+					method=params[0],
+					handler=self.Laser2,
+					min_value=params[1],
+					max_value=params[2],
+					unit=params[3],
+					data_type=params[4],
+				))
+		for key, params in freq_gen_keys.items():
+			self.device_profile.add(
+				Parameter(
+					key=("TGA1244", key),
+					method=params[0],
+					handler=self.TGA,
+					min_value=params[1],
+					max_value=params[2],
+					unit=params[3],
+					data_type=params[4]
+				))
+		for key, params in fsv_keys.items():
+			self.device_profile.add(
+				Parameter(
+					key=("FSV3000", key),
+					method=params[0],
+					handler=self.FSV,
+					min_value=params[1],
+					max_value=params[2],
+					unit=params[3],
+					data_type=params[4]
+				))
+		return
 
-	def receive_values(self, values: Dict[tuple, Any]) -> None:
+	def receive_values(self, values: Dict[tuple, Any], force:bool=None) -> None:
 		"""
 		The gatekeeper logic checking if the values have already been set.
 		This will then call the worker handler for further processing.
 
 		:param values: Values received from the ui. dict[(device, parameter), value]
 		:type values: Dict[tuple, Any]
+		:param force: Flag to set when forcing the update of the parameter
+		:type force: bool
 		:raises AttributeError: If the parameter is not supported by the backend
 		:return: None
 		:rtype: None
 		"""
+		for key, value in values.items():
+			parameter = self.device_profile.get(key)
+
+			if not parameter:
+				continue
+
+			current_value = self.cache.get_value(key[0], key[1])
+			if not self.value_handler.check_values(current_value, value) and not force:
+				continue
+
+			if not parameter.validate(value):
+				QMessageBox.warning(
+					self.main_window,
+					"Input Error",
+					f"Value: {value} for {key} is out of bounds!\n"
+						f"Limit: {parameter.min_value} - {parameter.max_value} {parameter.unit}"
+				)
+				continue
+
+			request_id = f"SET_{key[1]}"
+			device_handler = parameter.handler
+			device_handler.request_task(request_id, parameter.method, value)
+		return
 
 
 

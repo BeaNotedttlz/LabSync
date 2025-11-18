@@ -6,6 +6,7 @@ This focuses on the RS232 serial interface of the device. However the GPIO shoul
 @file: src/backend/devices/tga.py
 @note: Use at your own risk.
 """
+# TODO this needs a rework without the attributes
 
 import pyvisa, os
 from pyvisa import errors

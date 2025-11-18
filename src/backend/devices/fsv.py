@@ -85,7 +85,7 @@ class SpectrumAnalyzer:
 		else:
 			return None
 
-	def set_enter_frequency(self, value: float) -> None:
+	def set_center_frequency(self, value: float) -> None:
 		"""
 		Set the center frequency of the current window
 

@@ -22,13 +22,14 @@ class Parameter:
 
 	# the name of the driver method
 	method: str = None
+	handler: object = None
 
 	# Validation types
-	min_value: Any = None
-	max_value: Any = None
+	min_value: float = None
+	max_value: float = None
 	unit: str = ""
 
-	data_type: type = None
+	data_type: type = float
 
 	def validate(self, value: Any) -> bool:
 		"""

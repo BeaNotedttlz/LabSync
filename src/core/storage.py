@@ -19,7 +19,7 @@ class InstrumentCache(QObject):
 		super().__init__()
 		self._cache: Dict[tuple, Any] = {}
 
-	def get_value(self, device: str, parameter: str) -> Any:
+	def get_value(self, device: str, parameter: str) -> Any | None:
 		"""
 		Retrieves the value for the given parameter.
 
@@ -27,9 +27,8 @@ class InstrumentCache(QObject):
 		:type device: str
 		:param parameter: Name of the parameter
 		:type parameter: str
-		:raises KeyError: If parameter is not in the cache.
-		:return: The current value of the parameter
-		:rtype: Any
+		:return: The current value of the parameter or None if the value isnt stored
+		:rtype: Any | None
 		"""
 		# create key
 		key = (device, parameter)
@@ -37,7 +36,7 @@ class InstrumentCache(QObject):
 			# return current value
 			return self._cache[key]
 		else:
-			raise KeyError(f"Parameter '{parameter}' for device '{device}' not found in cache.")
+			return None
 
 	def set_value(self, device: str, parameter: str, value: Any) -> None:
 		"""
