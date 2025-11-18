@@ -1,5 +1,5 @@
 """
-Module for creating and operating the PySide6 dialog window widgets
+Module for creating and operating the PySide6 dialog window widgets.
 @author: Merlin Schmidt
 @date: 2025-18-10
 @file: src.frontend.widgets.dialogs.py

@@ -1,4 +1,10 @@
-
+"""
+Main window module for the PySide6 LabSync application.
+@author: Merlin Schmidt
+@date: 2025-18-10
+@file: src/frontend/main_window.py
+@note:
+"""
 
 from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget,
 							   QHBoxLayout, QSplitter, QGridLayout,

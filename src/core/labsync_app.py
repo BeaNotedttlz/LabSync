@@ -1,4 +1,10 @@
-
+"""
+Main application for controlling backend and frontend of the LabSync application.
+@author: Merlin Schmidt
+@date: 2025-18-10
+@file: src/core/labsync_app.py
+@note:
+"""
 
 from src.core.labsync_worker import WorkerHandler
 from src.backend.devices.eco_connect import EcoConnect
