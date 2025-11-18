@@ -47,7 +47,7 @@ class LabSyncWorker(QThread):
 		self.timer.timeout.connect(self._process_poll)
 
 	@Slot(str, int)
-	def request_connection(self, port: str, baudrate: int) -> None:
+	def request_connection(self, port: str, baudrate: int | None) -> None:
 		"""
 		Request a connection to the device.
 
@@ -59,8 +59,11 @@ class LabSyncWorker(QThread):
 		:rtype: None
 		"""
 		try:
-			# try to open the serial port
-			self.device.open_port(port, baudrate)
+			# try to open the device
+			if baudrate is None:
+				self.device.open_port(port)
+			else:
+				self.device.open_port(port, baudrate)
 			self.statusChanged.emit(True)
 
 			if self.poll_method:
@@ -158,7 +161,7 @@ class WorkerHandler(QObject):
 	# send a operation to the worker
 	sendToWorker = Signal(str, str, list, dict)
 	# request connection to the worker
-	connectSig = Signal(str, int)
+	connectSig = Signal(str, object)
 	# request disconnection to the worker
 	disconnectSig = Signal()
 
@@ -171,7 +174,7 @@ class WorkerHandler(QObject):
 	# notify if an error occurred
 	errorMessage = Signal(str)
 
-	def __init__(self, device_instance: object, port: str, baudrate: int,
+	def __init__(self, device_instance: object, port: str, baudrate: int | None,
 				 poll_method: str=None) -> None:
 		"""Constructor method
 		"""

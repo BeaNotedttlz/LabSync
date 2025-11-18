@@ -12,7 +12,6 @@ however this version only implements basic operations to allow control in the La
 import pyvisa, os, time
 from pyvisa import errors
 from serial import SerialException
-from src.core.storage import Parameter, ParameterStorage
 from src.core.utilities import ParameterNotSetError, ParameterOutOfRangeError
 from src.backend.connection_status import ConnectionStatus
 
@@ -22,32 +21,19 @@ class OmicronLaser:
 
 	:param name: Name of the laser device.
 	:type name: str
-	:param _storage: ParameterStorage instance for storing device parameters.
-	:type _storage: ParameterStorage
 	:param simulate: Flag to indicate if simulation mode is enabled.
 	:type simulate: bool
 	:return: None
 	:rtype: None
 	"""
-	# Device parameter attribtutes
-	firmware = Parameter("firmware", None, ["ND", "ND", "ND"], list)
-	specs = Parameter("specs", None, ["ND", "ND"], list)
-	max_power = Parameter("max_power", None, 1, int)
-	op_mode = Parameter("op_mode", "set_op_mode", 0, int)
-	temp_power = Parameter("temp_power", "set_temp_power", 0.0, float)
-	power = Parameter("power", "set_power", 0.0, float)
-	emission = Parameter("emission", "set_emission", False, bool)
-	error_code = Parameter("error_code", "", "0x00", str)
-
-	def __init__(self, name: str, _storage: ParameterStorage, _simulate: bool) -> None:
+	def __init__(self, name: str, simulate: bool) -> None:
 		"""Constructor method
 		"""
 		# save variables to self and create connected variable
 		self.Laser = None
-		self.storage = _storage
 		self.name = name
 		self.status = ConnectionStatus.DISCONNECTED
-		self.simulate = _simulate
+		self.simulate = simulate
 		# create simulate path
 		sim_path = os.path.join(
 			os.path.dirname(os.path.abspath(__file__)),
@@ -58,23 +44,6 @@ class OmicronLaser:
 			f"{sim_path}@sim"
 			if self.simulate else ""
 		)
-
-		# Save attributes to storage
-		for param in type(self)._get_params():
-			_storage.new_parameter(name, param.name, param.default)
-
-	@classmethod
-	def _get_params(cls):
-		"""
-		Get all Parameter attributes of the class.
-
-		:param cls: Class reference.
-		:return: attributes of type Parameter.
-		:rtype: generator
-		"""
-		for attr in vars(cls).values():
-			if isinstance(attr, Parameter):
-				yield attr
 
 	def _ask(self, command: str) -> list:
 		"""

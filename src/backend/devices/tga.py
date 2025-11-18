@@ -10,7 +10,6 @@ This focuses on the RS232 serial interface of the device. However the GPIO shoul
 import pyvisa, os
 from pyvisa import errors
 from serial import SerialException
-from src.core.storage import Parameter, ParameterStorage
 from src.core.utilities import DeviceParameterError
 from src.backend.connection_status import ConnectionStatus
 
@@ -20,63 +19,18 @@ class FrequencyGenerator:
 
 	:param name: Name of the frequency generator device.
 	:type name: str
-	:param _storage: ParameterStorage instance for storing device parameters.
-	:type _storage: ParameterStorage
 	:param simulate: Flag to indicate if simulation mode is enabled.
 	:type simulate: bool
 	:return: None
 	:rtype: None
 	"""
-	# Device parameter attributes
-	waveform = Parameter(
-		name="waveform",
-		method="set_waveform",
-		default={1:"sine", 2:"sine", 3:"sine", 4:"sine"},
-		type=dict)
-	frequency = Parameter(
-		name="frequency",
-		method="set_frequency",
-		default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
-		type=dict)
-	amplitude = Parameter(
-		name="amplitude",
-		method="set_amplitude",
-		default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
-		type=dict)
-	offset = Parameter(
-		name="offset",
-		method="set_offset",
-		default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
-		type=dict)
-	phase = Parameter(
-		name="phase",
-		method="set_phase",
-		default={1:0.0, 2:0.0, 3:0.0, 4:0.0},
-		type=dict)
-	inputmode = Parameter(
-		name="inputmode",
-		method=None,
-		default={1: "Amp+Offset", 2: "Amp+Offset", 3: "Amp+Offset", 4: "Amp+Offset"},
-		type=dict)
-	lockmode = Parameter(
-		name="lockmode",
-		method="set_lockmode",
-		default={1:"indep", 2:"indep", 3:"indep", 4:"indep"},
-		type=dict)
-	output = Parameter(
-		name="output",
-		method="set_output",
-		default={1:False, 2:False, 3:False, 4:False},
-		type=dict)
-
-	def __init__(self, name: str, _storage: ParameterStorage, _simulate: bool) -> None:
+	def __init__(self, name: str, simulate: bool) -> None:
 		"""Constructor method
 		"""
 		# save variables to self and create connected variable
 		self.name = name
 		self.status = ConnectionStatus.DISCONNECTED
-		self.simulate = _simulate
-		self.storage = _storage
+		self.simulate = simulate
 		self.current_channel = 1
 		self.TGA = None
 		# create simulate path
@@ -89,22 +43,6 @@ class FrequencyGenerator:
 			f"{sim_path}@sim"
 			if self.simulate else ""
 		)
-		# Save attributes to storage
-		for param in type(self)._get_params():
-			self.storage.new_parameter(name, param.name, param.default)
-
-	@classmethod
-	def _get_params(cls):
-		"""
-		Get all Parameter attributes of the class.
-
-		:param cls: Class reference.
-		:return: attributes of type Parameter.
-		:rtype: generator
-		"""
-		for attr in vars(cls).values():
-			if isinstance(attr, Parameter):
-				yield attr
 
 	def open_port(self, port: str, baudrate: int) -> None:
 		"""

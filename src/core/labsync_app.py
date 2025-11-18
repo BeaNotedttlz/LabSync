@@ -8,6 +8,9 @@ Main application for controlling backend and frontend of the LabSync application
 
 from src.core.labsync_worker import WorkerHandler
 from src.backend.devices.eco_connect import EcoConnect
+from src.backend.devices.omicron import OmicronLaser
+from src.backend.devices.tga import FrequencyGenerator
+from src.backend.devices.fsv import SpectrumAnalyzer
 
 from src.frontend.main_window import MainWindow
 
@@ -147,6 +150,18 @@ class LabSync(QObject):
 		# otherwise create devices and workers
 		stage_instance = EcoConnect(name="EcoVario", simulate=self.simulate)
 		self.Stage = WorkerHandler(stage_instance, self.stage_port, self.stage_baudrate)
+
+		laser1_instance = OmicronLaser(name="Laser1", simulate=self.simulate)
+		self.Laser1 = WorkerHandler(laser1_instance, self.laser1_port, self.laser1_baudrate)
+
+		laser2_instance = EcoConnect(name="Laser2", simulate=self.simulate)
+		self.Laser2 = WorkerHandler(laser2_instance, self.laser2_port, self.laser2_baudrate)
+
+		freq_gen = FrequencyGenerator(name="TGA1244", simulate=self.simulate)
+		self.TGA = WorkerHandler(freq_gen, self.freq_gen_port, self.freq_gen_baudrate)
+
+		fsv_instance = EcoConnect(name="FSV3000", simulate=self.simulate)
+		self.FSV = WorkerHandler(fsv_instance, self.fsv_port, None)
 
 
 

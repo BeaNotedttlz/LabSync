@@ -8,7 +8,6 @@ For this the already provided RsInstrument communication framework by R&S is use
 """
 
 from RsInstrument import RsInstrument
-from src.core.storage import Parameter, ParameterStorage
 from src.backend.connection_status import ConnectionStatus
 
 class SpectrumAnalyzer:
@@ -17,47 +16,19 @@ class SpectrumAnalyzer:
 
 	:param name: Name of the frequency generator device.
 	:type name: str
-	:param _storage: ParameterStorage instance for storing device parameters.
-	:type _storage: ParameterStorage
 	:param simulate: Flag to indicate if simulation mode is enabled.
 	:type simulate: bool
 	:return: None
 	:rtype: None
 	"""
-	# Device parameter attributes
-	center_frequency = Parameter("center_frequency", "set_enter_frequency", 1e3, float)
-	span = Parameter("span", "set_span", 1e3, float)
-	sweep_type = Parameter("sweep_type", "set_sweep_type", "SWE", str)
-	bandwidth = Parameter("bandwidth", "set_bandwidth", 100, float)
-	unit = Parameter("unit", "set_unit", "DBM", str)
-	sweep_points = Parameter("sweep_points", "set_sweep_points", 2001, int)
-	avg_count = Parameter("avg_count", "set_avg_count", 64, int)
-
-	def __init__(self, name: str, _storage: ParameterStorage, _simulate: bool) -> None:
+	def __init__(self, name: str, simulate: bool) -> None:
 		"""Constructor method
 		"""
 		# save variables to self and create connected variable
 		self.FSV3000 = None
-		self.storage = _storage
 		self.name = name
 		self.status = ConnectionStatus.DISCONNECTED
-		self.simulate = _simulate
-		# save attributes to storage
-		for param in type(self)._get_params():
-			_storage.new_parameter(name, param.name, param.default)
-
-	@classmethod
-	def _get_params(cls):
-		"""
-		Get all Parameter attributes of the class.
-
-		:param cls: Class reference.
-		:return: attributes of type Parameter.
-		:rtype: generator
-		"""
-		for attr in vars(cls).values():
-			if isinstance(attr, Parameter):
-				yield attr
+		self.simulate = simulate
 
 	def open_port(self, ip: str) -> None:
 		"""
