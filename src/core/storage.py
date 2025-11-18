@@ -1,37 +1,89 @@
 
 
 from typing import Any, Dict
-class InstrumentCache:
+from PySide6.QtCore import QObject, Signal
+
+class InstrumentCache(QObject):
+	"""
+	Class for caching instrument parameters and respective values.
+	This also checks if the values are the same.
+
+	:return: None
+	:rtype: None
+	"""
+	valueChanged = Signal(tuple)
 
 	def __init__(self) -> None:
+		"""Constructor method
+		"""
+		super().__init__()
 		self._cache: Dict[tuple, Any] = {}
 
-	def set_value(self, device: str, parameter: str,
-				  value: Any, force: bool=False) -> None:
-		key = (device, parameter)
-		if key not in self._cache:
-			raise KeyError(f"Parameter {parameter} for {device} not found in cache.")
-		cached_value = self._cache[key]
-		is_same = (cached_value == value)
-
-		if is_same and force:
-			self._cache[key] = value
-			return None
-		else:
-			pass
-		self._cache[key] = value
-		return None
-
 	def get_value(self, device: str, parameter: str) -> Any:
-		key = (device, parameter)
-		if key not in self._cache:
-			raise KeyError(f"Parameter {parameter} for {device} not found in cache.")
-		return self._cache[key]
+		"""
+		Retrieves the value for the given parameter.
 
-	def save_preset(self) -> Dict[tuple, Any]:
+		:param device: The device name
+		:type device: str
+		:param parameter: Name of the parameter
+		:type parameter: str
+		:raises KeyError: If parameter is not in the cache.
+		:return: The current value of the parameter
+		:rtype: Any
+		"""
+		# create key
+		key = (device, parameter)
+		if key in self._cache:
+			# return current value
+			return self._cache[key]
+		else:
+			raise KeyError(f"Parameter '{parameter}' for device '{device}' not found in cache.")
+
+	def set_value(self, device: str, parameter: str, value: Any) -> None:
+		"""
+		Sets the value of the given parameter in the cache.
+		If the value does not exist, it will be created.
+
+		:param device: Device name
+		:type device: str
+		:param parameter: Parameter name
+		:type parameter: str
+		:param value: Value of the parameter to be set
+		:type value: Any
+		:return: None
+		:rtype: None
+		"""
+		# generate key
+		key = (device, parameter)
+		if key in self._cache:
+			# get the current value
+			cached_value = self._cache[key]
+			# check if the values are the same
+			is_same = (cached_value == value)
+			if not is_same:
+				# only update cache if the value is different
+				self._cache[key] = value
+				self.valueChanged.emit(value)
+				return
+			else:
+				# pass request otherwise
+				pass
+		else:
+			# create value if it does not exists
+			self._cache[key] = value
+			self.valueChanged.emit(value)
+			return
+
+	def save_cache(self) -> Dict[tuple, Any]:
+		# return copy of the cache
 		return self._cache.copy()
 
-	def load_preset(self, preset: Dict[tuple, Any]) -> None:
-		self._cache = preset.copy()
-		return None
+	def load_preset(self, cache: Dict[tuple, Any]) -> None:
+		# copy the preset into the cache
+		for key, value in cache.items():
+			# use the set method to send the update signal
+			self.set_value(key[0], key[1], value)
+		return
+
+
 

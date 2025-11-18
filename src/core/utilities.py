@@ -8,6 +8,7 @@ Module for proving general utility classes.
 from PySide6.QtCore import QObject
 import os, platform, subprocess, json, tempfile
 from typing import Any
+import math
 
 class SignalHandler(QObject):
 	"""
@@ -229,3 +230,14 @@ class UIParameterError(Exception):
 
 	def __str__(self) -> str:
 		return self.message
+
+class ValueHandler:
+	@staticmethod
+	def check_values(value_1: float, value_2: float) -> bool:
+		if value_1 is None:
+			return True
+
+		if isinstance(value_2, float) and isinstance(value_1, float):
+			return not math.isclose(value_1, value_2, abs_tol=1e-4)
+
+		return value_1 != value_2

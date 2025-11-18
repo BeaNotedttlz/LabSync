@@ -19,6 +19,10 @@ from PySide6.QtWidgets import (QApplication, QMessageBox)
 import os, json
 
 from src.core.storage import InstrumentCache
+from src.core.utilities import ValueHandler
+
+from typing import Any, Dict
+
 from src.core.utilities import (FilesUtils, SignalHandler,
 								UIParameterError, DeviceParameterError,
 								ParameterOutOfRangeError, ParameterNotSetError)
@@ -36,6 +40,7 @@ class LabSync(QObject):
 		super().__init__()
 
 		self.cache = InstrumentCache()
+		self.value_handler = ValueHandler()
 		self.file_utility = FilesUtils(_file_dir, file_name="settings.json")
 
 		self.file_dir = _file_dir
@@ -162,6 +167,21 @@ class LabSync(QObject):
 
 		fsv_instance = EcoConnect(name="FSV3000", simulate=self.simulate)
 		self.FSV = WorkerHandler(fsv_instance, self.fsv_port, None)
+
+
+
+
+	def receive_values(self, values: Dict[tuple, Any]) -> None:
+		"""
+		The gatekeeper logic checking if the values have already been set.
+		This will then call the worker handler for further processing.
+
+		:param values: Values received from the ui. dict[(device, parameter), value]
+		:type values: Dict[tuple, Any]
+		:raises AttributeError: If the parameter is not supported by the backend
+		:return: None
+		:rtype: None
+		"""
 
 
 
