@@ -5,45 +5,10 @@ Module for proving general utility classes.
 @file: scr/core/utils.py
 """
 
-from PySide6.QtCore import QObject
+
 import os, platform, subprocess, json, tempfile
 from typing import Any
 import math
-
-class SignalHandler(QObject):
-	"""
-	SignalHandler class for handling general PySide6 Signals and Slots.
-
-	:return: None
-	:rtype: None
-	"""
-	def __init__(self) -> None:
-		"""Constructor method
-		"""
-		# inherit QObject __init__
-		super().__init__()
-
-	@staticmethod
-	def route(sender, signal_name, receiver, slot) -> None:
-		"""
-		Routing method for connecting Signals to Slots.
-		This also allows for the connection of signals and slots from different instances.
-
-		:param sender: Signal sender instance
-		:type sender: Instance
-		:param signal_name: Name of the signal from the sender instance
-		:type signal_name: str
-		:param receiver: Slot receiver instance
-		:type: receiver: Instance
-		:param slot: Name of the slot from the receiver instance
-		:type slot: str
-		:return: None
-		:rtype: None
-		"""
-		signal = getattr(sender, signal_name)
-		slot = getattr(receiver, slot)
-		signal.connect(slot)
-		return None
 
 # Checking files #
 class FilesUtils:
@@ -69,82 +34,54 @@ class FilesUtils:
 		}
 		# save file name to self
 		self.filename = file_name
-		# get current operating system from user
-		self.system = platform.system()
 		# create folder and settings paths
-		# Generally the settings path is hidden
-		self.folder = os.path.join(file_path, "settings" if self.system == "Windows" else ".settings")
-		self.settings_path = os.path.join(self.folder, self.filename)
-		os.makedirs(self.folder, exist_ok=True)
+		self.ports_path = os.path.join(file_path, "ports", "default_ports.json")
+		self.folder = os.path.join(file_path, "settings")
+		self.settings_path = os.path.join(file_path, "settings", self.filename)
+		os.makedirs(self.settings_path, exist_ok=True)
+		return
 
-		# Hide settings path for Windows operating system
-		if self.system == "Windows":
-			try:
-				subprocess.run(["attrib", "+H", self.folder], check=True)
-			except Exception:
-				pass
-
-		# create settings file
-		# This is usually only needed on the first run
-		_ = self._ensure_hidden_settings()
-
-	def _ensure_hidden_settings(self) -> dict:
+	def read_settings(self) -> dict | None:
 		"""
-		Ensure there is a hidden settings file in the application dir
+		Read the settings file and return a specific settin.
 
-		:return: The contents of the settings file. Either the default settings on error or the actually read data
-		:rtype: dict
+		:param setting: Setting want to be read
+		:type setting: str
+		:return: The settings dictionary, Returns the default on reading error and None otherwise
+		:rtype: dict | None
 		"""
-		# check if the hidden settings file exists
 		if not os.path.exists(self.settings_path):
-			# if not dump default settings
 			with open(self.settings_path, "w", encoding="utf-8") as f:
-				json.dump(self.default_settings, f, indent=2)
+				json.dump(self.default_settings, f, indent=4)
+
 		try:
-			# open settings file and read data
 			with open(self.settings_path, "r", encoding="utf-8") as f:
 				data = json.load(f)
-			# return read data
+
 			return data
-		except (json.JSONDecodeError, OSError):
-			# on error return default data
+		except (json.decoder.JSONDecodeError, OSError):
 			return self.default_settings.copy()
+		except KeyError:
+			return None
 
-	def read_settings(self, setting: str) -> Any:
+	def edit_settings(self, setting: str, value: Any) -> None:
 		"""
-		Read a specific setting.
+		Edit a specific setting and save it to the file.
 
-		:param setting: Desired setting to retrieve value
+		:param setting: Setting to edit
 		:type setting: str
-		:return: The value of the desired setting
-		:rtype: Any
-		"""
-		# get all settings
-		settings = self._ensure_hidden_settings()
-		# return only [setting]
-		value = settings[setting]
-		return value
-
-	def edit_settings(self, setting_name: str, value: Any) -> dict:
-		"""
-		Edit a specific setting and save to file.
-
-		:param setting_name: Desired setting to edit
-		:type setting_name: str
-		:param value: New value
+		:param value: Value to save
 		:type value: Any
-		:return: The new contents of the settings file
-		:rtype: dict
+		:return: None
+		:rtype: None
 		"""
-		# get current settings and current value
-		settings = self._ensure_hidden_settings()
-		settings[setting_name] = value
+		data = self.read_settings()
+		data[setting] = value
 
-		# Atomic write
 		fd, tmp_path = tempfile.mkstemp(dir=self.folder, prefix="settings_", text=True)
 		try:
 			with os.fdopen(fd, "w", encoding="utf-8") as f:
-				json.dump(settings, f, indent=2)
+				json.dump(data, f, indent=2)
 				f.flush()
 				os.fsync(f.fileno())
 			os.replace(tmp_path, self.settings_path)
@@ -154,8 +91,7 @@ class FilesUtils:
 					os.remove(tmp_path)
 				except OSError:
 					pass
-
-		return settings
+		return
 
 	def read_port_file(self) -> dict:
 		"""
@@ -165,8 +101,9 @@ class FilesUtils:
 		:rtype: dict
 		"""
 		# read port file and return contents
-		ports_dir = os.path.join(self.cwd, "files", "ports", "default_ports.json")
-		with open(ports_dir, "r", encoding="utf-8") as f:
+
+
+		with open(self.ports_path, "r", encoding="utf-8") as f:
 			ports = json.load(f)
 		return ports
 
@@ -188,7 +125,7 @@ class FilesUtils:
 		:rtype: dict
 		"""
 		# create ports dir and dict for device ports
-		ports_dir = os.path.join(self.cwd, "files", "ports", "default_ports.json")
+		ports_dir = os.path.join(self.ports_path, "files", "ports", "default_ports.json")
 		ports = {
 			"stage": stage,
 			"TGA": TGA,
