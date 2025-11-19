@@ -74,7 +74,7 @@ class FrequencyGenerator:
 			self.current_channel = 1
 		except (errors.VisaIOError, SerialException) as e:
 			self.status = ConnectionStatus.DISCONNECTED
-			raise ConnectionError(f"{e}")
+			raise DeviceParameterError("Failed to connect to device") from e
 
 	def close_port(self) -> None:
 		"""

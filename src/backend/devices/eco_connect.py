@@ -13,6 +13,7 @@ from typing import Any
 from pyvisa import errors
 from serial import SerialException
 from src.backend.connection_status import ConnectionStatus
+from src.core.utilities import DeviceConnectionError
 
 class EcoConnect:
 	"""
@@ -71,7 +72,7 @@ class EcoConnect:
 			self.status = ConnectionStatus.CONNECTED
 		except (errors.VisaIOError, SerialException) as e:
 			self.status = ConnectionStatus.DISCONNECTED
-			raise ConnectionError(f"Failed to open EcoVario port: {e}")
+			raise DeviceConnectionError("Failed to open serial port") from e
 
 	def close_port(self) -> None:
 		"""

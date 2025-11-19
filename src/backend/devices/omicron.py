@@ -12,7 +12,7 @@ however this version only implements basic operations to allow control in the La
 import pyvisa, os, time
 from pyvisa import errors
 from serial import SerialException
-from src.core.utilities import ParameterNotSetError, ParameterOutOfRangeError
+from src.core.utilities import ParameterNotSetError, ParameterOutOfRangeError, DeviceConnectionError
 from src.backend.connection_status import ConnectionStatus
 
 class OmicronLaser:
@@ -34,6 +34,7 @@ class OmicronLaser:
 		self.name = name
 		self.status = ConnectionStatus.DISCONNECTED
 		self.simulate = simulate
+		self.max_power = 1.0
 		# create simulate path
 		sim_path = os.path.join(
 			os.path.dirname(os.path.abspath(__file__)),
@@ -114,7 +115,7 @@ class OmicronLaser:
 				self.max_power = float(self._ask("GMP")[0])
 			except (errors.VisaIOError, SerialException) as e:
 				self.status = ConnectionStatus.DISCONNECTED
-				raise ConnectionError(f"Failed to open EcoVario port: {e}")
+				raise DeviceConnectionError("Failed to connect to device") from e
 
 	def close_port(self) -> None:
 		"""
