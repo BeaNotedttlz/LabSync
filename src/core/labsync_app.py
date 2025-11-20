@@ -5,7 +5,9 @@ Main application for controlling backend and frontend of the LabSync application
 @file: src/core/labsync_app.py
 @note:
 """
-from src.core.context import DeviceRequest, RequestType
+from src.core.context import (DeviceRequest, RequestType, RequestResult,
+							  ErrorType, DeviceProfile, Parameter)
+from src.core.utilities import PortSetError
 from src.core.labsync_worker import WorkerHandler
 from src.backend.devices.eco_connect import EcoConnect
 from src.backend.devices.omicron import OmicronLaser
@@ -19,11 +21,8 @@ from PySide6.QtWidgets import QMessageBox
 
 from src.core.storage import InstrumentCache
 from src.core.utilities import ValueHandler, FilesUtils
-from src.core.mapping import Parameter, DeviceProfile
-from src.core.utilities import PortSetError, DeviceConnectionError
 
-from typing import Any, Dict
-import os, json
+from typing import Dict
 
 class MapWorkers:
 	def __init__(self) -> None:
@@ -113,55 +112,54 @@ class LabSync(QObject):
 		}
 		self.stage_profile = DeviceProfile()
 		for key, parameter in ecovario_keys.items():
-			self.stage_profile(Parameter(
+			self.stage_profile.add(Parameter(
 				key=key,
 				method=parameter[0],
 				min_value=parameter[1],
 				max_value=parameter[2],
 				unit=parameter[3],
-				datatype=parameter[4],
+				data_type=parameter[4]
 			))
 		self.laser1_profile = DeviceProfile()
 		for key, parameter in laser_keys.items():
-			self.laser1_profile(Parameter(
+			self.laser1_profile.add(Parameter(
 				key=key,
 				method=parameter[0],
 				min_value=parameter[1],
 				max_value=parameter[2],
 				unit=parameter[3],
-				datatype=parameter[4],
+				data_type=parameter[4]
 			))
 		self.laser2_profile = DeviceProfile()
 		for key, parameter in laser_keys.items():
-			self.laser2_profile(Parameter(
+			self.laser2_profile.add(Parameter(
 				key=key,
 				method=parameter[0],
 				min_value=parameter[1],
 				max_value=parameter[2],
 				unit=parameter[3],
-				datatype=parameter[4],
+				data_type=parameter[4]
 			))
 		self.freq_gen_profile = DeviceProfile()
 		for key, parameter in freq_gen_keys.items():
-			self.freq_gen_profile(Parameter(
+			self.freq_gen_profile.add(Parameter(
 				key=key,
 				method=parameter[0],
 				min_value=parameter[1],
 				max_value=parameter[2],
 				unit=parameter[3],
-				datatype=parameter[4],
+				data_type=parameter[4]
 			))
 		self.fsv_profile = DeviceProfile()
 		for key, parameter in fsv_keys.items():
-			self.fsv_profile(Parameter(
+			self.fsv_profile.add(Parameter(
 				key=key,
 				method=parameter[0],
 				min_value=parameter[1],
 				max_value=parameter[2],
 				unit=parameter[3],
-				datatype=parameter[4],
+				data_type=parameter[4]
 			))
-
 		self._setup_devices()
 		return
 
@@ -300,82 +298,56 @@ class LabSync(QObject):
 			handler.send_request(cmd)
 		return
 
-
-	@Slot(str, str)
-	def _handle_worker_error(self, id: str, error_msg: str) -> None:
+	@Slot(RequestResult)
+	def receive_worker_result(self, result: RequestResult) -> None:
 		"""
-		Executed when the worker encountered an error.
-
-		:param error_msg: The error message
-		:type error_msg: str
-		:param id: ID of the error
-		:type id: str
+		Called when the worker finishes a request. This handles all request results.
+		:param result: Result of the worker
+		:type result: RequestResult
 		:return: None
-		:rtype: None
 		"""
-		if id == "CONN":
-			QMessageBox.information(
+		if not result.is_success:
+			self._handle_worker_error(result)
+			return
+
+		else:
+			request_type, device_id, parameter = result.request_id.split("_")
+			if request_type == "SET" or request_type == "POLL":
+				self.cache.set_value(device_id, parameter, result.value)
+				return
+			else:
+				pass
+
+	def _handle_worker_error(self, error_result: RequestResult) -> None:
+		"""
+		Handles the error of a worker request. Shows the respective Messagebox with the needed information.
+		:param error_result: Result with the error information
+		:type error_result: RequestResult
+		:return: None
+		"""
+		if error_result.error_type == ErrorType.CONNECTION:
+			QMessageBox.critical(
 				self.main_window,
 				"Connection Error",
-				f"Something went went wrong while connecting to the device\n{error_msg}"
+				f"Could not open {error_result.device_id} port!\n"
+				f"{error_result.request_id}: {error_result.error}"
 			)
-			self.conectionChanged.emit(id, False)
-			return
-		elif id.startswith("SET_"):
-			device = id[4:]
+		elif error_result.error_type == ErrorType.TASK:
+			QMessageBox.critical(
+				self.main_window,
+				"Request Task Error",
+				f"Could not do operation: {error_result.request_id} for device: {error_result.device_id}\n"
+				f"{error_result.error}"
+			)
+		else:
+			QMessageBox.critical(
+				self.main_window,
+				"Unknown Error Occurred",
+				f"Something went wrong! {error_result.request_id} for device: {error_result.device_id}\n"
+				f"{error_result.error}"
 
-	def receive_values(self, values: Dict[tuple, Any], force:bool=False) -> None:
-		"""
-		The gatekeeper logic checking if the values have already been set.
-		This will then call the worker handler for further processing.
-
-		:param values: Values received from the ui. dict[(device, parameter), value]
-		:type values: Dict[tuple, Any]
-		:param force: Flag to set when forcing the update of the parameter
-		:type force: bool
-		:raises AttributeError: If the parameter is not supported by the backend
-		:return: None
-		:rtype: None
-		"""
-		for key, value in values.items():
-			parameter = self.device_profile.parameters[key]
-
-			if not parameter:
-				continue
-
-			current_value = self.cache.get_value(key[0], key[1])
-			if not self.value_handler.check_values(current_value, value) and not force:
-				continue
-
-			if not parameter.validate(value):
-				QMessageBox.warning(
-					self.main_window,
-					"Input Error",
-					f"Value: {value} for {key} is out of bounds!\n"
-						f"Limit: {parameter.min_value} - {parameter.max_value} {parameter.unit}"
-				)
-				continue
-
-			request_id = f"SET_{key[0]}-{key[1]}"
-			device_handler = parameter.handler
-			device_handler.request_task(request_id, parameter.method, value)
+			)
 		return
 
-	@Slot(str, object)
-	def _handle_worker_finish(self, request_id: str, commited_value: Any) -> None:
-		"""
-		Executed when the worker successfully finished.
-
-		:param request_id: ID of the request -> (SET|READ|POLL_device-parameter)
-		:type request_id: str
-		:param commited_value: value that was set
-		:type commited_value: Any
-		:return: None
-		:rtype: None
-		"""
-		if request_id.startswith("SET_") or request_id.startswith("READ_"):
-			parameter_key = request_id[4:].split("-")
-			self.cache.set_value(parameter_key[0], parameter_key[1], commited_value)
-		return
 
 

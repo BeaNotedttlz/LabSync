@@ -60,7 +60,7 @@ class LabSyncWorker(QObject):
 			self._poll_context = None
 		else:
 			try:
-				param_def = self.profile.parameters[(self.device_id, cmd.parameter)]
+				param_def = self.profile.parameters[cmd.parameter]
 			except KeyError as e:
 				self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e)))
 				return

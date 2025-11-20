@@ -87,6 +87,7 @@ class RequestResult:
 		return self.error is None
 
 # Device Parameters and profiles
+@dataclass
 class Parameter:
 	"""
 	Represents one controllable setting on a device.
