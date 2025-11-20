@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget,
 							   QHBoxLayout, QSplitter, QGridLayout,
 							   QMessageBox, QTabWidget, QSizePolicy,)
 from PySide6.QtCore import QEvent, Signal, Slot, Qt
+
+from src.frontend.widgets.devices.eco_normal import StageWidgetNormal
 from src.frontend.widgets.info_panel import InfoPanelWidget
 
 from src.frontend.widgets.devices.eco_expert import StageWidgetExpert
@@ -193,6 +195,10 @@ class MainWindow(QMainWindow):
 		return tab_widget
 
 	def _setup_widgets(self) -> None:
+		self.eco_normal_widget = StageWidgetNormal(device_id="EcoVario")
+		self.eco_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.normal_tab_layout.addWidget(self.eco_normal_widget)
+
 		self.eco_expert_widget = StageWidgetExpert(device_id="EcoVario")
 		self.eco_expert_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.stage_tab_layout.addWidget(self.eco_expert_widget)

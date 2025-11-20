@@ -1,8 +1,8 @@
 """
 Module for creating and operating the PySide6 EcoVario expert mode widgets.
 @author: Merlin Schmidt
-@date: 2025-18-10
-@file: src/frontend/widgets/devices/eco_expert.py
+@date: 2025-20-10
+@file: src/frontend/widgets/devices/eco_normal.py
 @note:
 """
 from PySide6.QtCore import Signal, Slot
@@ -13,11 +13,11 @@ from src.frontend.widgets.utilities import create_input_field, create_output_fie
 from typing import Dict, Any
 from src.core.context import DeviceRequest, RequestType
 
-class StageWidgetExpert(QWidget):
+class StageWidgetNormal(QWidget):
 	"""
-	Create EcoVario expert mode widgets and functionality.
-	:return: None
-	"""
+		Create EcoVario normal mode widgets and functionality.
+		:return: None
+		"""
 	sendRequest = Signal(DeviceRequest)
 	sendUpdate = Signal(dict)
 
@@ -25,16 +25,14 @@ class StageWidgetExpert(QWidget):
 		super().__init__()
 		self.device_id = device_id
 
+		start_button = QPushButton("Start")
+		stop_button = QPushButton("Stop")
+
+		# creating layout #
 		layout = QGridLayout()
 		layout.setVerticalSpacing(10)
 
-		start_button = QPushButton("Start")
-		stop_button = QPushButton("Stop")
-		home_stage_button = QPushButton("Home Stage \n to position")
-		self.sync = QCheckBox("Sync Accel. \n and Deaccel.")
-		self.sync.setChecked(True)
-		reset_error_button = QPushButton("Reset \n Error")
-
+		# creating and adding widgets to layout #
 		layout.addWidget(QLabel("Stage Controls"), 0, 0)
 		self.out_current_position = create_output_field(layout, "Current position", "0.0", "mm", 1, 0)
 		self.out_target_position = create_output_field(layout, "Target position", "0.0", "mm", 3, 0)
@@ -45,28 +43,15 @@ class StageWidgetExpert(QWidget):
 		layout.addItem(QSpacerItem(10, 100), 9, 0)
 		layout.addWidget(start_button, 10, 0)
 		layout.addWidget(stop_button, 11, 0)
-
-		layout.addItem(QSpacerItem(200, 10), 0, 1)
-
-		self.in_accell = create_input_field(layout, "Acceleration", "501.30", "mm/s^2", 1, 2)
-		self.in_accell.setValidator(QDoubleValidator())
-		self.in_deaccell = create_input_field(layout, "Deacceleration", "501.30", "mm/s^2", 3, 2)
-		self.in_deaccell.setValidator(QDoubleValidator())
-		self.out_error_code = create_output_field(layout, "Error code", "", "", 10, 2)
+		layout.addItem(QSpacerItem(10, 40), 12, 0)
+		self.out_error_code = create_output_field(layout, "Error code", "", "", 13, 0)
 		self.out_error_code.setAlignment(Qt.AlignLeft)
 
-		layout.addWidget(home_stage_button, 9, 2)
-		layout.addWidget(self.sync, 5, 2)
-		layout.addWidget(reset_error_button, 8, 2)
 		self.setLayout(layout)
-
-		# signal routing #
-		stop_button.clicked.connect(self._stop)
 		start_button.clicked.connect(self._start)
-
+		stop_button.clicked.connect(self._stop)
 		self.in_new_position.returnPressed.connect(self._send_update)
 		self.in_speed.editingFinished.connect(self._send_update)
-		return
 
 	@Slot()
 	def _start(self) -> None:
@@ -77,8 +62,8 @@ class StageWidgetExpert(QWidget):
 		try:
 			pos = float(self.out_target_position.text().replace(",", "."))
 			vel = float(self.in_speed.text().replace(",", "."))
-			accell = float(self.in_accell.text().replace(",", "."))
-			deaccell = float(self.in_deaccell.text().replace(",", "."))
+			accell = 501.30
+			deaccell = 501.30
 
 			parameters = {
 				"target_pos": pos,
@@ -133,9 +118,11 @@ class StageWidgetExpert(QWidget):
 			"target_acc": "in_accel",
 			"target_deacc": "in_deaccel",
 			"current_pos": "out_current_position",
-			"error_code": "out_error_code"
+			"error_code": "out_error_code",
 		}
 		for key, parameter in parameters.items():
+			if key in ["target_acc", "target_deacc"]:
+				continue
 			if not key in supproted_parameters:
 				QMessageBox.warning(
 					self,
@@ -153,7 +140,7 @@ class StageWidgetExpert(QWidget):
 		speed = self.in_speed.text().replace(",", ".")
 		pos = self.out_target_position.text().replace(",", ".")
 
-		self.out_target_position.setText(pos)
+		self.out_current_position.setText(pos)
 
 		update = {
 			"target_pos": pos,
@@ -161,4 +148,3 @@ class StageWidgetExpert(QWidget):
 		}
 		self.sendUpdate.emit(update)
 		return
-
