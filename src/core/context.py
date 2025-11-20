@@ -6,66 +6,88 @@ Module for creating and managing all device Context during runtime.
 @note:
 """
 
-from dataclasses import dataclass, field
-from PySide6.QtCore import QThread, QObject, QMetaObject
-from PySide6.QtWidgets import QWidget
-
-from src.backend.connection_status import ConnectionStatus
+from dataclasses import dataclass
 from src.core.labsync_worker import WorkerHandler
 
 from enum import Enum, auto
 from typing import Any, Optional, Dict
 
+# Request and Error types
 class RequestType(Enum):
-	"""Defines the intent of the command"""
-	# reading data from a timer
-	POLL = "POLL"
-	# reading / writing data via user input
+	"""Defines the intent of the request"""
+	# set a singular valur
 	SET = "SET"
+	# query a singular value
+	POLL = "POLL"
+	# start polling a value
+	START_POLL = "START_POLL"
+	# stop polling a value
+	STOP_POLL = "STOP_POLL"
+	# connect to device
+	CONNECT = "CONN"
+	# disconnect device
+	DISCONNECT = "DISCONN"
 
 class ErrorType(Enum):
-	"""defines the severity and category of an error"""
+	"""Defines the type and severity of the error"""
+	# connection error
 	CONNECTION = auto()
+	# read or write error
 	READ = auto()
 	WRITE = auto()
+	# critical application error
 	CRITICAL = auto()
+	# device timeout error
 	TIMEOUT = auto()
 
+# Requests
 @dataclass(frozen=True)
 class DeviceRequest:
 	"""
-	A request sent from LabSync to the worker.
+	A request from LabSync sent to the worker.
 	frozen=True makes this class immutable (for thread safety)
 	"""
+	# Device ID ("EcoVario", "Laser1", "Laser2", "TGA1244", "FSV3000")
 	device_id: str
+	# Parameter name (e.g. "frequency")
 	parameter: str
+	# Type of the command
 	cmd_type: RequestType
+	# value of the request
 	value: Any = None
 
 	@property
 	def id(self) -> str:
 		"""
-		Generates a unique request ID.
+		Generates a unique request ID
 		FORMAT: POLL/SET_DEVICE_PARAMETER
+		:return: The unique device request ID
+		:rtype: str
 		"""
 		return f"{self.cmd_type.value}_{self.device_id}_{self.parameter}"
 
 @dataclass
 class RequestResult:
 	"""
-	A response sent from the worker to LabSync.
+	A response sent from the worker after request.
 	"""
-	command_id: str
+	# device ID
 	device_id: str
+	# ID of the request
+	request_id: str
 
-	value: Any = None
+	# value of the return
+	value: Optional[Any] = None
+	# potential error
 	error: Optional[str] = None
+	# type of the error
 	error_type: Optional[ErrorType] = None
 
 	@property
 	def is_success(self) -> bool:
 		return self.error is None
 
+# Device Parameters and profiles
 class Parameter:
 	"""
 	Represents one controllable setting on a device.
@@ -77,7 +99,7 @@ class Parameter:
 	method: str = None
 	handler: WorkerHandler = None
 
-	# Validation types
+	# validation types
 	min_value: float = None
 	max_value: float = None
 	unit: str = ""
@@ -85,11 +107,11 @@ class Parameter:
 
 	def validate(self, value: Any) -> bool:
 		"""
-		Checks if the value is within the limits
+		Checks if the given value is within the limits
 
-		:param value: value to check
+		:param value: Value to be checked
 		:type value: Any
-		:return: If the value is within the limits or not (True/False)
+		:return: Returns True if the value is within the limits otherwise falls
 		:rtype: bool
 		"""
 		if self.data_type in [int, float] and (self.min_value is None or value is not None):
@@ -99,7 +121,7 @@ class Parameter:
 
 class DeviceProfile:
 	"""
-	A collection of the parameters for a specific device
+	A collection of the parameter for a specific device.
 	"""
 	def __init__(self) -> None:
 		"""Constructor method
@@ -110,6 +132,16 @@ class DeviceProfile:
 		self._handlers: Dict[str, WorkerHandler] = {}
 		return
 
+	@property
+	def devices(self) -> Dict[str, WorkerHandler]:
+		"""Access device handlers directly"""
+		return self._handlers.copy()
+
+	@property
+	def parameters(self) -> Dict[str, Parameter]:
+		"""Access parameter handlers directly"""
+		return self._params.copy()
+
 	def add(self, param: Parameter) -> None:
 		self._params[param.key] = param
 
@@ -119,53 +151,7 @@ class DeviceProfile:
 				self._handlers[device_name] = param.handler
 		return
 
-	@property
-	def devices(self) -> Dict[str, WorkerHandler]:
-		"""Access device handlers directly."""
-		return self._handlers
-
-	@property
-	def parameters(self) -> Dict[tuple, Parameter]:
-		"""Access parameter objects directly."""
-		return self._params
-
-@dataclass
-class DeviceContext:
-	"""
-	Holds the entire lifecycle state of a worker.
-	"""
-
-	device_id: str
-	profile: DeviceProfile
-
-	driver: object
-	worker: QObject
-	thread: QThread
-
-	widgets: Dict[str, QWidget] = field(default_factory=dict)
-
-	def is_connected(self) -> bool:
-		"""Save check for connection status"""
-		if hasattr(self.driver, "status"):
-			state = self.driver.status
-			return state == ConnectionStatus.CONNECTED
-		else:
-			return False
-
-	def send_request(self, cmd: DeviceRequest) -> None:
-		QMetaObject.invokeMethod(
-			self.worker,
-			"execute_request",
-			Qt.QueuedConnection,
-			cmd
-		)
-
-	def cleanup(self) -> None:
-		"""Stops the thread cleanly"""
-		if self.thread.isRunning():
-			self.thread.quit()
-			self.thread.wait()
-
+# Custom device exceptions on the DeviceError base exception
 class DeviceError(Exception):
 	"""Base class for all device exceptions"""
 	pass
