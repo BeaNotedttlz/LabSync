@@ -33,8 +33,7 @@ class ErrorType(Enum):
 	# connection error
 	CONNECTION = auto()
 	# read or write error
-	READ = auto()
-	WRITE = auto()
+	TASK = auto()
 	# critical application error
 	CRITICAL = auto()
 	# device timeout error
@@ -138,7 +137,7 @@ class DeviceProfile:
 		return self._handlers.copy()
 
 	@property
-	def parameters(self) -> Dict[str, Parameter]:
+	def parameters(self) -> Dict[tuple, Parameter]:
 		"""Access parameter handlers directly"""
 		return self._params.copy()
 
