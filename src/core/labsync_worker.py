@@ -115,7 +115,7 @@ class LabSyncWorker(QObject):
 
 		try:
 			self.driver.close_port()
-			self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=True))
+			self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=False))
 		except Exception as e:
 			self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e), error_type=ErrorType.CONNECTION))
 		return

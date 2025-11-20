@@ -36,34 +36,40 @@ class MapWorkers:
 
 class LabSync(QObject):
 	"""
-	LabSync class for handling the core logic between frontend and backend.
-
-	:return: None
-	:rtype: None
+	Core LabSync controller. This connects the frontend and the backend.
 	"""
-	# define signals
-	conectionChanged = Signal(str, bool)
+	connectionChanged = Signal(str, bool)
 
-	def __ini__(self, app, file_dir: str) -> None:
+	def __init__(self, app, file_dir: str) -> None:
 		"""Constructor method
 		"""
 		super().__init__()
 
+		# create cache
 		self.cache = InstrumentCache()
+		# handler for comparing values
 		self.value_handler = ValueHandler()
+		# File utility
 		self.file_utils = FilesUtils(file_path=file_dir, file_name="settings.json")
-
-		self.file_dir = file_dir
-		self.simulate = False
+		# Worker map
 		self.workers = MapWorkers()
 
+		# save file dir and simulate flag
+		self.file_dir = file_dir
+		self.simulate = False
+
+		# initialize the device ports as None
 		self.stage_port = None
 		self.freq_gen_port = None
 		self.laser1_port = None
 		self.laser2_port = None
 		self.fsv_port = None
 
+		# create main window widgets
 		self.main_window = MainWindow(app)
+
+		# connect signals
+		self.connectionChanged.connect(self.main_window.update_connection_status)
 		return
 
 	def _cleanup_backend(self) -> None:
@@ -315,6 +321,8 @@ class LabSync(QObject):
 			if request_type == "SET" or request_type == "POLL":
 				self.cache.set_value(device_id, parameter, result.value)
 				return
+			elif request_type == "CONNECT" or request_type == "DISCONNECT":
+				self.connectionChanged.emit(device_id, result.value)
 			else:
 				pass
 
@@ -348,6 +356,21 @@ class LabSync(QObject):
 
 			)
 		return
+
+	@Slot()
+	def request_worker(self, cmd: DeviceRequest) -> None:
+		device_handler = self.workers.worker[cmd.device_id]
+		if device_handler:
+			device_handler.send_request(cmd)
+			return
+		else:
+			QMessageBox.critical(
+				self.main_window,
+				"Internal Error",
+				"Device handler cannot be found \n"
+				"If you dont know what this means commit an Issue on GitHub!"
+			)
+			return
 
 
 
