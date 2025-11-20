@@ -8,9 +8,11 @@ Main window module for the PySide6 LabSync application.
 
 from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget,
 							   QHBoxLayout, QSplitter, QGridLayout,
-							   QMessageBox, QTabWidget)
-from PySide6.QtCore import QEvent, Signal, Slot
+							   QMessageBox, QTabWidget, QSizePolicy,)
+from PySide6.QtCore import QEvent, Signal, Slot, Qt
 from src.frontend.widgets.info_panel import InfoPanelWidget
+
+from src.frontend.widgets.devices.eco_expert import StageWidgetExpert
 
 
 class MainWindow(QMainWindow):
@@ -21,9 +23,14 @@ class MainWindow(QMainWindow):
 	:rtype: QApplication
 	"""
 	# create signals
+	# close window
 	requestClose = Signal()
+	# save / load preset
 	savePreset = Signal()
 	loadPreset = Signal()
+	# save ports
+	savePorts = Signal(str, str, str, str, str)
+	setDefaultPorts = Signal(str, str, str, str, str)
 
 	def __init__(self, app) -> None:
 		"""Constructor method
@@ -185,6 +192,11 @@ class MainWindow(QMainWindow):
 		# return widget for layout
 		return tab_widget
 
+	def _setup_widgets(self) -> None:
+		self.eco_expert_widget = StageWidgetExpert(device_id="EcoVario")
+		self.eco_expert_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.stage_tab_layout.addWidget(self.eco_expert_widget)
+		return
 
-
-
+	def update_connection_status(self, device_id: str, status: bool) -> None:
+		return

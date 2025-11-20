@@ -92,6 +92,8 @@ class LabSync(QObject):
 			"target_acc": ["set_acceleration", 0.0, 1000.0, "mm/s2", float],
 			"target_deacc": ["set_deacceleration", 0.0, 1000.0, "mm/s2", float],
 			"current_pos": [None, 0.0, 2530.0, "mm", float],
+			"START": ["start", None, None, None, None],
+			"STOP": ["stop", None, None, None, None]
 		}
 		laser_keys = {
 			"temp_power": ["set_temp_power", 0.0, 100.0, "%", float],
