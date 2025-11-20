@@ -127,14 +127,7 @@ class DeviceProfile:
 		"""
 		# Stores (device, parameter) -> Parameter object
 		self._params: Dict[tuple, Parameter] = {}
-		# Stores Device -> Handler object
-		self._handlers: Dict[str, WorkerHandler] = {}
 		return
-
-	@property
-	def devices(self) -> Dict[str, WorkerHandler]:
-		"""Access device handlers directly"""
-		return self._handlers.copy()
 
 	@property
 	def parameters(self) -> Dict[tuple, Parameter]:
@@ -142,12 +135,10 @@ class DeviceProfile:
 		return self._params.copy()
 
 	def add(self, param: Parameter) -> None:
-		self._params[param.key] = param
-
-		if param.key and len(param.key) > 0:
-			device_name = param.key[0]
-			if param.handler is not None:
-				self._handlers[device_name] = param.handler
+		if not param.key in self._params:
+			self._params[param.key] = param
+		else:
+			raise KeyError(f"{param.key} already exists")
 		return
 
 # Custom device exceptions on the DeviceError base exception
