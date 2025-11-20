@@ -92,11 +92,10 @@ class Parameter:
 	Represents one controllable setting on a device.
 	"""
 	# the key used in the backend / frontend -> (device, parameter)
-	key: tuple
+	key: str
 
 	# the name of the driver method
 	method: str = None
-	handler: WorkerHandler = None
 
 	# validation types
 	min_value: float = None
@@ -125,12 +124,12 @@ class DeviceProfile:
 	def __init__(self) -> None:
 		"""Constructor method
 		"""
-		# Stores (device, parameter) -> Parameter object
-		self._params: Dict[tuple, Parameter] = {}
+		# Stores parameter -> Parameter object
+		self._params: Dict[str, Parameter] = {}
 		return
 
 	@property
-	def parameters(self) -> Dict[tuple, Parameter]:
+	def parameters(self) -> Dict[str, Parameter]:
 		"""Access parameter handlers directly"""
 		return self._params.copy()
 
