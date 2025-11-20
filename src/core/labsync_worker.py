@@ -6,17 +6,25 @@ This allows for single device commands and loop calls of methods
 @file: src/core/labsync_worker.py
 @note:
 """
-from typing import Optional
+from typing import Optional, Any
 
 from PySide6.QtCore import QTimer, QThread, QObject, Signal, Slot
 from src.core.context import DeviceConnectionError, DeviceRequestError, ErrorType
 from src.core.context import DeviceRequest, RequestResult, RequestType, DeviceProfile
+from src.backend.connection_status import ConnectionStatus
 
 class LabSyncWorker(QObject):
+	"""
+	Worker for direct device connection and communication.
+	This will run the blocking operations and send / receive data.
+	"""
+	# result signal for communication with the handler
 	resultReady = Signal(RequestResult)
 
 	def __init__(self, device_id: str, driver: object, profile: DeviceProfile) -> None:
 		super().__init__()
+		"""Constructor method
+		"""
 		# save own ID, Driver instance and device profile
 		self.device_id = device_id
 		self.driver = driver
@@ -32,14 +40,21 @@ class LabSyncWorker(QObject):
 
 	@Slot(DeviceRequest)
 	def execute_request(self, cmd: DeviceRequest) -> None:
-
+		"""
+		Executes the requested operation by the DeviceRequest object.
+		This will also handle connection and disconnection, as well as the start and stop of the polling.
+		Since QEvents work in a queue, SET/POLL requests are possible while the polling is running.
+		:param cmd: Request for the device
+		:type cmd: DeviceRequest
+		:return: None
+		"""
 		if cmd.cmd_type == RequestType.CONNECT:
 			self._connect_device(cmd)
 		elif cmd.cmd_type == RequestType.DISCONNECT:
 			self._disconnect_device(cmd)
 		elif cmd.cmd_type == RequestType.START_POLL:
 			self._poll_context = cmd
-			self._timer.start()
+			self._timer.start(cmd.value if cmd.value else 500)
 		elif cmd.cmd_type == RequestType.STOP_POLL:
 			self._timer.stop()
 			self._poll_context = None
@@ -66,13 +81,19 @@ class LabSyncWorker(QObject):
 						raise ValueError(f"Parameter '{cmd.parameter}' has no method to call.")
 
 					method_to_call = getattr(self.driver, param_def.method)
-					result_val = method_to_call(cmd.value)
+					result_val = method_to_call()
 
 					self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=result_val))
 			except Exception as e:
 				self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e), error_type=ErrorType.TASK))
 
 	def _connect_device(self, cmd: DeviceRequest) -> None:
+		"""
+		handler for connecting to the serial port of the device.
+		:param cmd: Connection request. The port and baudrate should be in the value of the request
+		:type cmd: DeviceRequest
+		:return: None
+		"""
 		try:
 			self.driver.open_port(cmd.value[0], cmd.value[1])
 			self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=True))
@@ -82,6 +103,12 @@ class LabSyncWorker(QObject):
 			return
 
 	def _disconnect_device(self, cmd: DeviceRequest) -> None:
+		"""
+		handler for disconnecting from the serial port of the device.
+		:param cmd: Disconnection request.
+		:type cmd: DeviceRequest
+		:return:
+		"""
 		if self._timer.isActive():
 			self._timer.stop()
 			self._poll_context = None
@@ -95,6 +122,10 @@ class LabSyncWorker(QObject):
 
 	@Slot()
 	def _handle_poll(self) -> None:
+		"""
+		Handles the polling of the device. This Slot will be called each time after the timer timeouts.
+		:return: None
+		"""
 		if self._poll_context is not None:
 			self.execute_request(self._poll_context)
 		else:
@@ -102,40 +133,100 @@ class LabSyncWorker(QObject):
 
 
 class WorkerHandler(QObject):
+	"""
+	Handler for the device worker. This creates the thread and places the worker.
+	This handles the results, connection and cleanup.
+	"""
+	# Signal for receiving the result from the worker
 	receivedResult = Signal(RequestResult)
+	# Signal for requesting a task from the worker
 	requestWorker = Signal(DeviceRequest)
 
 	def __init__(self, device_id: str, driver_instance: object,
 				 profile_instance: DeviceProfile) -> None:
+		"""Constructor method
+		"""
 		super().__init__()
+		# save own device ID and device instance
 		self.device_id = device_id
 		self.driver = driver_instance
 
-		self.thread = QThread()
+		# create thread and worker
+		self._thread = QThread()
 		self._worker = LabSyncWorker(device_id, driver_instance, profile_instance)
+		# move worker to new thread
+		self._worker.moveToThread(self._thread)
 
-		self._worker.moveToThread(self.thread)
-
+		# connect Signals for results and requests
+		self._worker.resultReady.connect(self.handle_result)
 		self.requestWorker.connect(self._worker.execute_request)
-		self._worker.resultReady.connect(self.receivedResult)
 
-		self.thread.start()
+		# start thread
+		self._thread.start()
 		return
 
-	def send_command(self, cmd: DeviceRequest) -> None:
+	def send_request(self, device_id: str, cmd_type: RequestType,
+					 parameter: Optional[str]=None, value: Optional[Any]=None) -> None:
+		"""
+		Send a request to the device.
 
-		if not self.thread.isRunning():
+		:param device_id: Id of the device to request to. This is done to check correct routing
+		:type device_id: str
+		:param cmd_type: Type of the request
+		:type cmd_type: RequestType
+		:param parameter: Parameter to read / write. This parameter is optional since a connection request has no parameter.
+		:type parameter: Optional[str]
+		:param value: Value to set. This parameter is optional since a connection request has no value to set.
+		:type value: Optional[Any]
+		:raises ValueError: If the device IDs of the device and the requests do not match
+		:return: None
+		"""
+		# dont do anything is the thread is not running
+		if not self._thread.isRunning():
 			return
-		self.requestWorker.emit(cmd)
+
+		# create request object
+		request = DeviceRequest(
+			device_id,
+			cmd_type,
+			parameter,
+			value
+		)
+		if device_id == self.device_id:
+			# check if the device IDs match otherwise raise error
+			self.requestWorker.emit(request)
+			return
+		else:
+			raise DeviceRequestError(device_id, request.id, original_error=ValueError("Device ID's do not match!"))
+
+	def handle_result(self, result: RequestResult) -> None:
+		"""
+		Handles the result of the worker. This passes the result to the controller.
+		:param result: Result from the worker
+		:type result: RequestResult
+		:return: None
+		"""
+		self.receivedResult.emit(result)
+		return
+
+	def stop(self) -> None:
+		"""
+		Stop the Thread and the worker.
+		:return: None
+		"""
+		if self._thread.isRunning():
+			# request a device close
+			close_request = DeviceRequest(
+				device_id=self.device_id,
+				cmd_type=RequestType.DISCONNECT
+			)
+			self.requestWorker.emit(close_request)
+			# quit the worker and wait to finish
+			self._thread.quit()
+			self._thread.wait()
 		return
 
 	@property
 	def is_connected(self) -> bool:
+		"""Returns the connection status of the device"""
 		return getattr(self.driver, "status", False) == ConnectionStatus.CONNECTED
-
-	def stop(self) -> None:
-		if self.thread.isRunning():
-			self.thread.quit()
-			self.thread.wait()
-
-		return

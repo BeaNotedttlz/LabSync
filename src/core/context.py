@@ -48,12 +48,12 @@ class DeviceRequest:
 	"""
 	# Device ID ("EcoVario", "Laser1", "Laser2", "TGA1244", "FSV3000")
 	device_id: str
-	# Parameter name (e.g. "frequency")
-	parameter: str
 	# Type of the command
 	cmd_type: RequestType
+	# Parameter name (e.g. "frequency")
+	parameter: Optional[str] = ""
 	# value of the request
-	value: Any = None
+	value: Optional[Any] = None
 
 	@property
 	def id(self) -> str:
