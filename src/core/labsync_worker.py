@@ -165,39 +165,25 @@ class WorkerHandler(QObject):
 		self._thread.start()
 		return
 
-	def send_request(self, device_id: str, cmd_type: RequestType,
-					 parameter: Optional[str]=None, value: Optional[Any]=None) -> None:
+	def send_request(self, cmd: DeviceRequest) -> None:
 		"""
-		Send a request to the device.
-
-		:param device_id: Id of the device to request to. This is done to check correct routing
-		:type device_id: str
-		:param cmd_type: Type of the request
-		:type cmd_type: RequestType
-		:param parameter: Parameter to read / write. This parameter is optional since a connection request has no parameter.
-		:type parameter: Optional[str]
-		:param value: Value to set. This parameter is optional since a connection request has no value to set.
-		:type value: Optional[Any]
-		:raises ValueError: If the device IDs of the device and the requests do not match
+		Sends the request to the device worker. Checks if the device ID from the request matches the requested device ID.
+		Otherwise returns an error signal.
 		:return: None
 		"""
 		# dont do anything is the thread is not running
 		if not self._thread.isRunning():
 			return
 
-		# create request object
-		request = DeviceRequest(
-			device_id,
-			cmd_type,
-			parameter,
-			value
-		)
-		if device_id == self.device_id:
-			# check if the device IDs match otherwise raise error
-			self.requestWorker.emit(request)
+		request_device_id = cmd.device_id
+		if not request_device_id == self.device_id or request_device_id is None:
+			self.receivedResult.emit(RequestResult(self.device_id, cmd.id,
+												   error=f"Request device_id: {request_device_id} is not valid",
+												   error_type=ErrorType.TASK))
 			return
 		else:
-			raise DeviceRequestError(device_id, request.id, original_error=ValueError("Device ID's do not match!"))
+			self.requestWorker.emit(cmd)
+			return
 
 	def handle_result(self, result: RequestResult) -> None:
 		"""
