@@ -91,7 +91,7 @@ class Parameter:
 	Represents one controllable setting on a device.
 	"""
 	# the key used in the backend / frontend -> (device, parameter)
-	key: str
+	key: str | tuple
 
 	# the name of the driver method
 	method: str = None

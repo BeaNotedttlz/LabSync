@@ -16,6 +16,7 @@ from src.frontend.widgets.info_panel import InfoPanelWidget
 
 from src.frontend.widgets.devices.eco_expert import StageWidgetExpert
 from src.frontend.widgets.devices.tga_expert import FrequencyGeneratorWidget
+from src.frontend.widgets.devices.luxx_expert import LaserWidgetExpert
 
 
 class MainWindow(QMainWindow):
@@ -195,7 +196,7 @@ class MainWindow(QMainWindow):
 		# return widget for layout
 		return tab_widget
 
-	def _setup_widgets(self) -> None:
+	def _setup_widgets(self, laser1_max_power: int, laser1_maxx_power: int) -> None:
 		self.eco_normal_widget = StageWidgetNormal(device_id="EcoVario")
 		self.eco_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.normal_tab_layout.addWidget(self.eco_normal_widget)
@@ -232,6 +233,15 @@ class MainWindow(QMainWindow):
 		self.freq_gen_expert_widget_4.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert_widget_4)
 
+		self.laser_1_widget = LaserWidgetExpert(device_id="Laser1", laser_index=1,
+												max_power=laser1_max_power)
+		self.laser_1_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.laser_tab_layout.addWidget(self.laser_1_widget)
+
+		self.laser_2_widget = LaserWidgetExpert(device_id="Laser2", laser_index=2,
+												max_power=laser2_max_power)
+		self.laser_2_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.laser_tab_layout.addWidget(self.laser_2_widget)
 		return
 
 	def update_connection_status(self, device_id: str, status: bool) -> None:

@@ -108,6 +108,7 @@ class FrequencyGeneratorWidget(QWidget):
 			self.sendRequest.emit(cmd)
 		return
 
+	@Slot(Dict[str, Any])
 	def get_update(self, parameters: Dict[str, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.
@@ -144,16 +145,16 @@ class FrequencyGeneratorWidget(QWidget):
 			if key == "waveform":
 				idx = self._map_wave(actual_value)
 				self.waveform.setCurrentIndex(idx)
-				return
 			elif key == "lockmode":
 				idx = self._map_lock(actual_value)
 				self.lockmode.setCurrentIndex(idx)
-				return
+			elif key == "output":
+				continue
 			else:
 				widget = getattr(self, supported_parameters[key])
 				widget.clear()
 				widget.insert(str(actual_value))
-				return
+		return
 
 	@staticmethod
 	def _map_wave(waveform) -> int:

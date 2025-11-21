@@ -7,7 +7,7 @@ Module for creating and operating the PySide6 EcoVario normal mode widgets.
 """
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import QDoubleValidator, Qt
-from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QCheckBox, QSpacerItem, QLabel, QMessageBox
+from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QSpacerItem, QLabel, QMessageBox
 
 from src.frontend.widgets.utilities import create_input_field, create_output_field
 from typing import Dict, Any
@@ -133,7 +133,7 @@ class StageWidgetNormal(QWidget):
 			else:
 				widget = getattr(self, supproted_parameters[key])
 				widget.setText(parameter)
-				return
+		return
 
 	@Slot()
 	def _send_update(self) -> None:
