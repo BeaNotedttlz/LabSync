@@ -15,6 +15,7 @@ from src.frontend.widgets.devices.eco_normal import StageWidgetNormal
 from src.frontend.widgets.info_panel import InfoPanelWidget
 
 from src.frontend.widgets.devices.eco_expert import StageWidgetExpert
+from src.frontend.widgets.devices.tga_expert import FrequencyGeneratorWidget
 
 
 class MainWindow(QMainWindow):
@@ -202,6 +203,35 @@ class MainWindow(QMainWindow):
 		self.eco_expert_widget = StageWidgetExpert(device_id="EcoVario")
 		self.eco_expert_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.stage_tab_layout.addWidget(self.eco_expert_widget)
+
+		self.freq_gen_expert_widget_1 = FrequencyGeneratorWidget(
+			device_id="TGA1244",
+			channel_index=1
+		)
+		self.freq_gen_expert_widget_1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert_widget_1)
+
+		self.freq_gen_expert_widget_2 = FrequencyGeneratorWidget(
+			device_id="TGA1244",
+			channel_index=2
+		)
+		self.freq_gen_expert_widget_2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert_widget_2)
+
+		self.freq_gen_expert_widget_3 = FrequencyGeneratorWidget(
+			device_id="TGA1244",
+			channel_index=3
+		)
+		self.freq_gen_expert_widget_3.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert_widget_3)
+
+		self.freq_gen_expert_widget_4 = FrequencyGeneratorWidget(
+			device_id="TGA1244",
+			channel_index=4
+		)
+		self.freq_gen_expert_widget_4.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert_widget_4)
+
 		return
 
 	def update_connection_status(self, device_id: str, status: bool) -> None:

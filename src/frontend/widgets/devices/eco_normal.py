@@ -1,5 +1,5 @@
 """
-Module for creating and operating the PySide6 EcoVario expert mode widgets.
+Module for creating and operating the PySide6 EcoVario normal mode widgets.
 @author: Merlin Schmidt
 @date: 2025-20-10
 @file: src/frontend/widgets/devices/eco_normal.py
@@ -17,7 +17,7 @@ class StageWidgetNormal(QWidget):
 	"""
 		Create EcoVario normal mode widgets and functionality.
 		:return: None
-		"""
+	"""
 	sendRequest = Signal(DeviceRequest)
 	sendUpdate = Signal(dict)
 
@@ -57,7 +57,7 @@ class StageWidgetNormal(QWidget):
 	def _start(self) -> None:
 		"""
 		Sends all stage parameters as Device requests as start signal
-		:return:
+		:return: None
 		"""
 		try:
 			pos = float(self.out_target_position.text().replace(",", "."))
@@ -80,7 +80,7 @@ class StageWidgetNormal(QWidget):
 					value=value
 				)
 				self.sendRequest.emit(cmd)
-				return
+			return
 		except Exception as e:
 			QMessageBox.warning(
 				self,
@@ -123,7 +123,7 @@ class StageWidgetNormal(QWidget):
 		for key, parameter in parameters.items():
 			if key in ["target_acc", "target_deacc"]:
 				continue
-			if not key in supproted_parameters:
+			if key not in supproted_parameters:
 				QMessageBox.warning(
 					self,
 					"UI Error",
