@@ -9,7 +9,7 @@ This allows for single device commands and loop calls of methods
 from typing import Optional, Any
 
 from PySide6.QtCore import QTimer, QThread, QObject, Signal, Slot
-from src.core.context import DeviceConnectionError, DeviceRequestError, ErrorType
+from src.core.context import DeviceConnectionError, ErrorType
 from src.core.context import DeviceRequest, RequestResult, RequestType, DeviceProfile
 from src.backend.connection_status import ConnectionStatus
 

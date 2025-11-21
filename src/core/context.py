@@ -7,8 +7,6 @@ Module for creating and managing all device Context during runtime.
 """
 
 from dataclasses import dataclass
-from src.core.labsync_worker import WorkerHandler
-
 from enum import Enum, auto
 from typing import Any, Optional, Dict
 
