@@ -4,9 +4,7 @@ Module for proving general utility classes.
 @date: 2025-15-10
 @file: scr/core/utils.py
 """
-
-
-import os, platform, subprocess, json, tempfile
+import os, json, tempfile
 from typing import Any
 import math
 
@@ -31,6 +29,13 @@ class FilesUtils:
 			"version": "2.5.2",
 			"username": "",
 			"debug_mode": False,
+		}
+		self.default_ports = {
+			"EcoVario": ["COM0", 9600],
+			"Laser1": ["COM1", 500000],
+			"Laser2": ["COM2", 500000],
+			"TGA1244": ["COM3", 9600],
+			"FSV3000": "COM4"
 		}
 		# save file name to self
 		self.filename = file_name
@@ -85,6 +90,8 @@ class FilesUtils:
 				f.flush()
 				os.fsync(f.fileno())
 			os.replace(tmp_path, self.settings_path)
+		except (json.decoder.JSONDecodeError, OSError):
+			raise PortSetError
 		finally:
 			if os.path.exists(tmp_path):
 				try:
@@ -102,19 +109,22 @@ class FilesUtils:
 		"""
 		# read port file and return contents
 
+		try:
+			with open(self.ports_path, "r", encoding="utf-8") as f:
+				ports = json.load(f)
+			return ports
+		except (json.decoder.JSONDecodeError, OSError):
+			return self.default_settings.copy()
+			raise PortSetError
 
-		with open(self.ports_path, "r", encoding="utf-8") as f:
-			ports = json.load(f)
-		return ports
-
-	def set_ports(self, stage: str, TGA: str, laser1: str, laser2: str, fsv: str) -> dict:
+	def set_ports(self, stage: str, freq_gen: str, laser1: str, laser2: str, fsv: str) -> None:
 		"""
 		Update the new ports and save to ports file.
 
 		:param stage: New stage port
 		:type stage: str
-		:param TGA: New TGA port
-		:type TGA: str
+		:param freq_gen: New TGA port
+		:type freq_gen: str
 		:param laser1: New Laser1 port
 		:type laser1: str
 		:param laser2: New Laser2 port
@@ -124,19 +134,31 @@ class FilesUtils:
 		:return: The new contents of the ports file
 		:rtype: dict
 		"""
-		# create ports dir and dict for device ports
-		ports_dir = os.path.join(self.ports_path, "files", "ports", "default_ports.json")
+		# TODO need to implement the baud rates
 		ports = {
-			"stage": stage,
-			"TGA": TGA,
-			"laser1": laser1,
-			"laser2": laser2,
-			"fsv": fsv
+			"EcoVario": [stage, 9600],
+			"Laser1": [laser1, 500000],
+			"Laser2": [laser2, 500000],
+			"TGA1244": [freq_gen, 9600],
+			"FSV3000": fsv,
 		}
-		# save contents to file and return new contents
-		with open(ports_dir, "w", encoding="utf-8") as f:
-			json.dump(ports, f, indent=2)
-		return ports
+		# atomic write
+		fd, tmp_path = tempfile.mkstemp(dir=self.folder, prefix="ports_", text=True)
+		try:
+			with os.fdopen(fd, "w", encoding="utf-8") as f:
+				json.dump(ports, f, indent=2)
+				f.flush()
+				os.fsync(f.fileno())
+			os.replace(tmp_path, self.settings_path)
+		except (json.decoder.JSONDecodeError, OSError):
+			raise PortSetError
+		finally:
+			if os.path.exists(tmp_path):
+				try:
+					os.remove(tmp_path)
+				except OSError:
+					pass
+		return
 
 # Exception classes #
 class ParameterNotSetError(Exception):
@@ -161,6 +183,30 @@ class ParameterOutOfRangeError(Exception):
 		return self.message
 
 class UIParameterError(Exception):
+	def __init__(self, message) -> None:
+		self.message = message
+		super().__init__(self.message)
+
+	def __str__(self) -> str:
+		return self.message
+
+class PortSetError(Exception):
+	def __init__(self, message) -> None:
+		self.message = message
+		super().__init__(self.message)
+
+	def __str__(self) -> str:
+		return self.message
+
+class DeviceConnectionError(Exception):
+	def __init__(self, message) -> None:
+		self.message = message
+		super().__init__(self.message)
+
+	def __str__(self) -> str:
+		return self.message
+
+class DeviceTaskError(Exception):
 	def __init__(self, message) -> None:
 		self.message = message
 		super().__init__(self.message)

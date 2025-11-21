@@ -15,8 +15,8 @@ from src.core.context import DeviceRequest, RequestType
 
 class StageWidgetNormal(QWidget):
 	"""
-		Create EcoVario normal mode widgets and functionality.
-		:return: None
+	Create EcoVario normal mode widgets and functionality.
+	:return: None
 	"""
 	sendRequest = Signal(DeviceRequest)
 	sendUpdate = Signal(dict)

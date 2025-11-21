@@ -24,6 +24,8 @@ class LaserWidgetExpert(QWidget):
 	control_modes = ["ACC", "APC"]
 
 	def __init__(self, device_id: str, laser_index: int, max_power: float=1.0) -> None:
+		"""Constructor method
+		"""
 		super().__init__()
 		self.device_id = device_id
 		self.laser_index = laser_index
@@ -63,12 +65,13 @@ class LaserWidgetExpert(QWidget):
 		self.laser_power_absolute.returnPressed.connect(
 			lambda: self._calc_power(False)
 		)
+		return
 
 	@Slot()
 	def _apply(self) -> None:
 		"""
 		Sends all laser parameters as a Device request.
-		:return:
+		:return: None
 		"""
 		temp_power = float(self.laser_power_percent.text().replace(",", "."))
 		modulation = self.modulation_mode.currentIndex()
@@ -96,6 +99,15 @@ class LaserWidgetExpert(QWidget):
 
 	@staticmethod
 	def _map_operating_mode(modulation: str, control: str) -> int:
+		"""
+		Maps the desired modulation and control mode to the single digit ROM operating mode.
+		:param modulation: Selected modulation mode
+		:type modulation: str
+		:param control: Selected control mode
+		:type control: str
+		:return: The corresponding operating mode in ROM
+		:rtype: int
+		"""
 		if modulation == "Standby":
 			return 0
 		elif modulation == "Digital":
