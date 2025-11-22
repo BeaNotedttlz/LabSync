@@ -11,15 +11,14 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QCheckBox, QSpa
 
 from src.frontend.widgets.utilities import create_input_field, create_output_field
 from typing import Dict, Any
-from src.core.context import DeviceRequest, RequestType
 
 class StageWidgetExpert(QWidget):
 	"""
 	Create EcoVario expert mode widgets and functionality.
 	:return: None
 	"""
-	sendRequest = Signal(DeviceRequest)
-	sendUpdate = Signal(dict)
+	sendRequest = Signal(Dict[tuple, Any])
+	sendUpdate = Signal(Dict[tuple, Any], str)
 
 	def __init__(self, device_id: str) -> None:
 		super().__init__()
@@ -72,7 +71,7 @@ class StageWidgetExpert(QWidget):
 	def _start(self) -> None:
 		"""
 		Sends all stage parameters as Device requests as start signal
-		:return:
+		:return: None
 		"""
 		try:
 			pos = float(self.out_target_position.text().replace(",", "."))
@@ -81,21 +80,15 @@ class StageWidgetExpert(QWidget):
 			deaccell = float(self.in_deaccell.text().replace(",", "."))
 
 			parameters = {
-				"target_pos": pos,
-				"target_vel": vel,
-				"target_acc": accell,
-				"target_deacc": deaccell,
-				"START": None
+				(self.device_id,"target_pos"): pos,
+				(self.device_id,"target_vel"): vel,
+				(self.device_id,"target_acc"): accell,
+				(self.device_id,"target_deacc"): deaccell,
+				(self.device_id,"START"): None
 			}
-			for key, value in parameters.items():
-				cmd = DeviceRequest(
-					device_id=self.device_id,
-					cmd_type=RequestType.SET,
-					parameter=key,
-					value=value
-				)
-				self.sendRequest.emit(cmd)
-				return
+
+			self.sendRequest.emit(parameters)
+			return
 		except Exception as e:
 			QMessageBox.warning(
 				self,
@@ -110,17 +103,13 @@ class StageWidgetExpert(QWidget):
 		Sends stop signal to the controller
 		:return: None
 		"""
-		cmd = DeviceRequest(
-			device_id=self.device_id,
-			cmd_type=RequestType.SET,
-			parameter="STOP",
-			value=None
-		)
-		self.sendRequest.emit(cmd)
-		return
+		parameters = {
+			(self.device_id, "STOP"): None
+		}
+		self.sendRequest.emit(parameters)
 
 	@Slot()
-	def get_update(self, parameters: Dict[str, Any]) -> None:
+	def get_update(self, parameters: Dict[tuple, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.
 		:param parameters: Parameters from the controller.
@@ -136,7 +125,7 @@ class StageWidgetExpert(QWidget):
 			"error_code": "out_error_code"
 		}
 		for key, parameter in parameters.items():
-			if not key in supproted_parameters:
+			if not key[1] in supproted_parameters:
 				QMessageBox.warning(
 					self,
 					"UI Error",
@@ -144,7 +133,7 @@ class StageWidgetExpert(QWidget):
 				)
 				return
 			else:
-				widget = getattr(self, supproted_parameters[key])
+				widget = getattr(self, supproted_parameters[key[1]])
 				widget.setText(parameter)
 				return
 
@@ -156,9 +145,9 @@ class StageWidgetExpert(QWidget):
 		self.out_target_position.setText(pos)
 
 		update = {
-			"target_pos": pos,
-			"target_vel": speed,
+			(self.device_id,"target_pos"): pos,
+			(self.device_id,"target_vel"): speed,
 		}
-		self.sendUpdate.emit(update)
+		self.sendUpdate.emit(update, "expert")
 		return
 
