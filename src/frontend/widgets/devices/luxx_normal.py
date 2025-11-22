@@ -9,18 +9,18 @@ from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import QDoubleValidator, Qt
 from PySide6.QtWidgets import (QWidget, QGridLayout,
 							   QCheckBox, QPushButton, QSpacerItem,
-							   QLabel, QMessageBox, QSpinBox)
+							   QLabel, QSpinBox)
 
 from src.frontend.widgets.utilities import create_input_field, create_combo_box
 from typing import Dict, Any
-from src.core.context import DeviceRequest, RequestType
+
 
 class LaserWidgetNormal(QWidget):
 	"""
 	Create Normal mode widgets and functionality.
 	"""
-	sendRequest = Signal(DeviceRequest)
-	sendUpdate = Signal(dict)
+	sendRequest = Signal(Dict[tuple, Any])
+	sendUpdate = Signal(Dict[tuple, Any])
 
 	modulation_modes = ["Standby", "CW", "Digital", "Analog"]
 	control_modes = ["ACC", "APC"]
@@ -127,18 +127,27 @@ class LaserWidgetNormal(QWidget):
 		output_1 = self.output1.isChecked()
 		output_2 = self.output2.isChecked()
 
-		parameters = {
-			"waveform": wave_1,
-			"waveform": wave_2,
-			"frequency": frequency_1,
-			"frequency": frequency_2,
-			"lockmode": lockmode_1,
-			"lockmode": lockmode_2,
-			"output": output_1,
-			"output": output_2,
-			"temp_power": power_1,
-			"temp_power1": power_2,
+		ch1_parameters = {
+			("TGA1244","waveform"): wave_1,
+			("TGA1244","frequency"): frequency_1,
+			("TGA1244","lockmode"): lockmode_1,
+			("TGA1244","output"): output_1,
+			("Laser1","operating_mode"): op_mode_1,
+			("Laser1","temp_power"): power_1,
 		}
+		self.sendRequest.emit(ch1_parameters)
+		self.sendUpdate.emit(ch1_parameters)
+		ch2_parameters = {
+			("TGA1244","waveform"): wave_2,
+			("TGA1244","frequency"): frequency_2,
+			("TGA1244","lockmode"): lockmode_2,
+			("TGA1244","output"): output_2,
+			("Laser2","operating_mode"): op_mode_2,
+			("Laser2","temp_power"): power_2,
+		}
+		self.sendRequest.emit(ch2_parameters)
+		self.sendUpdate.emit(ch2_parameters)
+		return
 
 	@staticmethod
 	def _map_operating_mode(modulation: str, control: str) -> int:

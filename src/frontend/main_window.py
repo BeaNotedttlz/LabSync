@@ -8,7 +8,8 @@ Main window module for the PySide6 LabSync application.
 
 from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget,
 							   QHBoxLayout, QSplitter, QGridLayout,
-							   QMessageBox, QTabWidget, QSizePolicy,)
+							   QMessageBox, QTabWidget, QSizePolicy,
+							   QSpacerItem)
 from PySide6.QtCore import Signal, Slot, Qt
 from typing import Dict, Any
 
@@ -20,6 +21,7 @@ from src.core.context import UIRequest, RequestType
 from src.frontend.widgets.devices.eco_expert import StageWidgetExpert
 from src.frontend.widgets.devices.tga_expert import FrequencyGeneratorWidget
 from src.frontend.widgets.devices.luxx_expert import LaserWidgetExpert
+from src.frontend.widgets.devices.luxx_normal import LaserWidgetNormal
 
 
 class MainWindow(QMainWindow):
@@ -204,6 +206,11 @@ class MainWindow(QMainWindow):
 		self.eco_normal_widget = StageWidgetNormal(device_id="EcoVario")
 		self.eco_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.normal_tab_layout.addWidget(self.eco_normal_widget)
+		self.normal_tab_layout.addItem(QSpacerItem(100, 10))
+
+		self.laser_normal_widget = LaserWidgetNormal()
+		self.laser_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.normal_tab_layout.addWidget(self.laser_normal_widget)
 
 		self.eco_expert_widget = StageWidgetExpert(device_id="EcoVario")
 		self.eco_expert_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -251,8 +258,8 @@ class MainWindow(QMainWindow):
 	def update_connection_status(self, device_id: str, status: bool) -> None:
 		return
 
-	@Slot(Dict[str, str, Any])
-	def handle_ui_request(self, request: Dict[str, str, Any]) -> None:
+	@Slot(Dict[tuple, Any])
+	def handle_ui_request(self, request: Dict[tuple, Any]) -> None:
 		"""
 		Handles the request from a widget and formats it as a UIRequest object.
 		This will then be sent to LabSync to finally send to device.
@@ -273,8 +280,8 @@ class MainWindow(QMainWindow):
 		self.deviceRequest.emit(cmd)
 		return
 
-	@Slot(Dict[str, str, Any])
-	def update_ui_request(self, request: Dict[str, str, Any], sender: str) -> None:
+	@Slot(Dict[tuple, Any])
+	def update_ui_request(self, request: Dict[tuple, Any], sender: str) -> None:
 		"""
 		Gets an update from the widget and passes it to another.
 		:param request: Request object.
