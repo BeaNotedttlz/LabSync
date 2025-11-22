@@ -38,6 +38,7 @@ class ErrorType(Enum):
 	TIMEOUT = auto()
 
 # Requests
+# Device worker requests
 @dataclass(frozen=True)
 class DeviceRequest:
 	"""
@@ -84,6 +85,18 @@ class RequestResult:
 	def is_success(self) -> bool:
 		return self.error is None
 
+# UI requests
+@dataclass
+class UIRequest:
+	# Device ID
+	device_id: str
+	# parameter
+	parameter: str
+	# type of request
+	cmd_type: RequestType
+	# value
+	value: Optional[Any] = None
+
 # Device Parameters and profiles
 @dataclass
 class Parameter:
@@ -91,7 +104,7 @@ class Parameter:
 	Represents one controllable setting on a device.
 	"""
 	# the key used in the backend / frontend -> (device, parameter)
-	key: str | tuple
+	key: str
 
 	# the name of the driver method
 	method: str = None

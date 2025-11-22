@@ -9,10 +9,13 @@ Main window module for the PySide6 LabSync application.
 from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget,
 							   QHBoxLayout, QSplitter, QGridLayout,
 							   QMessageBox, QTabWidget, QSizePolicy,)
-from PySide6.QtCore import QEvent, Signal, Slot, Qt
+from PySide6.QtCore import Signal, Slot, Qt
+from typing import Dict, Any
 
 from src.frontend.widgets.devices.eco_normal import StageWidgetNormal
 from src.frontend.widgets.info_panel import InfoPanelWidget
+
+from src.core.context import UIRequest, RequestType
 
 from src.frontend.widgets.devices.eco_expert import StageWidgetExpert
 from src.frontend.widgets.devices.tga_expert import FrequencyGeneratorWidget
@@ -27,6 +30,7 @@ class MainWindow(QMainWindow):
 	:rtype: QApplication
 	"""
 	# create signals
+	deviceRequest = Signal(object)
 	# close window
 	requestClose = Signal()
 	# save / load preset
@@ -196,7 +200,7 @@ class MainWindow(QMainWindow):
 		# return widget for layout
 		return tab_widget
 
-	def _setup_widgets(self, laser1_max_power: int, laser1_maxx_power: int) -> None:
+	def _setup_widgets(self, laser1_max_power: int, laser2_max_power: int) -> None:
 		self.eco_normal_widget = StageWidgetNormal(device_id="EcoVario")
 		self.eco_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.normal_tab_layout.addWidget(self.eco_normal_widget)
@@ -246,3 +250,52 @@ class MainWindow(QMainWindow):
 
 	def update_connection_status(self, device_id: str, status: bool) -> None:
 		return
+
+	@Slot(Dict[str, str, Any])
+	def handle_ui_request(self, request: Dict[str, str, Any]) -> None:
+		"""
+		Handles the request from a widget and formats it as a UIRequest object.
+		This will then be sent to LabSync to finally send to device.
+		:param request: Request object.
+		:type request: Dict[str, str, Any]
+		:return: None
+		"""
+		device_id = request["device_id"]
+		parameter = request["parameter"]
+		value = request["value"]
+
+		cmd = UIRequest(
+			device_id=device_id,
+			parameter=parameter,
+			cmd_type=RequestType.SET,
+			value=value
+		)
+		self.deviceRequest.emit(cmd)
+		return
+
+	@Slot(Dict[str, str, Any])
+	def update_ui_request(self, request: Dict[str, str, Any], sender: str) -> None:
+		"""
+		Gets an update from the widget and passes it to another.
+		:param request: Request object.
+		:type request: Dict[str, str, Any]
+		:param sender: Sender ID
+		:type sender: str
+		:return: None
+		"""
+		if sender == "normal":
+			self.eco_expert_widget.get_update(request)
+			return
+		elif sender == "expert":
+			self.eco_normal_widget.get_update(request)
+			return
+		else:
+			QMessageBox.warning(
+				self,
+				"UI Error",
+				"An Interal UI Error occurred."
+				"Unknown sender: {}".format(sender)
+			)
+			return
+
+
