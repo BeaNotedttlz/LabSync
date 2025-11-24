@@ -11,7 +11,6 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QSpacerItem, QL
 
 from src.frontend.widgets.utilities import create_input_field, create_output_field
 from typing import Dict, Any
-from src.core.context import DeviceRequest, RequestType
 
 class StageWidgetNormal(QWidget):
 	"""

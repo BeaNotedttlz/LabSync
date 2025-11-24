@@ -11,14 +11,13 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QCheckBox, QPushButton, QSpa
 
 from src.frontend.widgets.utilities import create_input_field, create_combo_box
 from typing import Dict, Any
-from src.core.context import DeviceRequest, RequestType
 
 class LaserWidgetExpert(QWidget):
 	"""
 	Create LuxX+ expert mode widgets and functionality.
 	:return: None
 	"""
-	sendRequest = Signal(DeviceRequest)
+	sendRequest = Signal(Dict[tuple, Any])
 
 	modulation_types = ["Standby", "CW", "Digital", "Analog"]
 	control_modes = ["ACC", "APC"]
@@ -83,18 +82,12 @@ class LaserWidgetExpert(QWidget):
 		operating_mode = self._map_operating_mode(modulation, control_mode)
 
 		parameters = {
-			"temp_power": temp_power,
-			"operating_mode": operating_mode,
-			"emission_status": emission
+			(self.device_id, "temp_power"): temp_power,
+			(self.device_id, "operating_mode"): operating_mode,
+			(self.device_id, "emission_status"): emission
 		}
-		for key, parameter in parameters.items():
-			cmd = DeviceRequest(
-				device_id=self.device_id,
-				cmd_type=RequestType.SET,
-				parameter=key,
-				value=parameter
-			)
-			self.sendRequest.emit(cmd)
+
+		self.sendRequest.emit(parameters)
 		return
 
 	@staticmethod
@@ -153,21 +146,21 @@ class LaserWidgetExpert(QWidget):
 			"emission_status": "if_active"
 		}
 		for key, parameter in parameters.items():
-			if key not in supported_parameters:
+			if key[1] not in supported_parameters:
 				QMessageBox.warning(
 					self,
 					"UI Error",
 					f"something went wrong:\n{parameter} not supported."
 				)
 				return
-			if key == "operating_mode":
+			if key[1] == "operating_mode":
 				modulation, control = self._map_ui_modes(parameter)
 				self.modulation_mode.setCurrentIndex(modulation)
 				self.control_mode.setCurrentIndex(control)
-			elif key == "emission_status":
+			elif key[1] == "emission_status":
 				continue
 			else:
-				widget = getattr(self, supported_parameters[key])
+				widget = getattr(self, supported_parameters[key[1]])
 				widget.clear()
 				widget.setText(parameter)
 		return
