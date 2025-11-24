@@ -128,20 +128,20 @@ class LaserWidgetNormal(QWidget):
 		output_2 = self.output2.isChecked()
 
 		ch1_parameters = {
-			("TGA1244","waveform"): wave_1,
-			("TGA1244","frequency"): frequency_1,
-			("TGA1244","lockmode"): lockmode_1,
-			("TGA1244","output"): output_1,
+			("TGA1244","waveform"): (channel_1, wave_1),
+			("TGA1244","frequency"): (channel_1, frequency_1),
+			("TGA1244","lockmode"): (channel_1, lockmode_1),
+			("TGA1244","output"): (channel_1, output_1),
 			("Laser1","operating_mode"): op_mode_1,
 			("Laser1","temp_power"): power_1,
 		}
 		self.sendRequest.emit(ch1_parameters)
 		self.sendUpdate.emit(ch1_parameters)
 		ch2_parameters = {
-			("TGA1244","waveform"): wave_2,
-			("TGA1244","frequency"): frequency_2,
-			("TGA1244","lockmode"): lockmode_2,
-			("TGA1244","output"): output_2,
+			("TGA1244","waveform"): (channel_2, wave_2),
+			("TGA1244","frequency"): (channel_2, frequency_2),
+			("TGA1244","lockmode"): (channel_2, lockmode_2),
+			("TGA1244","output"): (channel_2, output_2),
 			("Laser2","operating_mode"): op_mode_2,
 			("Laser2","temp_power"): power_2,
 		}
