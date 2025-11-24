@@ -11,14 +11,13 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QCheckBox, QLab
 
 from src.frontend.widgets.utilities import create_input_field, create_combo_box
 from typing import Dict, Any
-from src.core.context import DeviceRequest, RequestType
 
 class FrequencyGeneratorWidget(QWidget):
 	"""
 	Create TGA1244 expert mode widgets and functionality.
 	:return: None
 	"""
-	sendRequest = Signal(DeviceRequest)
+	sendRequest = Signal(Dict[tuple, Any])
 
 	wave_forms = ["sine", "square", "triang", "dc"]
 	input_modes = ["Amp+Offset", "Low+High"]
@@ -90,22 +89,16 @@ class FrequencyGeneratorWidget(QWidget):
 			offset = (offset + amplitude) / 2
 
 		parameters = {
-			"waveform": wave_form,
-			"lockmode": lock_mode,
-			"frequency": frequency,
-			"amplitude": amplitude,
-			"offset": offset,
-			"phase": phase,
-			"output": output,
+			(self.device_id, "waveform"): (wave_form, self.channel_index),
+			(self.device_id, "locjkmode"): (lock_mode, self.channel_index),
+			(self.device_id, "frequency"): (frequency, self.channel_index),
+			(self.device_id, "amplitude"): (amplitude, self.channel_index),
+			(self.device_id, "offset"): (offset, self.channel_index),
+			(self.device_id, "phase"): (phase, self.channel_index),
+			(self.device_id, "output"): (output, self.channel_index)
 		}
-		for key, value in parameters.items():
-			cmd = DeviceRequest(
-				device_id=self.device_id,
-				cmd_type=RequestType.SET,
-				parameter=key,
-				value=(self.channel_index, value)
-			)
-			self.sendRequest.emit(cmd)
+
+		self.sendRequest.emit(parameters)
 		return
 
 	@Slot(Dict[str, Any])
@@ -128,7 +121,7 @@ class FrequencyGeneratorWidget(QWidget):
 		for key, parameter in parameters.items():
 			channel_index = parameter[0]
 			actual_value = parameter[1]
-			if key not in supported_parameters:
+			if key[1] not in supported_parameters:
 				QMessageBox.warning(
 					self,
 					"UI Error",
@@ -142,16 +135,16 @@ class FrequencyGeneratorWidget(QWidget):
 					"The request and device index does not match"
 				)
 				return
-			if key == "waveform":
+			if key[1] == "waveform":
 				idx = self._map_wave(actual_value)
 				self.waveform.setCurrentIndex(idx)
-			elif key == "lockmode":
+			elif key[1] == "lockmode":
 				idx = self._map_lock(actual_value)
 				self.lockmode.setCurrentIndex(idx)
-			elif key == "output":
+			elif key[1] == "output":
 				continue
 			else:
-				widget = getattr(self, supported_parameters[key])
+				widget = getattr(self, supported_parameters[key[1]])
 				widget.clear()
 				widget.insert(str(actual_value))
 		return
