@@ -107,8 +107,9 @@ class StageWidgetExpert(QWidget):
 			(self.device_id, "STOP"): None
 		}
 		self.sendRequest.emit(parameters)
+		return
 
-	@Slot()
+	@Slot(Dict[tuple, Any])
 	def get_update(self, parameters: Dict[tuple, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.

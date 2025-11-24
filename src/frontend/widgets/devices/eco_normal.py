@@ -18,8 +18,8 @@ class StageWidgetNormal(QWidget):
 	Create EcoVario normal mode widgets and functionality.
 	:return: None
 	"""
-	sendRequest = Signal(DeviceRequest)
-	sendUpdate = Signal(dict)
+	sendRequest = Signal(Dict[tuple, Any])
+	sendUpdate = Signal(Dict[tuple, Any], str)
 
 	def __init__(self, device_id: str) -> None:
 		super().__init__()
@@ -66,20 +66,14 @@ class StageWidgetNormal(QWidget):
 			deaccell = 501.30
 
 			parameters = {
-				"target_pos": pos,
-				"target_vel": vel,
-				"target_acc": accell,
-				"target_deacc": deaccell,
-				"START": None
+				(self.device_id, "target_pos"): pos,
+				(self.device_id, "target_vel"): vel,
+				(self.device_id, "target_acc"): accell,
+				(self.device_id, "target_deacc"): deaccell,
+				(self.device_id, "START"): None
 			}
-			for key, value in parameters.items():
-				cmd = DeviceRequest(
-					device_id=self.device_id,
-					cmd_type=RequestType.SET,
-					parameter=key,
-					value=value
-				)
-				self.sendRequest.emit(cmd)
+
+			self.sendRequest.emit(parameters)
 			return
 		except Exception as e:
 			QMessageBox.warning(
@@ -95,17 +89,14 @@ class StageWidgetNormal(QWidget):
 		Sends stop signal to the controller
 		:return: None
 		"""
-		cmd = DeviceRequest(
-			device_id=self.device_id,
-			cmd_type=RequestType.SET,
-			parameter="STOP",
-			value=None
-		)
-		self.sendRequest.emit(cmd)
+		parameters = {
+			(self.device_id, "STOP"): None
+		}
+		self.sendRequest.emit(parameters)
 		return
 
-	@Slot()
-	def get_update(self, parameters: Dict[str, Any]) -> None:
+	@Slot(Dict[tuple, Any])
+	def get_update(self, parameters: Dict[tuple, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.
 		:param parameters: Parameters from the controller.
@@ -118,12 +109,10 @@ class StageWidgetNormal(QWidget):
 			"target_acc": "in_accel",
 			"target_deacc": "in_deaccel",
 			"current_pos": "out_current_position",
-			"error_code": "out_error_code",
+			"error_code": "out_error_code"
 		}
 		for key, parameter in parameters.items():
-			if key in ["target_acc", "target_deacc"]:
-				continue
-			if key not in supproted_parameters:
+			if not key[1] in supproted_parameters:
 				QMessageBox.warning(
 					self,
 					"UI Error",
@@ -131,20 +120,20 @@ class StageWidgetNormal(QWidget):
 				)
 				return
 			else:
-				widget = getattr(self, supproted_parameters[key])
+				widget = getattr(self, supproted_parameters[key[1]])
 				widget.setText(parameter)
-		return
+				return
 
 	@Slot()
 	def _send_update(self) -> None:
 		speed = self.in_speed.text().replace(",", ".")
 		pos = self.out_target_position.text().replace(",", ".")
 
-		self.out_current_position.setText(pos)
+		self.out_target_position.setText(pos)
 
 		update = {
-			"target_pos": pos,
-			"target_vel": speed,
+			(self.device_id, "target_pos"): pos,
+			(self.device_id, "target_vel"): speed,
 		}
-		self.sendUpdate.emit(update)
+		self.sendUpdate.emit(update, "expert")
 		return
