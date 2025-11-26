@@ -50,6 +50,8 @@ class MainWindow(QMainWindow):
 		# save the application instance to self.
 		self.app = app
 
+		self.laser_dialog = None
+
 		# set window title
 		self.setWindowTitle("LabSync")
 
@@ -135,17 +137,17 @@ class MainWindow(QMainWindow):
 		expert_mode = mode_menu.addAction("Expert Mode")
 		expert_mode.triggered.connect(self.toggle_expert_mode)
 
-		# create port secltion and settings entrires
-		port_select = mode_menu.addAction("Select Ports")
-		port_select.triggered.connect(self._show_port_dialog)
-
-		settings = mode_menu.addAction("Settings")
-		settings.triggered.connect(self._show_settings_dialog)
-
-		# BodePlot window #
-		window_menu = menu_bar.addMenu("&Windows")
-		bode_window = window_menu.addAction("BodePlot")
-		bode_window.triggered.connect(self.open_bode_window)
+		# # create port secltion and settings entrires
+		# port_select = mode_menu.addAction("Select Ports")
+		# port_select.triggered.connect(self._show_port_dialog)
+		#
+		# settings = mode_menu.addAction("Settings")
+		# settings.triggered.connect(self._show_settings_dialog)
+		#
+		# # BodePlot window #
+		# window_menu = menu_bar.addMenu("&Windows")
+		# bode_window = window_menu.addAction("BodePlot")
+		# bode_window.triggered.connect(self.open_bode_window)
 		return
 
 	def toggle_expert_mode(self) -> None:
@@ -264,7 +266,7 @@ class MainWindow(QMainWindow):
 	def update_connection_status(self, device_id: str, status: bool) -> None:
 		return
 
-	@Slot(Dict[tuple, Any])
+	@Slot(dict)
 	def handle_ui_request(self, request: Dict[tuple, Any]) -> None:
 		"""
 		Handles the request from a widget and formats it as a UIRequest object.
@@ -286,7 +288,7 @@ class MainWindow(QMainWindow):
 		self.deviceRequest.emit(cmd)
 		return
 
-	@Slot(Dict[tuple, Any])
+	@Slot(dict)
 	def update_ui_request(self, request: Dict[tuple, Any], sender: str) -> None:
 		"""
 		Gets an update from the widget and passes it to another.

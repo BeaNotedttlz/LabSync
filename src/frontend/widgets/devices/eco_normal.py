@@ -94,7 +94,7 @@ class StageWidgetNormal(QWidget):
 		self.sendRequest.emit(parameters)
 		return
 
-	@Slot(Dict[tuple, Any])
+	@Slot(dict)
 	def get_update(self, parameters: Dict[tuple, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.

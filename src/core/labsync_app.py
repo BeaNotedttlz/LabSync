@@ -7,6 +7,7 @@ Main application for controlling backend and frontend of the LabSync application
 """
 from src.core.context import (DeviceRequest, RequestType, RequestResult,
 							  ErrorType, DeviceProfile, Parameter)
+from src.core.context import UIRequest
 from src.core.utilities import PortSetError
 from src.core.labsync_worker import WorkerHandler
 from src.backend.devices.eco_connect import EcoConnect
@@ -67,6 +68,7 @@ class LabSync(QObject):
 
 		# create main window widgets
 		self.main_window = MainWindow(app)
+		self.main_window.show()
 
 		# connect signals
 		self.connectionChanged.connect(self.main_window.update_connection_status)
@@ -374,6 +376,18 @@ class LabSync(QObject):
 				"If you dont know what this means commit an Issue on GitHub!"
 			)
 			return
+
+	@Slot(UIRequest)
+	def request_worker(self, request: UIRequest) -> None:
+		"""
+		A single entry point for UI requests
+		:param request: Request from the User Interface
+		:type request: UIRequest
+		:return: None
+		"""
+
+		return
+
 
 
 

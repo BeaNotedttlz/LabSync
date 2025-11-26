@@ -101,7 +101,7 @@ class FrequencyGeneratorWidget(QWidget):
 		self.sendRequest.emit(parameters)
 		return
 
-	@Slot(Dict[str, Any])
+	@Slot(dict)
 	def get_update(self, parameters: Dict[str, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.

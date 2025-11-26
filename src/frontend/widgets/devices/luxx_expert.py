@@ -132,7 +132,7 @@ class LaserWidgetExpert(QWidget):
 			self.laser_power_percent.setText(str(power))
 		return
 
-	@Slot(Dict[str, Any])
+	@Slot(dict)
 	def get_update(self, parameters: Dict[str, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.
