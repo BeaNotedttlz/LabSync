@@ -22,6 +22,7 @@ from src.frontend.widgets.devices.eco_expert import StageWidgetExpert
 from src.frontend.widgets.devices.tga_expert import FrequencyGeneratorWidget
 from src.frontend.widgets.devices.luxx_expert import LaserWidgetExpert
 from src.frontend.widgets.devices.luxx_normal import LaserWidgetNormal
+from src.frontend.widgets.devices.fsv_normal import FsvNormalWidget
 
 
 class MainWindow(QMainWindow):
@@ -110,6 +111,7 @@ class MainWindow(QMainWindow):
 			# ignore event otherwise
 			event.ignore()
 
+	# TODO missing functionality
 	def _setup_menubar(self) -> None:
 		"""
 		Create the menubar of the LabSync application.
@@ -253,6 +255,10 @@ class MainWindow(QMainWindow):
 												max_power=laser2_max_power)
 		self.laser_2_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.laser_tab_layout.addWidget(self.laser_2_widget)
+
+		self.fsv_normal_widget = FsvNormalWidget(device_id="FSV3000")
+		self.fsv_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.fsv_tab_layout.addWidget(self.fsv_normal_widget)
 		return
 
 	def update_connection_status(self, device_id: str, status: bool) -> None:
