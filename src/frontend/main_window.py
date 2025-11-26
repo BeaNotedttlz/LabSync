@@ -86,7 +86,8 @@ class MainWindow(QMainWindow):
 		self.setCentralWidget(container)
 
 		self._setup_menubar()
-		self._setup_tabs()
+		self._setup_widgets(1.0, 1.0)
+		return
 
 	def closeEvent(self, event) -> None:
 		"""
@@ -206,7 +207,7 @@ class MainWindow(QMainWindow):
 		# return widget for layout
 		return tab_widget
 
-	def _setup_widgets(self, laser1_max_power: int, laser2_max_power: int) -> None:
+	def _setup_widgets(self, laser1_max_power: float, laser2_max_power: float) -> None:
 		self.eco_normal_widget = StageWidgetNormal(device_id="EcoVario")
 		self.eco_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.normal_tab_layout.addWidget(self.eco_normal_widget)

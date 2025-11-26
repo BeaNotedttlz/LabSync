@@ -45,7 +45,7 @@ class LaserWidgetExpert(QWidget):
 		self.laser_power_absolute.setValidator(QDoubleValidator())
 
 
-		self.modulation_mode = create_combo_box(layout, self.modulation_modes,
+		self.modulation_mode = create_combo_box(layout, self.modulation_types,
 											   "Modulation mode", 5, 0)
 
 		self.control_mode = create_combo_box(layout, self.control_modes,
