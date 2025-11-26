@@ -142,6 +142,8 @@ class WorkerHandler(QObject):
 	# Signal for requesting a task from the worker
 	requestWorker = Signal(DeviceRequest)
 
+	handlerFinished = Signal(str)
+
 	def __init__(self, device_id: str, driver_instance: object,
 				 profile_instance: DeviceProfile) -> None:
 		"""Constructor method
@@ -160,6 +162,7 @@ class WorkerHandler(QObject):
 		# connect Signals for results and requests
 		self._worker.resultReady.connect(self.handle_result)
 		self.requestWorker.connect(self._worker.execute_request)
+		self._thread.finished.connect(self._on_thread_finished)
 
 		# start thread
 		self._thread.start()
@@ -193,23 +196,33 @@ class WorkerHandler(QObject):
 		:return: None
 		"""
 		self.receivedResult.emit(result)
-		return
-
-	def stop(self) -> None:
-		"""
-		Stop the Thread and the worker.
-		:return: None
-		"""
-		if self._thread.isRunning():
-			# request a device close
-			close_request = DeviceRequest(
-				device_id=self.device_id,
-				cmd_type=RequestType.DISCONNECT
-			)
-			self.requestWorker.emit(close_request)
-			# quit the worker and wait to finish
+		if result.request_id.startswith(RequestType.DISCONNECT.value):
 			self._thread.quit()
 			self._thread.wait()
+		return
+
+	def start_shutdown(self) -> None:
+		"""
+		Non-blocking shutdown request. Called by MainWindow.closeEvent
+		:return: None
+		"""
+		if not self._thread.isRunning():
+			self.handlerFinished.emit(self.device_id)
+			return
+
+		self.requestWorker.emit(DeviceRequest(
+			device_id=self.device_id,
+			cmd_type=RequestType.STOP_POLL
+		))
+
+		self.requestWorker.emit(DeviceRequest(
+			device_id=self.device_id,
+			cmd_type=RequestType.DISCONNECT
+		))
+		return
+
+	def _on_thread_finished(self) -> None:
+		self.handlerFinished.emit(self.device_id)
 		return
 
 	@property

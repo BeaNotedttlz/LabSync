@@ -40,6 +40,7 @@ class LabSync(QObject):
 	Core LabSync controller. This connects the frontend and the backend.
 	"""
 	connectionChanged = Signal(str, bool)
+	shutdownFinished = Signal()
 
 	def __init__(self, app, file_dir: str) -> None:
 		"""Constructor method
@@ -54,10 +55,11 @@ class LabSync(QObject):
 		self.file_utils = FilesUtils(file_path=file_dir, file_name="settings.json")
 		# Worker map
 		self.workers = MapWorkers()
+		self._pending_workers = set()
 
 		# save file dir and simulate flag
 		self.file_dir = file_dir
-		self.simulate = False
+		self.simulate = True
 
 		# initialize the device ports as None
 		self.stage_port = None
@@ -72,16 +74,37 @@ class LabSync(QObject):
 
 		# connect signals
 		self.connectionChanged.connect(self.main_window.update_connection_status)
+		self.main_window.requestClose.connect(self._cleanup_backend)
+		self.shutdownFinished.connect(self.main_window.finalize_exit)
+		self._setup_profiles()
 		return
 
+	@Slot()
 	def _cleanup_backend(self) -> None:
-		# TODO special close request for closeEvent?
-		self.stage_worker.stop()
-		self.laser1_worker.stop()
-		self.laser2_worker.stop()
-		self.freq_gen_worker.stop()
-		self.fsv_worker.stop()
+		self._pending_workers.clear()
+
+		for worker_id, _ in self.workers.worker.items():
+			self._pending_workers.add(worker_id)
+
+		if not self._pending_workers:
+			self.shutdownFinished.emit()
+			return
+
+		for _, handler in self.workers.worker.items():
+			handler.start_shutdown()
+
 		return
+
+	@Slot()
+	def _on_worker_finish(self, device_id: str) -> None:
+		if device_id in self._pending_workers:
+			self._pending_workers.remove(device_id)
+
+		if not self._pending_workers:
+			self.shutdownFinished.emit()
+
+		return
+
 
 	def _setup_profiles(self) -> None:
 		"""
@@ -194,17 +217,27 @@ class LabSync(QObject):
 		self.laser1_worker = WorkerHandler(device_id="Laser1", driver_instance=laser1_instance,
 										   profile_instance=self.laser1_profile)
 		# LuxX+ Laser 2
-		laser2_instance = OmicronLaser(name="Laser1", simulate=self.simulate)
-		self.laser2_worker = WorkerHandler(device_id="Laser1", driver_instance=laser2_instance,
+		laser2_instance = OmicronLaser(name="Laser2", simulate=self.simulate)
+		self.laser2_worker = WorkerHandler(device_id="Laser2", driver_instance=laser2_instance,
 										   profile_instance=self.laser2_profile)
 		# TGA1244 Frequency Generator
 		freq_gen_instance = FrequencyGenerator(name="TGA1244", simulate=self.simulate)
-		self.freq_gen_worker = WorkerHandler(device_id="TGA", driver_instance=freq_gen_instance,
+		self.freq_gen_worker = WorkerHandler(device_id="TGA1244", driver_instance=freq_gen_instance,
 											 profile_instance=self.freq_gen_profile)
 		# FSV3000 Spectrum Analyzer
 		fsv_instance = SpectrumAnalyzer(name="FSV3000", simulate=self.simulate)
 		self.fsv_worker = WorkerHandler(device_id="FSV3000", driver_instance=fsv_instance,
 										profile_instance=self.fsv_profile)
+		workers = {
+			"EcoVario": self.stage_worker,
+			"Laser1": self.laser1_worker,
+			"Laser2": self.laser2_worker,
+			"TGA1244": self.freq_gen_worker,
+			"FSV3000": self.fsv_worker
+		}
+		for device_id, worker in workers.items():
+			self.workers.set_worker(device_id, worker)
+			worker.handlerFinished.connect(self._on_worker_finish)
 		return
 
 	def _load_default_ports(self) -> None:

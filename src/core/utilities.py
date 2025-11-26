@@ -114,8 +114,7 @@ class FilesUtils:
 				ports = json.load(f)
 			return ports
 		except (json.decoder.JSONDecodeError, OSError):
-			return self.default_settings.copy()
-			raise PortSetError
+			return self.default_ports.copy()
 
 	def set_ports(self, stage: str, freq_gen: str, laser1: str, laser2: str, fsv: str) -> None:
 		"""

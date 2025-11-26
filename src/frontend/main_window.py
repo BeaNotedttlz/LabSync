@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
 		# save the application instance to self.
 		self.app = app
 
+		self._is_ready_to_close = False
 		self.laser_dialog = None
 
 		# set window title
@@ -99,6 +100,10 @@ class MainWindow(QMainWindow):
 		:rtype: None
 		"""
 		# Make QMessageBox to ask for confirmation
+		if self._is_ready_to_close:
+			event.accept()
+			return
+
 		response = QMessageBox.question(
 			self,
 			"Close LabSync?",
@@ -106,13 +111,19 @@ class MainWindow(QMainWindow):
 			QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
 			QMessageBox.StandardButton.No
 		)
+
 		if response == QMessageBox.StandardButton.Yes:
-			# close ports and application
-			self.requestClose.emit()
-			event.accept()
-		else:
-			# ignore event otherwise
 			event.ignore()
+			self.setEnabled(False)
+			self.requestClose.emit()
+		else:
+			event.ignore()
+
+	@Slot()
+	def finalize_exit(self) -> None:
+		self._is_ready_to_close = True
+		self.close()
+		return
 
 	# TODO missing functionality
 	def _setup_menubar(self) -> None:

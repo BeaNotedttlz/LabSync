@@ -37,7 +37,7 @@ class FrequencyGenerator:
 		# create simulate path
 		sim_path = os.path.join(
 			os.path.dirname(os.path.abspath(__file__)),
-			"SimResp.yaml"
+			"simulation.yaml"
 		)
 		# create resource manager
 		self.rm = pyvisa.ResourceManager(
