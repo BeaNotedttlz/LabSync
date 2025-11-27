@@ -17,8 +17,8 @@ class StageWidgetExpert(QWidget):
 	Create EcoVario expert mode widgets and functionality.
 	:return: None
 	"""
-	sendRequest = Signal(Dict[tuple, Any])
-	sendUpdate = Signal(Dict[tuple, Any], str)
+	sendRequest = Signal(object)
+	sendUpdate = Signal(object, str)
 
 	def __init__(self, device_id: str) -> None:
 		super().__init__()
@@ -109,7 +109,7 @@ class StageWidgetExpert(QWidget):
 		self.sendRequest.emit(parameters)
 		return
 
-	@Slot(dict)
+	@Slot(object)
 	def get_update(self, parameters: Dict[tuple, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.
@@ -136,13 +136,14 @@ class StageWidgetExpert(QWidget):
 			else:
 				widget = getattr(self, supproted_parameters[key[1]])
 				widget.setText(parameter)
-				return
+		return
 
 	@Slot()
 	def _send_update(self) -> None:
 		speed = self.in_speed.text().replace(",", ".")
-		pos = self.out_target_position.text().replace(",", ".")
+		pos = self.in_new_position.text().replace(",", ".")
 
+		self.out_target_position.clear()
 		self.out_target_position.setText(pos)
 
 		update = {

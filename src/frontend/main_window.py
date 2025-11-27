@@ -234,6 +234,8 @@ class MainWindow(QMainWindow):
 		self.eco_expert_widget = StageWidgetExpert(device_id="EcoVario")
 		self.eco_expert_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.stage_tab_layout.addWidget(self.eco_expert_widget)
+		self.eco_expert_widget.sendRequest.connect(self.handle_ui_request)
+		self.eco_expert_widget.sendUpdate.connect(self.update_ui_request)
 
 		self.freq_gen_expert_widget_1 = FrequencyGeneratorWidget(
 			device_id="TGA1244",

@@ -120,13 +120,14 @@ class StageWidgetNormal(QWidget):
 			else:
 				widget = getattr(self, supproted_parameters[key[1]])
 				widget.setText(parameter)
-				return
+		return
 
 	@Slot()
 	def _send_update(self) -> None:
 		speed = self.in_speed.text().replace(",", ".")
-		pos = self.out_target_position.text().replace(",", ".")
+		pos = self.in_new_position.text().replace(",", ".")
 
+		self.out_target_position.clear()
 		self.out_target_position.setText(pos)
 
 		update = {
