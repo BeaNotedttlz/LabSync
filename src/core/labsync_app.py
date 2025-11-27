@@ -18,7 +18,7 @@ from src.backend.devices.fsv import SpectrumAnalyzer
 from src.frontend.main_window import MainWindow
 
 from PySide6.QtCore import QObject, Signal, Slot
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox, QStatusBar
 
 from src.core.storage import InstrumentCache
 from src.core.utilities import ValueHandler, FilesUtils
@@ -102,6 +102,7 @@ class LabSync(QObject):
 		self.file_dir = file_dir
 		self.simulate = True
 
+
 		# initialize the device ports as None
 		self.stage_port = None
 		self.freq_gen_port = None
@@ -111,6 +112,19 @@ class LabSync(QObject):
 
 		# create main window widgets
 		self.main_window = MainWindow(app)
+
+		self.simulate = self.file_utils.read_settings()["debug_mode"]
+		if self.simulate:
+			response = QMessageBox.question(
+				self.main_window,
+				"Debug Mode",
+				"Debug Mode is activated! Do you want to continue?",
+				QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+				QMessageBox.StandardButton.No
+			)
+			if response == QMessageBox.StandardButton.No:
+				self.simulate = False
+
 		self.main_window.show()
 
 		# connect signals
@@ -305,7 +319,7 @@ class LabSync(QObject):
 			worker.handlerFinished.connect(self._on_worker_finish)
 			worker.receivedResult.connect(self.receive_worker_result)
 
-			self.connect_device(device_id)
+			self.connect_device(device_id, if_silent=True)
 		return
 
 	def _load_default_ports(self) -> None:
@@ -415,11 +429,12 @@ class LabSync(QObject):
 		return
 
 	@Slot()
-	def connect_device(self, device_id) -> None:
+	def connect_device(self, device_id, if_silent: bool=False) -> None:
 		worker_handler = self.workers.worker[device_id]
 		connect_request = DeviceRequest(
 			device_id=device_id,
 			cmd_type=RequestType.CONNECT,
+			parameter="SILENT" if if_silent else None,
 			value = self.device_ports.ports[device_id]
 		)
 		worker_handler.send_request(connect_request)
@@ -472,6 +487,11 @@ class LabSync(QObject):
 				f"Could not open {error_result.device_id} port!\n"
 				f"{error_result.request_id}: {error_result.error}"
 			)
+			return
+		elif error_result.error_type == ErrorType.INIT_CONNECTION:
+			# App just opened, just show a subtle message at the bottom
+			self.main_window.statusBar().showMessage(f"Device not found: {error_result.device_id}. Please connect manually!", 5000)
+			return
 		elif error_result.error_type == ErrorType.TASK:
 			QMessageBox.critical(
 				self.main_window,
@@ -479,6 +499,7 @@ class LabSync(QObject):
 				f"Could not do operation: {error_result.request_id} for device: {error_result.device_id}\n"
 				f"{error_result.error}"
 			)
+			return
 		else:
 			QMessageBox.critical(
 				self.main_window,

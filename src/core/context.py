@@ -32,6 +32,8 @@ class ErrorType(Enum):
 	"""Defines the type and severity of the error"""
 	# connection error
 	CONNECTION = auto()
+	# Initial connection error for status bar
+	INIT_CONNECTION = auto()
 	# read or write error
 	TASK = auto()
 	# critical application error
@@ -175,5 +177,5 @@ class DeviceRequestError(DeviceError):
 		self.request = request_id
 		msg = f"Something went wrong for {device_id} and request {request_id}"
 		if original_error:
-			msg += f" Reason: {original_error}"
+			msg += f"\n For reason: {original_error}"
 		super().__init__(msg)

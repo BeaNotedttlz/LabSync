@@ -12,7 +12,8 @@ however this version only implements basic operations to allow control in the La
 import pyvisa, os, time
 from pyvisa import errors
 from serial import SerialException
-from src.core.utilities import ParameterNotSetError, ParameterOutOfRangeError, DeviceConnectionError
+from src.core.utilities import ParameterNotSetError, ParameterOutOfRangeError
+from src.core.context import DeviceConnectionError
 from src.backend.connection_status import ConnectionStatus
 
 class OmicronLaser:
@@ -115,7 +116,7 @@ class OmicronLaser:
 				self.max_power = float(self._ask("GMP")[0])
 			except (errors.VisaIOError, SerialException) as e:
 				self.status = ConnectionStatus.DISCONNECTED
-				raise DeviceConnectionError("Failed to connect to device") from e
+				raise DeviceConnectionError(device_id=self.name, original_error=e) from e
 
 	def close_port(self) -> None:
 		"""

@@ -101,7 +101,10 @@ class LabSyncWorker(QObject):
 			self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=True))
 			return
 		except DeviceConnectionError as e:
-			self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e), error_type=ErrorType.CONNECTION))
+			if cmd.parameter is not None and cmd.parameter == "SILENT":
+				self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e), error_type=ErrorType.INIT_CONNECTION))
+			else:
+				self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e), error_type=ErrorType.CONNECTION))
 			return
 
 	def _disconnect_device(self, cmd: DeviceRequest) -> None:

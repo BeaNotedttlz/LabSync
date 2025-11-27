@@ -9,7 +9,7 @@ For this the already provided RsInstrument communication framework by R&S is use
 
 from RsInstrument import RsInstrument
 from src.backend.connection_status import ConnectionStatus
-from src.core.utilities import DeviceConnectionError
+from src.core.context import DeviceConnectionError
 
 class SpectrumAnalyzer:
 	"""
@@ -58,7 +58,7 @@ class SpectrumAnalyzer:
 			self.status = ConnectionStatus.CONNECTED
 		except Exception as e:
 			self.status = ConnectionStatus.DISCONNECTED
-			raise DeviceConnectionError("Failed to connect to device") from e
+			raise DeviceConnectionError(device_id=self.name, original_error=e) from e
 
 	def _com_check(self) -> str:
 		"""

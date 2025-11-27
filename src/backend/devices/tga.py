@@ -11,7 +11,7 @@ This focuses on the RS232 serial interface of the device. However the GPIO shoul
 import pyvisa, os
 from pyvisa import errors
 from serial import SerialException
-from src.core.utilities import DeviceParameterError
+from src.core.context import DeviceConnectionError
 from src.backend.connection_status import ConnectionStatus
 
 class FrequencyGenerator:
@@ -74,7 +74,7 @@ class FrequencyGenerator:
 			self.current_channel = 1
 		except (errors.VisaIOError, SerialException) as e:
 			self.status = ConnectionStatus.DISCONNECTED
-			raise DeviceParameterError("Failed to connect to device") from e
+			raise DeviceConnectionError(device_id=self.name, original_error=e) from e
 
 	def close_port(self) -> None:
 		"""
