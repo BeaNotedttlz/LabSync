@@ -31,12 +31,14 @@ class SpectrumAnalyzer:
 		self.status = ConnectionStatus.DISCONNECTED
 		self.simulate = simulate
 
-	def open_port(self, ip: str) -> None:
+	def open_port(self, ip: str, _: None) -> None:
 		"""
 		Open serial communication port with the R&S device.
 
 		:param ip: TCP ip of device
 		:type ip: str
+		:param _: Typical baudrate parameter can be ignored since its None for this device
+		:type _: None
 		:raises ConnectionError: If the port could not be opened
 		:return: None
 		:rtype: None

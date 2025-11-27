@@ -46,26 +46,26 @@ class InfoPanelWidget(QWidget):
 		self._create_status_indicator("Laser2Status", "Laser 2:", self.info_states[1], 2, 0)
 		self.layout.addWidget(laser_button, 3, 0)
 
-		self._create_port_indicator("EcoVarioPort", "EcoVario port:", self.info_states[2], 4, 0)
-		self._create_port_indicator("TGAPort", "TGA 1244 port:", self.info_states[2], 6, 0)
-		self._create_port_indicator("Laser1Port", "Laser 1 port", self.info_states[2], 8, 0)
-		self._create_port_indicator("Laser2Port", "Laser 2 port:", self.info_states[2], 10, 0)
-		self._create_port_indicator("FsvPort", "FSV3000 Port:", self.info_states[2], 12, 0)
+		self._create_port_indicator("EcoVario", "EcoVario port:", self.info_states[2], 4, 0)
+		self._create_port_indicator("TGA1244", "TGA 1244 port:", self.info_states[2], 6, 0)
+		self._create_port_indicator("Laser1", "Laser 1 port", self.info_states[2], 8, 0)
+		self._create_port_indicator("Laser2", "Laser 2 port:", self.info_states[2], 10, 0)
+		self._create_port_indicator("FSV3000", "FSV3000 Port:", self.info_states[2], 12, 0)
 		self.setLayout(self.layout)
 
-		self.indicators["EcoVarioPort"]["buttons"][0].clicked.connect(lambda: self.stagePortUpdate.emit(True))
-		self.indicators["EcoVarioPort"]["buttons"][1].clicked.connect(lambda: self.stagePortUpdate.emit(False))
+		self.indicators["EcoVario"]["buttons"][0].clicked.connect(lambda: self.stagePortUpdate.emit(True))
+		self.indicators["EcoVario"]["buttons"][1].clicked.connect(lambda: self.stagePortUpdate.emit(False))
 
-		self.indicators["TGAPort"]["buttons"][0].clicked.connect(lambda: self.freqGenUpdate.emit(True))
-		self.indicators["TGAPort"]["buttons"][1].clicked.connect(lambda: self.freqGenUpdate.emit(False))
+		self.indicators["TGA1244"]["buttons"][0].clicked.connect(lambda: self.freqGenUpdate.emit(True))
+		self.indicators["TGA1244"]["buttons"][1].clicked.connect(lambda: self.freqGenUpdate.emit(False))
 
-		self.indicators["Laser1Port"]["buttons"][0].clicked.connect(lambda: self.laser1PortUpdate.emit(True))
-		self.indicators["Laser1Port"]["buttons"][1].clicked.connect(lambda: self.laser1PortUpdate.emit(False))
-		self.indicators["Laser2Port"]["buttons"][0].clicked.connect(lambda: self.laser2PortUpdate.emit(True))
-		self.indicators["Laser2Port"]["buttons"][1].clicked.connect(lambda: self.laser2PortUpdate.emit(False))
+		self.indicators["Laser1"]["buttons"][0].clicked.connect(lambda: self.laser1PortUpdate.emit(True))
+		self.indicators["Laser1"]["buttons"][1].clicked.connect(lambda: self.laser1PortUpdate.emit(False))
+		self.indicators["Laser2"]["buttons"][0].clicked.connect(lambda: self.laser2PortUpdate.emit(True))
+		self.indicators["Laser2"]["buttons"][1].clicked.connect(lambda: self.laser2PortUpdate.emit(False))
 
-		self.indicators["FsvPort"]["buttons"][0].clicked.connect(lambda: self.fsvPortUpdate.emit(True))
-		self.indicators["FsvPort"]["buttons"][1].clicked.connect(lambda: self.fsvPortUpdate.emit(False))
+		self.indicators["FSV3000"]["buttons"][0].clicked.connect(lambda: self.fsvPortUpdate.emit(True))
+		self.indicators["FSV3000"]["buttons"][1].clicked.connect(lambda: self.fsvPortUpdate.emit(False))
 
 	def _create_status_indicator(self, name: str, label: str, status: list, row: int, column: int) -> None:
 		label = QLabel(label)

@@ -57,6 +57,20 @@ class MapWorkers:
 		"""
 		self._workers[device_id] = worker
 
+class MapPorts:
+	def __init__(self) -> None:
+		self._ports: Dict[str, list] = {}
+		return
+
+	@property
+	def ports(self) -> Dict[str, list]:
+		return self._ports.copy()
+
+	def set_port(self, device_id: str, port: list) -> None:
+		self._ports[device_id] = port
+		return
+
+
 class LabSync(QObject):
 	"""
 	Core LabSync controller. This connects the frontend and the backend.
@@ -80,6 +94,7 @@ class LabSync(QObject):
 		self.file_utils = FilesUtils(file_path=file_dir, file_name="settings.json")
 		# Worker map
 		self.workers = MapWorkers()
+		self.device_ports = MapPorts()
 		# Store pending workers still needed to be closed on quit
 		self._pending_workers = set()
 
@@ -287,6 +302,9 @@ class LabSync(QObject):
 			self.workers.set_worker(device_id, worker)
 			# connect finish signal for each worker
 			worker.handlerFinished.connect(self._on_worker_finish)
+			worker.receivedResult.connect(self.receive_worker_result)
+
+			self.connect_device(device_id)
 		return
 
 	def _load_default_ports(self) -> None:
@@ -302,6 +320,9 @@ class LabSync(QObject):
 		self.laser2_port = ports["Laser2"][0]; self.laser2_baudrate = ports["Laser2"][1]
 		self.freq_gen_port = ports["TGA1244"][0]; self.freq_gen_baudrate = ports["TGA1244"][1]
 		self.fsv_port = ports["FSV3000"][0]; self.fsv_baudrate = ports["FSV3000"][1]
+
+		for device_id, port in ports.items():
+			self.device_ports.set_port(device_id, port)
 		return
 
 	@Slot(str, str, str, str, str)
@@ -370,6 +391,7 @@ class LabSync(QObject):
 					value = new_port
 				)
 				handler.send_request(cmd)
+				self.device_ports.set_port(dev_id, new_port)
 			else:
 				QMessageBox.critical(
 					self.main_window,
@@ -391,6 +413,28 @@ class LabSync(QObject):
 			handler.send_request(cmd)
 		return
 
+	@Slot()
+	def connect_device(self, device_id) -> None:
+		worker_handler = self.workers.worker[device_id]
+		connect_request = DeviceRequest(
+			device_id=device_id,
+			cmd_type=RequestType.CONNECT,
+			value = self.device_ports.ports[device_id]
+		)
+		worker_handler.send_request(connect_request)
+		return
+
+	@Slot()
+	def disconnect_device(self, device_id) -> None:
+		worker_handler = self.workers.worker[device_id]
+		disconnect_request = DeviceRequest(
+			device_id=device_id,
+			cmd_type=RequestType.DISCONNECT,
+			value = None
+		)
+		worker_handler.send_request(disconnect_request)
+		return
+
 	@Slot(RequestResult)
 	def receive_worker_result(self, result: RequestResult) -> None:
 		"""
@@ -408,7 +452,7 @@ class LabSync(QObject):
 			if request_type == "SET" or request_type == "POLL":
 				self.cache.set_value(device_id, parameter, result.value)
 				return
-			elif request_type == "CONNECT" or request_type == "DISCONNECT":
+			elif request_type == RequestType.CONNECT.value or request_type == RequestType.DISCONNECT.value:
 				self.connectionChanged.emit(device_id, result.value)
 			else:
 				pass
