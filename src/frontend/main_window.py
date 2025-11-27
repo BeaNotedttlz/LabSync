@@ -70,6 +70,7 @@ class MainWindow(QMainWindow):
 		info_panel_widget = QWidget()
 		info_panel_widget.setLayout(info_panel_layout)
 		self.info_panel = InfoPanelWidget()
+		self.info_panel.updatePort.connect(self.handle_ui_port_request)
 		info_panel_layout.addWidget(self.info_panel, 0, 0)
 
 		# add info panel and tab widget to splitter
@@ -298,6 +299,23 @@ class MainWindow(QMainWindow):
 			cmd_type=RequestType.SET,
 			value=value
 		)
+		self.deviceRequest.emit(cmd)
+		return
+
+	@Slot(str, bool)
+	def handle_ui_port_request(self, device_id: str, status: bool) -> None:
+		if status:
+			cmd = UIRequest(
+				device_id=device_id,
+				cmd_type=RequestType.CONNECT,
+				value=True
+			)
+		else:
+			cmd = UIRequest(
+				device_id=device_id,
+				cmd_type=RequestType.DISCONNECT,
+				value=False
+			)
 		self.deviceRequest.emit(cmd)
 		return
 

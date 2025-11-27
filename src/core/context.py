@@ -92,10 +92,10 @@ class RequestResult:
 class UIRequest:
 	# Device ID
 	device_id: str
-	# parameter
-	parameter: str
 	# type of request
 	cmd_type: RequestType
+	# parameter
+	parameter: Optional[str] = None
 	# value
 	value: Optional[Any] = None
 

@@ -118,6 +118,7 @@ class LabSync(QObject):
 		self.connectionChanged.connect(self.main_window.update_connection_status)
 		# Request worker quit on QCloseEvent
 		self.main_window.requestClose.connect(self._cleanup_backend)
+		self.main_window.deviceRequest.connect(self.request_worker)
 		# Signal that the application can be closed
 		self.shutdownFinished.connect(self.main_window.finalize_exit)
 
@@ -488,21 +489,6 @@ class LabSync(QObject):
 			)
 		return
 
-	@Slot()
-	def request_worker(self, cmd: DeviceRequest) -> None:
-		device_handler = self.workers.worker[cmd.device_id]
-		if device_handler:
-			device_handler.send_request(cmd)
-			return
-		else:
-			QMessageBox.critical(
-				self.main_window,
-				"Internal Error",
-				"Device handler cannot be found \n"
-				"If you dont know what this means commit an Issue on GitHub!"
-			)
-			return
-
 	@Slot(UIRequest)
 	def request_worker(self, request: UIRequest) -> None:
 		"""
@@ -511,7 +497,20 @@ class LabSync(QObject):
 		:type request: UIRequest
 		:return: None
 		"""
-
+		if request.cmd_type == RequestType.DISCONNECT or RequestType.CONNECT:
+			if request.value:
+				self.connect_device(request.device_id)
+			else:
+				self.disconnect_device(request.device_id)
+		else:
+			device_request = DeviceRequest(
+				device_id=request.device_id,
+				cmd_type=request.cmd_type,
+				parameter=request.parameter,
+				value=request.value
+			)
+			worker = self.workers.worker[device_request.device_id]
+			worker.send_request(device_request)
 		return
 
 

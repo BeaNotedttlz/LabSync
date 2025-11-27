@@ -17,12 +17,8 @@ class InfoPanelWidget(QWidget):
 	:rtype: None
 	"""
 	# create signals for functionality
+	updatePort = Signal(str, bool)
 	laserInfoSig = Signal()
-	stagePortUpdate = Signal(bool)
-	freqGenUpdate = Signal(bool)
-	laser1PortUpdate = Signal(bool)
-	laser2PortUpdate = Signal(bool)
-	fsvPortUpdate = Signal(bool)
 
 	def __init__(self) -> None:
 		"""Constructor method
@@ -53,19 +49,19 @@ class InfoPanelWidget(QWidget):
 		self._create_port_indicator("FSV3000", "FSV3000 Port:", self.info_states[2], 12, 0)
 		self.setLayout(self.layout)
 
-		self.indicators["EcoVario"]["buttons"][0].clicked.connect(lambda: self.stagePortUpdate.emit(True))
-		self.indicators["EcoVario"]["buttons"][1].clicked.connect(lambda: self.stagePortUpdate.emit(False))
+		self.indicators["EcoVario"]["buttons"][0].clicked.connect(lambda: self._update_device_port_status("EcoVario", True))
+		self.indicators["EcoVario"]["buttons"][1].clicked.connect(lambda: self._update_device_port_status("EcoVario", False))
 
-		self.indicators["TGA1244"]["buttons"][0].clicked.connect(lambda: self.freqGenUpdate.emit(True))
-		self.indicators["TGA1244"]["buttons"][1].clicked.connect(lambda: self.freqGenUpdate.emit(False))
+		self.indicators["TGA1244"]["buttons"][0].clicked.connect(lambda: self._update_device_port_status("TGA1244", True))
+		self.indicators["TGA1244"]["buttons"][1].clicked.connect(lambda: self._update_device_port_status("TGA1244", False))
 
-		self.indicators["Laser1"]["buttons"][0].clicked.connect(lambda: self.laser1PortUpdate.emit(True))
-		self.indicators["Laser1"]["buttons"][1].clicked.connect(lambda: self.laser1PortUpdate.emit(False))
-		self.indicators["Laser2"]["buttons"][0].clicked.connect(lambda: self.laser2PortUpdate.emit(True))
-		self.indicators["Laser2"]["buttons"][1].clicked.connect(lambda: self.laser2PortUpdate.emit(False))
+		self.indicators["Laser1"]["buttons"][0].clicked.connect(lambda: self._update_device_port_status("Laser1", True))
+		self.indicators["Laser1"]["buttons"][1].clicked.connect(lambda: self._update_device_port_status("Laser1", False))
+		self.indicators["Laser2"]["buttons"][0].clicked.connect(lambda: self._update_device_port_status("Laser2", True))
+		self.indicators["Laser2"]["buttons"][1].clicked.connect(lambda: self._update_device_port_status("Laser2", False))
 
-		self.indicators["FSV3000"]["buttons"][0].clicked.connect(lambda: self.fsvPortUpdate.emit(True))
-		self.indicators["FSV3000"]["buttons"][1].clicked.connect(lambda: self.fsvPortUpdate.emit(False))
+		self.indicators["FSV3000"]["buttons"][0].clicked.connect(lambda: self._update_device_port_status("FSV3000", True))
+		self.indicators["FSV3000"]["buttons"][1].clicked.connect(lambda: self._update_device_port_status("FSV3000", False))
 
 	def _create_status_indicator(self, name: str, label: str, status: list, row: int, column: int) -> None:
 		label = QLabel(label)
@@ -87,6 +83,10 @@ class InfoPanelWidget(QWidget):
 
 		self.indicators[name] = indicator_data
 		return None
+
+	def _update_device_port_status(self, device_id: str, status: bool) -> None:
+		self.updatePort.emit(device_id, status)
+		return
 
 	def _create_port_indicator(self, name: str, label: str, status: list, row: int, column: int) -> None:
 		label = QLabel(label)
