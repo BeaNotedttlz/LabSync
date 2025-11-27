@@ -17,8 +17,8 @@ class StageWidgetNormal(QWidget):
 	Create EcoVario normal mode widgets and functionality.
 	:return: None
 	"""
-	sendRequest = Signal(Dict[tuple, Any])
-	sendUpdate = Signal(Dict[tuple, Any], str)
+	sendRequest = Signal(dict)
+	sendUpdate = Signal(dict, str)
 
 	def __init__(self, device_id: str) -> None:
 		super().__init__()
@@ -71,7 +71,6 @@ class StageWidgetNormal(QWidget):
 				(self.device_id, "target_deacc"): deaccell,
 				(self.device_id, "START"): None
 			}
-
 			self.sendRequest.emit(parameters)
 			return
 		except Exception as e:
@@ -134,5 +133,5 @@ class StageWidgetNormal(QWidget):
 			(self.device_id, "target_pos"): pos,
 			(self.device_id, "target_vel"): speed,
 		}
-		self.sendUpdate.emit(update, "expert")
+		self.sendUpdate.emit(update, "normal")
 		return

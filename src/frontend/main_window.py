@@ -276,6 +276,8 @@ class MainWindow(QMainWindow):
 		return
 
 	def update_connection_status(self, device_id: str, status: bool) -> None:
+		self.info_panel.update_indicator(device_id, status)
+		print(device_id, status)
 		return
 
 	@Slot(dict)

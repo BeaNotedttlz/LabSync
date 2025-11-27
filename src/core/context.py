@@ -25,6 +25,8 @@ class RequestType(Enum):
 	CONNECT = "CONN"
 	# disconnect device
 	DISCONNECT = "DISCONN"
+	# quit thread
+	QUIT = "QUIT"
 
 class ErrorType(Enum):
 	"""Defines the type and severity of the error"""
@@ -104,7 +106,7 @@ class Parameter:
 	Represents one controllable setting on a device.
 	"""
 	# the key used in the backend / frontend -> (device, parameter)
-	key: str
+	key: str | tuple
 
 	# the name of the driver method
 	method: str = None

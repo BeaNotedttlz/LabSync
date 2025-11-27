@@ -196,7 +196,7 @@ class WorkerHandler(QObject):
 		:return: None
 		"""
 		self.receivedResult.emit(result)
-		if result.request_id.startswith(RequestType.DISCONNECT.value):
+		if result.request_id.startswith(RequestType.QUIT.value):
 			self._thread.quit()
 			self._thread.wait()
 		return
@@ -217,7 +217,7 @@ class WorkerHandler(QObject):
 
 		self.requestWorker.emit(DeviceRequest(
 			device_id=self.device_id,
-			cmd_type=RequestType.DISCONNECT
+			cmd_type=RequestType.QUIT
 		))
 		return
 

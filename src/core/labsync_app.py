@@ -26,20 +26,45 @@ from src.core.utilities import ValueHandler, FilesUtils
 from typing import Dict
 
 class MapWorkers:
+	"""
+	Mapper for device workers and device ID. This allows for the easy access to the worker instance
+	from the device ID.
+	"""
 	def __init__(self) -> None:
+		"""Constructor method
+		"""
+		# internal worker storage
 		self._workers: Dict[str, WorkerHandler] = {}
+		return
+
 	@property
 	def worker(self) -> Dict[str, WorkerHandler]:
+		"""
+		Get the entire worker storage as a dictionary.
+		:return: The workers in a dictionary.
+		:rtype: Dict[str, WorkerHandler]
+		"""
 		return self._workers.copy()
 
 	def set_worker(self, device_id: str, worker: WorkerHandler) -> None:
+		"""
+		Set new worker to the map. Note that this will not check if the worker already exists and just overwrite it.
+		:param device_id: Device ID of the worker
+		:type device_id: str
+		:param worker: Worker instance
+		:type worker: WorkerHandler
+		:return: None
+		"""
 		self._workers[device_id] = worker
 
 class LabSync(QObject):
 	"""
 	Core LabSync controller. This connects the frontend and the backend.
 	"""
+	# Signal to change connection status in the UI
 	connectionChanged = Signal(str, bool)
+	# Signal to allow closing of the application
+	# This will be emitted once all workers and threads have been closed
 	shutdownFinished = Signal()
 
 	def __init__(self, app, file_dir: str) -> None:
@@ -55,6 +80,7 @@ class LabSync(QObject):
 		self.file_utils = FilesUtils(file_path=file_dir, file_name="settings.json")
 		# Worker map
 		self.workers = MapWorkers()
+		# Store pending workers still needed to be closed on quit
 		self._pending_workers = set()
 
 		# save file dir and simulate flag
@@ -73,23 +99,36 @@ class LabSync(QObject):
 		self.main_window.show()
 
 		# connect signals
+		# update connection status in UI
 		self.connectionChanged.connect(self.main_window.update_connection_status)
+		# Request worker quit on QCloseEvent
 		self.main_window.requestClose.connect(self._cleanup_backend)
+		# Signal that the application can be closed
 		self.shutdownFinished.connect(self.main_window.finalize_exit)
+
+		# Setup device profiles and Instances / Workers
 		self._setup_profiles()
 		return
 
 	@Slot()
 	def _cleanup_backend(self) -> None:
+		"""
+		Start clean up process of the devices and workers
+		:return: None
+		"""
+		# clear all pending workers to be closed
 		self._pending_workers.clear()
 
+		# add all current workers to pending
 		for worker_id, _ in self.workers.worker.items():
 			self._pending_workers.add(worker_id)
 
+		# finalize shutdown if no workers are pending
 		if not self._pending_workers:
 			self.shutdownFinished.emit()
 			return
 
+		# Start shutdown process for all current workers
 		for _, handler in self.workers.worker.items():
 			handler.start_shutdown()
 
@@ -97,14 +136,21 @@ class LabSync(QObject):
 
 	@Slot()
 	def _on_worker_finish(self, device_id: str) -> None:
+		"""
+		Log the finished closing of the worker. This will emit the shutdown signal if there are no more pending workers.
+		:param device_id: ID of the device worker
+		:type device_id: str
+		:return: None
+		"""
+		# If the ID is currently pending remove from set
 		if device_id in self._pending_workers:
 			self._pending_workers.remove(device_id)
 
+		# if no more pending devices quit application
 		if not self._pending_workers:
 			self.shutdownFinished.emit()
 
 		return
-
 
 	def _setup_profiles(self) -> None:
 		"""
@@ -228,6 +274,7 @@ class LabSync(QObject):
 		fsv_instance = SpectrumAnalyzer(name="FSV3000", simulate=self.simulate)
 		self.fsv_worker = WorkerHandler(device_id="FSV3000", driver_instance=fsv_instance,
 										profile_instance=self.fsv_profile)
+		# Add all created workers to the Map with the corresponding IDs
 		workers = {
 			"EcoVario": self.stage_worker,
 			"Laser1": self.laser1_worker,
@@ -236,7 +283,9 @@ class LabSync(QObject):
 			"FSV3000": self.fsv_worker
 		}
 		for device_id, worker in workers.items():
+			# Add worker instances
 			self.workers.set_worker(device_id, worker)
+			# connect finish signal for each worker
 			worker.handlerFinished.connect(self._on_worker_finish)
 		return
 
