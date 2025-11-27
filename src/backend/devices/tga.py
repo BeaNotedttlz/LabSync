@@ -11,7 +11,7 @@ This focuses on the RS232 serial interface of the device. However the GPIO shoul
 import pyvisa, os
 from pyvisa import errors
 from serial import SerialException
-from src.core.context import DeviceConnectionError
+from src.core.context import DeviceConnectionError, DeviceRequestError
 from src.backend.connection_status import ConnectionStatus
 
 class FrequencyGenerator:
@@ -139,7 +139,7 @@ class FrequencyGenerator:
 		waveforms = ["sine", "square", "dc", "triag"]
 		if waveform not in waveforms:
 			# raise error if the waveform is not supported
-			raise DeviceParameterError(f"Wavefrom {waveform} is not supported!")
+			raise DeviceRequestError(f"Wavefrom {waveform} is not supported!")
 		return self._write(channel, "WAVE", waveform)
 
 	def set_frequency(self, channel: int, frequency: float) -> None:

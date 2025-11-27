@@ -230,6 +230,8 @@ class MainWindow(QMainWindow):
 		self.laser_normal_widget = LaserWidgetNormal()
 		self.laser_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.normal_tab_layout.addWidget(self.laser_normal_widget)
+		self.laser_normal_widget.sendRequest.connect(self.handle_ui_request)
+		self.laser_normal_widget.sendUpdate.connect(self.update_ui_request)
 
 		self.eco_expert_widget = StageWidgetExpert(device_id="EcoVario")
 		self.eco_expert_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -345,6 +347,8 @@ class MainWindow(QMainWindow):
 		elif sender == "expert":
 			self.eco_normal_widget.get_update(request)
 			return
+		elif sender == "laser":
+			pass
 		else:
 			QMessageBox.warning(
 				self,

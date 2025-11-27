@@ -59,10 +59,8 @@ class OmicronLaser:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			# only read if connected
-			print(f"Laser ask command: {command}")
 			response = self.Laser.query("?" + command)
 			# split response by '|' and remove first 4 characters
-			print(f"Laser ask response: {response}")
 			return response[4:].split("|")
 		# otherwise return empty list
 		return [""]
@@ -80,11 +78,9 @@ class OmicronLaser:
 		:rtype: str
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
-			print(f"Laser set command: {what}={value}")
 			# send command to device if connected
 			response = self.Laser.query("?" + what + value)
 			# return response without first 4 characters
-			print(f"Laser set response: {response}")
 			return response[4:]
 		# oterhwise return empty string
 		return ""
