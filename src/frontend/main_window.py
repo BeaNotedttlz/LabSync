@@ -224,6 +224,8 @@ class MainWindow(QMainWindow):
 		self.eco_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.normal_tab_layout.addWidget(self.eco_normal_widget)
 		self.normal_tab_layout.addItem(QSpacerItem(100, 10))
+		self.eco_normal_widget.sendRequest.connect(self.handle_ui_request)
+		self.eco_normal_widget.sendUpdate.connect(self.update_ui_request)
 
 		self.laser_normal_widget = LaserWidgetNormal()
 		self.laser_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -289,17 +291,16 @@ class MainWindow(QMainWindow):
 		:type request: Dict[str, str, Any]
 		:return: None
 		"""
-		device_id = request["device_id"]
-		parameter = request["parameter"]
-		value = request["value"]
-
-		cmd = UIRequest(
-			device_id=device_id,
-			parameter=parameter,
-			cmd_type=RequestType.SET,
-			value=value
-		)
-		self.deviceRequest.emit(cmd)
+		for keys, value in request.items():
+			device_id = keys[0]
+			parameter = keys[1]
+			cmd = UIRequest(
+				device_id=device_id,
+				cmd_type=RequestType.SET,
+				parameter=parameter,
+				value=value
+			)
+			self.deviceRequest.emit(cmd)
 		return
 
 	@Slot(str, bool)

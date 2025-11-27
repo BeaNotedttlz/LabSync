@@ -17,8 +17,8 @@ class StageWidgetNormal(QWidget):
 	Create EcoVario normal mode widgets and functionality.
 	:return: None
 	"""
-	sendRequest = Signal(dict)
-	sendUpdate = Signal(dict, str)
+	sendRequest = Signal(object)
+	sendUpdate = Signal(object, str)
 
 	def __init__(self, device_id: str) -> None:
 		super().__init__()
@@ -93,7 +93,7 @@ class StageWidgetNormal(QWidget):
 		self.sendRequest.emit(parameters)
 		return
 
-	@Slot(dict)
+	@Slot(object)
 	def get_update(self, parameters: Dict[tuple, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.

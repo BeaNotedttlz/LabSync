@@ -449,7 +449,7 @@ class LabSync(QObject):
 			return
 
 		else:
-			request_type, device_id, parameter = result.request_id.split("_")
+			request_type, device_id, parameter = result.request_id.split("-")
 			if request_type == "SET" or request_type == "POLL":
 				self.cache.set_value(device_id, parameter, result.value)
 				return
@@ -497,7 +497,7 @@ class LabSync(QObject):
 		:type request: UIRequest
 		:return: None
 		"""
-		if request.cmd_type == RequestType.DISCONNECT or RequestType.CONNECT:
+		if request.cmd_type == RequestType.DISCONNECT or request.cmd_type == RequestType.CONNECT:
 			if request.value:
 				self.connect_device(request.device_id)
 			else:

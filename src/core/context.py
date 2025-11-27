@@ -64,7 +64,7 @@ class DeviceRequest:
 		:return: The unique device request ID
 		:rtype: str
 		"""
-		return f"{self.cmd_type.value}_{self.device_id}_{self.parameter}"
+		return f"{self.cmd_type.value}-{self.device_id}-{self.parameter}"
 
 @dataclass
 class RequestResult:

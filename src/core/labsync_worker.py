@@ -72,6 +72,8 @@ class LabSyncWorker(QObject):
 					method_to_call = getattr(self.driver, param_def.method)
 					if isinstance(cmd.value, list):
 						method_to_call(cmd.value[0], cmd.value[1])
+					elif cmd.value is None:
+						method_to_call()
 					else:
 						method_to_call(cmd.value)
 					result_val = cmd.value
