@@ -50,7 +50,7 @@ class LabSyncWorker(QObject):
 		"""
 		if cmd.cmd_type == RequestType.CONNECT:
 			self._connect_device(cmd)
-		elif cmd.cmd_type == RequestType.DISCONNECT:
+		elif cmd.cmd_type == RequestType.DISCONNECT or cmd.cmd_type == RequestType.QUIT:
 			self._disconnect_device(cmd)
 		elif cmd.cmd_type == RequestType.START_POLL:
 			self._poll_context = cmd
