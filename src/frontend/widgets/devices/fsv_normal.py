@@ -15,7 +15,7 @@ from src.frontend.widgets.utilities import create_input_field, create_combo_box
 from typing import Dict, Any
 
 class FsvNormalWidget(QWidget):
-	sendRequest = Signal(dict)
+	sendRequest = Signal(object)
 	saveDataRequest = Signal(object)
 
 	sweep_types = ["Sweep", "FFT"]

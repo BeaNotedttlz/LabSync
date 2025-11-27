@@ -19,8 +19,8 @@ class LaserWidgetNormal(QWidget):
 	"""
 	Create Normal mode widgets and functionality.
 	"""
-	sendRequest = Signal(Dict[tuple, Any])
-	sendUpdate = Signal(Dict[tuple, Any])
+	sendRequest = Signal(object)
+	sendUpdate = Signal(object)
 
 	modulation_modes = ["Standby", "CW", "Digital", "Analog"]
 	control_modes = ["ACC", "APC"]

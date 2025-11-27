@@ -5,6 +5,8 @@ Main application for controlling backend and frontend of the LabSync application
 @file: src/core/labsync_app.py
 @note:
 """
+import traceback
+
 from src.core.context import (DeviceRequest, RequestType, RequestResult,
 							  ErrorType, DeviceProfile, Parameter)
 from src.core.context import UIRequest
@@ -113,7 +115,7 @@ class LabSync(QObject):
 		# create main window widgets
 		self.main_window = MainWindow(app)
 
-		self.simulate = self.file_utils.read_settings()["debug_mode"]
+		# self.simulate = self.file_utils.read_settings()["debug_mode"]
 		if self.simulate:
 			response = QMessageBox.question(
 				self.main_window,
@@ -251,15 +253,14 @@ class LabSync(QObject):
 			))
 		self.freq_gen_profile = DeviceProfile()
 		for key, parameter in freq_gen_keys.items():
-			for i in range(4):
-				self.freq_gen_profile.add(Parameter(
-					key=(i+1, key),
-					method=parameter[0],
-					min_value=parameter[1],
-					max_value=parameter[2],
-					unit=parameter[3],
-					data_type=parameter[4]
-				))
+			self.freq_gen_profile.add(Parameter(
+				key=key,
+				method=parameter[0],
+				min_value=parameter[1],
+				max_value=parameter[2],
+				unit=parameter[3],
+				data_type=parameter[4]
+			))
 		self.fsv_profile = DeviceProfile()
 		for key, parameter in fsv_keys.items():
 			self.fsv_profile.add(Parameter(
@@ -480,7 +481,9 @@ class LabSync(QObject):
 		:type error_result: RequestResult
 		:return: None
 		"""
+		# Handle connection error
 		if error_result.error_type == ErrorType.CONNECTION:
+			# show message box with failed connection
 			QMessageBox.critical(
 				self.main_window,
 				"Connection Error",
@@ -488,10 +491,12 @@ class LabSync(QObject):
 				f"{error_result.request_id}: {error_result.error}"
 			)
 			return
+		# Handle initial connection error
 		elif error_result.error_type == ErrorType.INIT_CONNECTION:
-			# App just opened, just show a subtle message at the bottom
+			# Only show status Bar error instead of MessageBox
 			self.main_window.statusBar().showMessage(f"Device not found: {error_result.device_id}. Please connect manually!", 5000)
 			return
+		# Handle task execution error
 		elif error_result.error_type == ErrorType.TASK:
 			QMessageBox.critical(
 				self.main_window,
@@ -500,6 +505,7 @@ class LabSync(QObject):
 				f"{error_result.error}"
 			)
 			return
+		# Handle all other errors
 		else:
 			QMessageBox.critical(
 				self.main_window,
@@ -519,18 +525,22 @@ class LabSync(QObject):
 		:return: None
 		"""
 		if request.cmd_type == RequestType.DISCONNECT or request.cmd_type == RequestType.CONNECT:
+			# Handle connection and disconnection requests
 			if request.value:
 				self.connect_device(request.device_id)
 			else:
 				self.disconnect_device(request.device_id)
 		else:
+			# Handle all other requests
 			device_request = DeviceRequest(
 				device_id=request.device_id,
 				cmd_type=request.cmd_type,
 				parameter=request.parameter,
 				value=request.value
 			)
+			# Get worker instance from Map
 			worker = self.workers.worker[device_request.device_id]
+			# Send request to worker instance
 			worker.send_request(device_request)
 		return
 

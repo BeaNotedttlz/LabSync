@@ -17,7 +17,7 @@ class LaserWidgetExpert(QWidget):
 	Create LuxX+ expert mode widgets and functionality.
 	:return: None
 	"""
-	sendRequest = Signal(Dict[tuple, Any])
+	sendRequest = Signal(object)
 
 	modulation_types = ["Standby", "CW", "Digital", "Analog"]
 	control_modes = ["ACC", "APC"]
@@ -132,7 +132,7 @@ class LaserWidgetExpert(QWidget):
 			self.laser_power_percent.setText(str(power))
 		return
 
-	@Slot(dict)
+	@Slot(object)
 	def get_update(self, parameters: Dict[str, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.

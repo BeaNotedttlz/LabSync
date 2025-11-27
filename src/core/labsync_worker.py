@@ -6,6 +6,7 @@ This allows for single device commands and loop calls of methods
 @file: src/core/labsync_worker.py
 @note:
 """
+import traceback
 from typing import Optional, Any
 
 from PySide6.QtCore import QTimer, QThread, QObject, Signal, Slot
@@ -70,8 +71,8 @@ class LabSyncWorker(QObject):
 						raise ValueError(f"Parameter '{cmd.parameter}' has no method to call.")
 
 					method_to_call = getattr(self.driver, param_def.method)
-					if isinstance(cmd.value, list):
-						method_to_call(cmd.value[0], cmd.value[1])
+					if isinstance(cmd.value, tuple):
+						method_to_call(cmd.value[1], cmd.value[0])
 					elif cmd.value is None:
 						method_to_call()
 					else:

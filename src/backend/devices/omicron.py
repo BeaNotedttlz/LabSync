@@ -59,8 +59,10 @@ class OmicronLaser:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			# only read if connected
+			print(f"Laser ask command: {command}")
 			response = self.Laser.query("?" + command)
 			# split response by '|' and remove first 4 characters
+			print(f"Laser ask response: {response}")
 			return response[4:].split("|")
 		# otherwise return empty list
 		return [""]
@@ -78,9 +80,11 @@ class OmicronLaser:
 		:rtype: str
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
+			print(f"Laser set command: {what}={value}")
 			# send command to device if connected
 			response = self.Laser.query("?" + what + value)
 			# return response without first 4 characters
+			print(f"Laser set response: {response}")
 			return response[4:]
 		# oterhwise return empty string
 		return ""
@@ -100,23 +104,23 @@ class OmicronLaser:
 		# set port for simulation
 		if self.simulate:
 			port = "ASRL1::INSTR"
-		else:
-			try:
-				# open serial port
-				self.Laser = self.rm.open_resource(port)
-				# set baudrate, query delay and line termination
-				self.Laser.baud_rate = baudrate
-				self.Laser.query_delay = 0.1
-				self.Laser.read_termination = "\r"
-				self.Laser.write_termination = "\r"
-				# set connected variable
-				self.status = ConnectionStatus.CONNECTED
-				# this is only done for first communication and to set for |
-				_ = self._ask("GFw|")
-				self.max_power = float(self._ask("GMP")[0])
-			except (errors.VisaIOError, SerialException) as e:
-				self.status = ConnectionStatus.DISCONNECTED
-				raise DeviceConnectionError(device_id=self.name, original_error=e) from e
+
+		try:
+			# open serial port
+			self.Laser = self.rm.open_resource(port)
+			# set baudrate, query delay and line termination
+			self.Laser.baud_rate = baudrate
+			self.Laser.query_delay = 0.1
+			self.Laser.read_termination = "\r"
+			self.Laser.write_termination = "\r"
+			# set connected variable
+			self.status = ConnectionStatus.CONNECTED
+			# this is only done for first communication and to set for |
+			_ = self._ask("GFw|")
+			self.max_power = float(self._ask("GMP")[0])
+		except (errors.VisaIOError, SerialException) as e:
+			self.status = ConnectionStatus.DISCONNECTED
+			raise DeviceConnectionError(device_id=self.name, original_error=e) from e
 
 	def close_port(self) -> None:
 		"""

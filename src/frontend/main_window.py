@@ -243,6 +243,7 @@ class MainWindow(QMainWindow):
 		)
 		self.freq_gen_expert_widget_1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert_widget_1)
+		self.freq_gen_expert_widget_1.sendRequest.connect(self.handle_ui_request)
 
 		self.freq_gen_expert_widget_2 = FrequencyGeneratorWidget(
 			device_id="TGA1244",
@@ -250,6 +251,7 @@ class MainWindow(QMainWindow):
 		)
 		self.freq_gen_expert_widget_2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert_widget_2)
+		self.freq_gen_expert_widget_2.sendRequest.connect(self.handle_ui_request)
 
 		self.freq_gen_expert_widget_3 = FrequencyGeneratorWidget(
 			device_id="TGA1244",
@@ -257,6 +259,7 @@ class MainWindow(QMainWindow):
 		)
 		self.freq_gen_expert_widget_3.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert_widget_3)
+		self.freq_gen_expert_widget_3.sendRequest.connect(self.handle_ui_request)
 
 		self.freq_gen_expert_widget_4 = FrequencyGeneratorWidget(
 			device_id="TGA1244",
@@ -264,20 +267,24 @@ class MainWindow(QMainWindow):
 		)
 		self.freq_gen_expert_widget_4.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert_widget_4)
+		self.freq_gen_expert_widget_2.sendRequest.connect(self.handle_ui_request)
 
 		self.laser_1_widget = LaserWidgetExpert(device_id="Laser1", laser_index=1,
 												max_power=laser1_max_power)
 		self.laser_1_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.laser_tab_layout.addWidget(self.laser_1_widget)
+		self.laser_1_widget.sendRequest.connect(self.handle_ui_request)
 
 		self.laser_2_widget = LaserWidgetExpert(device_id="Laser2", laser_index=2,
 												max_power=laser2_max_power)
 		self.laser_2_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.laser_tab_layout.addWidget(self.laser_2_widget)
+		self.laser_2_widget.sendRequest.connect(self.handle_ui_request)
 
 		self.fsv_normal_widget = FsvNormalWidget(device_id="FSV3000")
 		self.fsv_normal_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.fsv_tab_layout.addWidget(self.fsv_normal_widget)
+		self.fsv_normal_widget.sendRequest.connect(self.handle_ui_request)
 		return
 
 	def update_connection_status(self, device_id: str, status: bool) -> None:

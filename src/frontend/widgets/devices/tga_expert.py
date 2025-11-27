@@ -17,7 +17,7 @@ class FrequencyGeneratorWidget(QWidget):
 	Create TGA1244 expert mode widgets and functionality.
 	:return: None
 	"""
-	sendRequest = Signal(Dict[tuple, Any])
+	sendRequest = Signal(object)
 
 	wave_forms = ["sine", "square", "triang", "dc"]
 	input_modes = ["Amp+Offset", "Low+High"]
@@ -90,7 +90,7 @@ class FrequencyGeneratorWidget(QWidget):
 
 		parameters = {
 			(self.device_id, "waveform"): (wave_form, self.channel_index),
-			(self.device_id, "locjkmode"): (lock_mode, self.channel_index),
+			(self.device_id, "lockmode"): (lock_mode, self.channel_index),
 			(self.device_id, "frequency"): (frequency, self.channel_index),
 			(self.device_id, "amplitude"): (amplitude, self.channel_index),
 			(self.device_id, "offset"): (offset, self.channel_index),

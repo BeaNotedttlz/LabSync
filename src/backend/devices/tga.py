@@ -170,14 +170,7 @@ class FrequencyGenerator:
 		:rtype: None
 		"""
 		# get current input mode
-		mode = self.inputmode[channel]
-		if mode == "Amp+Offset":
-			# normal operation
-			return self._write(channel, 'AMPL', str(amplitude))
-		else:
-			# convert to amplitude and offset
-			amplitude = self.offset - amplitude
-			return self._write(channel, 'AMPL', str(amplitude))
+		return self._write(channel, 'AMPL', str(amplitude))
 
 	def set_offset(self, channel: int, offset: float) -> None:
 		"""
@@ -193,15 +186,7 @@ class FrequencyGenerator:
 		:return: None
 		:rtype: None
 		"""
-		# get current input mode
-		mode = self.inputmode[channel]
-		if mode == "Amp+Offset":
-			# normal operation
-			return self._write(channel, 'DCOFFS', str(offset))
-		else:
-			# convert to amplitude and offset
-			offset = (offset+self.amplitude)/2
-			return self._write(channel, 'DCOFFS', str(offset))
+		return self._write(channel, 'DCOFFS', str(offset))
 
 	def set_phase(self, channel: int, phase: float) -> None:
 		"""
