@@ -36,6 +36,7 @@ class OmicronLaser:
 		self.status = ConnectionStatus.DISCONNECTED
 		self.simulate = simulate
 		self.max_power = 1.0
+		self.info = None
 		# create simulate path
 		sim_path = os.path.join(
 			os.path.dirname(os.path.abspath(__file__)),
@@ -61,6 +62,7 @@ class OmicronLaser:
 			# only read if connected
 			response = self.Laser.query("?" + command)
 			# split response by '|' and remove first 4 characters
+			print(response)
 			return response[4:].split("|")
 		# otherwise return empty list
 		return [""]
@@ -112,7 +114,7 @@ class OmicronLaser:
 			# set connected variable
 			self.status = ConnectionStatus.CONNECTED
 			# this is only done for first communication and to set for |
-			_ = self._ask("GFw|")
+			self.info = self._ask("GFw|")
 			self.max_power = float(self._ask("GMP")[0])
 		except (errors.VisaIOError, SerialException) as e:
 			self.status = ConnectionStatus.DISCONNECTED
@@ -165,6 +167,24 @@ class OmicronLaser:
 				break
 			else:
 				time.sleep(0.1)
+
+	def get_device_information(self) -> dict | None:
+		if self.status == ConnectionStatus.CONNECTED:
+			max_power = float(self._ask("GMP")[0])
+			model, device_id, firmware = self._ask("GFw|")
+			wavelength = self._ask("GSI")[0]
+			current_status = self._ask("GAS")[0]
+
+			info = {
+				"max_power": max_power,
+				"model": model,
+				"id": device_id,
+				"firmware": firmware,
+				"wavelength": wavelength,
+				"current_status": current_status
+			}
+			return info
+		return None
 
 	def set_power(self, value: float) -> None:
 		"""

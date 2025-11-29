@@ -28,6 +28,8 @@ devices:
         r: "!LOf>"
       - q: "?POn"
         r: "!POn>"
+      - q: "?GAS"
+        r: "!GAS0x0000"
     properties:
       temporarypower:
         default: 50.0

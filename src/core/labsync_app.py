@@ -5,8 +5,6 @@ Main application for controlling backend and frontend of the LabSync application
 @file: src/core/labsync_app.py
 @note:
 """
-import traceback
-
 from src.core.context import (DeviceRequest, RequestType, RequestResult,
 							  ErrorType, DeviceProfile, Parameter)
 from src.core.context import UIRequest
@@ -20,7 +18,7 @@ from src.backend.devices.fsv import SpectrumAnalyzer
 from src.frontend.main_window import MainWindow
 
 from PySide6.QtCore import QObject, Signal, Slot
-from PySide6.QtWidgets import QMessageBox, QStatusBar
+from PySide6.QtWidgets import QMessageBox
 
 from src.core.storage import InstrumentCache
 from src.core.utilities import ValueHandler, FilesUtils
@@ -83,6 +81,8 @@ class LabSync(QObject):
 	# This will be emitted once all workers and threads have been closed
 	shutdownFinished = Signal()
 
+	returnResult = Signal(RequestResult)
+
 	def __init__(self, app, file_dir: str) -> None:
 		"""Constructor method
 		"""
@@ -98,7 +98,7 @@ class LabSync(QObject):
 		self.workers = MapWorkers()
 		self.device_ports = MapPorts()
 		# Store pending workers still needed to be closed on quit
-		self._pending_workers = set()
+		self._pending_workers = set()  # type: ignore[var-annotated]
 
 		# save file dir and simulate flag
 		self.file_dir = file_dir
@@ -137,6 +137,7 @@ class LabSync(QObject):
 		self.main_window.deviceRequest.connect(self.request_worker)
 		# Signal that the application can be closed
 		self.shutdownFinished.connect(self.main_window.finalize_exit)
+		self.returnResult.connect(self.main_window.handle_device_result)
 
 		# Setup device profiles and Instances / Workers
 		self._setup_profiles()
@@ -194,14 +195,16 @@ class LabSync(QObject):
 			"target_vel": ["set_speed", 0.0, 100.0, "mm/s", float],
 			"target_acc": ["set_acceleration", 0.0, 1000.0, "mm/s2", float],
 			"target_deacc": ["set_deacceleration", 0.0, 1000.0, "mm/s2", float],
-			"current_pos": [None, 0.0, 2530.0, "mm", float],
+			"current_pos": ["get_current_position", 0.0, 2530.0, "mm", float],
 			"START": ["start", None, None, None, None],
-			"STOP": ["stop", None, None, None, None]
+			"STOP": ["stop", None, None, None, None],
+			"current_error_code": ["get_current_error", None, None, None, None]
 		}
 		laser_keys = {
 			"temp_power": ["set_temp_power", 0.0, 100.0, "%", float],
 			"operating_mode": ["set_op_mode", 0, 5, "", int],
-			"emission_status": ["set_emission", None, None, "", bool]
+			"emission_status": ["set_emission", None, None, "", bool],
+			"INFO": ["get_device_information", None, None, None, None]
 		}
 		freq_gen_keys = {
 			"amplitude": ["set_amplitude", 0.0, 10.0, "V", float],
@@ -255,11 +258,11 @@ class LabSync(QObject):
 		for key, parameter in freq_gen_keys.items():
 			self.freq_gen_profile.add(Parameter(
 				key=key,
-				method=parameter[0],
-				min_value=parameter[1],
-				max_value=parameter[2],
-				unit=parameter[3],
-				data_type=parameter[4]
+				method=parameter[0],  # type: ignore[index]
+				min_value=parameter[1],  # type: ignore[index,index]
+				max_value=parameter[2],  # type: ignore[index]
+				unit=parameter[3],  # type: ignore[index]
+				data_type=parameter[4]  # type: ignore[index]
 			))
 		self.fsv_profile = DeviceProfile()
 		for key, parameter in fsv_keys.items():
@@ -404,10 +407,10 @@ class LabSync(QObject):
 				cmd = DeviceRequest(
 					device_id=dev_id,
 					cmd_type=RequestType.CONNECT,
-					value = new_port
+					value=new_port
 				)
 				handler.send_request(cmd)
-				self.device_ports.set_port(dev_id, new_port)
+				self.device_ports.set_port(dev_id, new_port)  # type: ignore[arg-type]
 			else:
 				QMessageBox.critical(
 					self.main_window,
@@ -463,8 +466,8 @@ class LabSync(QObject):
 		if not result.is_success:
 			self._handle_worker_error(result)
 			return
-
 		else:
+			self.returnResult.emit(result)
 			request_type, device_id, parameter = result.request_id.split("-")
 			if request_type == "SET" or request_type == "POLL":
 				self.cache.set_value(device_id, parameter, result.value)
@@ -543,7 +546,3 @@ class LabSync(QObject):
 			# Send request to worker instance
 			worker.send_request(device_request)
 		return
-
-
-
-

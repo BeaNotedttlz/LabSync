@@ -16,13 +16,15 @@ from typing import Dict, Any
 from src.frontend.widgets.devices.eco_normal import StageWidgetNormal
 from src.frontend.widgets.info_panel import InfoPanelWidget
 
-from src.core.context import UIRequest, RequestType
+from src.core.context import UIRequest, RequestType, RequestResult
 
 from src.frontend.widgets.devices.eco_expert import StageWidgetExpert
 from src.frontend.widgets.devices.tga_expert import FrequencyGeneratorWidget
 from src.frontend.widgets.devices.luxx_expert import LaserWidgetExpert
 from src.frontend.widgets.devices.luxx_normal import LaserWidgetNormal
 from src.frontend.widgets.devices.fsv_normal import FsvNormalWidget
+
+from src.frontend.widgets.dialogs import LaserInfoDialog
 
 
 class MainWindow(QMainWindow):
@@ -71,6 +73,7 @@ class MainWindow(QMainWindow):
 		info_panel_widget.setLayout(info_panel_layout)
 		self.info_panel = InfoPanelWidget()
 		self.info_panel.updatePort.connect(self.handle_ui_port_request)
+		self.info_panel.laserInfoSig.connect(self._show_laser_info_dialog)
 		info_panel_layout.addWidget(self.info_panel, 0, 0)
 
 		# add info panel and tab widget to splitter
@@ -137,7 +140,7 @@ class MainWindow(QMainWindow):
 		# create menubar
 		menu_bar = self.menuBar()
 
-		# create preset entry #
+		# create preset entry
 		preset_menu = menu_bar.addMenu("&Presets")
 		save_preset = preset_menu.addAction("Save Preset")
 		save_preset.triggered.connect(self.savePreset)
@@ -145,7 +148,7 @@ class MainWindow(QMainWindow):
 		load_preset = preset_menu.addAction("Load Preset")
 		load_preset.triggered.connect(self.loadPreset)
 
-		# create expert mode toggle and port #
+		# create expert mode toggle and port
 		mode_menu = menu_bar.addMenu("&Menu")
 		expert_mode = mode_menu.addAction("Expert Mode")
 		expert_mode.triggered.connect(self.toggle_expert_mode)
@@ -316,6 +319,7 @@ class MainWindow(QMainWindow):
 
 	@Slot(str, bool)
 	def handle_ui_port_request(self, device_id: str, status: bool) -> None:
+
 		if status:
 			cmd = UIRequest(
 				device_id=device_id,
@@ -348,6 +352,7 @@ class MainWindow(QMainWindow):
 			self.eco_normal_widget.get_update(request)
 			return
 		elif sender == "laser":
+			# TODO normal mode laser widget updating respective expert mode widgets
 			pass
 		else:
 			QMessageBox.warning(
@@ -358,4 +363,43 @@ class MainWindow(QMainWindow):
 			)
 			return
 
+	@Slot(RequestResult)
+	def handle_device_result(self, result: RequestResult) -> None:
+		request_type, device_id, parameter = result.request_id.split("-")
+		if request_type == "POLL" and parameter == "INFO":
+			if self.laser_dialog is not None:
+				if result.value is None:
+					return
+				data = {
+					device_id: result.value
+				}
+				self.laser_dialog.update_info(data)
+		return
 
+	@Slot()
+	def _show_laser_info_dialog(self) -> None:
+		if self.laser_dialog is None:
+			self.laser_dialog = LaserInfoDialog(self)
+
+			self.laser_dialog.finished.connect(self._on_laser_dialog_closed)
+			self.laser_dialog.show()
+		else:
+			if not self.laser_dialog.isVisible():
+				self.laser_dialog.show()
+			self.laser_dialog.raise_()
+
+		for device in ["Laser1", "Laser2"]:
+			info_request = UIRequest(
+				device_id=device,
+				cmd_type=RequestType.POLL,
+				parameter="INFO",
+				value=None
+			)
+			self.deviceRequest.emit(info_request)
+		return
+
+	@Slot(int)
+	def _on_laser_dialog_closed(self, result: int) -> None:
+		self.laser_dialog.finished.disconnect(self._on_laser_dialog_closed)
+		self.laser_dialog = None
+		return

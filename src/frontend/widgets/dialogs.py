@@ -8,62 +8,85 @@ Module for creating and operating the PySide6 dialog window widgets.
 
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import Qt
-from PySide6.QtWidgets import (QWidget, QLabel, QPushButton,
-							   QSpacerItem, QGridLayout, QCheckBox)
+from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, QProgressBar,
+							   QSpacerItem, QGridLayout, QCheckBox, QDialog,
+							   QGroupBox, QVBoxLayout, QHBoxLayout)
 from src.frontend.widgets.utilities import create_input_field
+from typing import Dict, Any
 
-class LaserInfoDialog(QWidget):
-	"""
-	Class for creating widgets and functionality of the laser info dialog.
 
-	:param firmware: Laser firmware information
-	:type firmware: list
-	:param specs: Laser specifications information
-	:type specs: list
-	:param max_power: Laser maximum power information
-	:type max_power: list
-	:param error_byte: Laser error byte information
-	:type error_byte: list
-	:return: None
-	:rtype: None
-	"""
-	def __init__(self, firmware: list, specs: list,
-				 max_power: list, error_byte: list) -> None:
-		"""Constructor method
-		"""
-		super().__init__()
-		# create layout
-		layout = QGridLayout()
-		layout.setVerticalSpacing(10)
-		self.setWindowTitle("Laser Info")
-		self.setMinimumSize(600, 400)
 
-		# create all widgets
-		for i in [1, 2]:
-			layout.addWidget(QLabel("Laser %d: " % i), 0, i - 1 if i == 1 else i + 1)
-			layout.addWidget(QLabel("Model code: "), 1, i - 1 if i == 1 else i + 1)
-			layout.addWidget(QLabel("Device id: "), 2, i - 1 if i == 1 else i + 1)
-			layout.addWidget(QLabel("Firmware version: "), 3, i - 1 if i == 1 else i + 1)
-			layout.addWidget(QLabel("Wavelenght: "), 4, i - 1 if i == 1 else i + 1)
-			layout.addWidget(QLabel("Max power: "), 5, i - 1 if i == 1 else i + 1)
-			layout.addWidget(QLabel("Status: "), 6, i - 1 if i == 1 else i + 1)
+class LaserInfoDialog(QDialog):
+	class SingleLaserWidget(QWidget):
+		def __init__(self, laser_name: str="Laser", parent=None) -> None:
+			super().__init__(parent)
 
-		layout.addWidget(QLabel(firmware[0][0]), 1, 1)
-		layout.addWidget(QLabel(firmware[0][1]), 2, 1)
-		layout.addWidget(QLabel(firmware[0][2]), 3, 1)
-		layout.addWidget(QLabel(specs[0][0]), 4, 1)
-		layout.addWidget(QLabel(str(max_power[0])), 5, 1)
-		layout.addWidget(QLabel(error_byte[0]), 6, 1)
+			self.group = QGroupBox(laser_name)
 
-		layout.addWidget(QLabel(firmware[1][0]), 1, 4)
-		layout.addWidget(QLabel(firmware[1][1]), 2, 4)
-		layout.addWidget(QLabel(firmware[1][2]), 3, 4)
-		layout.addWidget(QLabel(specs[1][0]), 4, 4)
-		layout.addWidget(QLabel(str(max_power[1])), 5, 4)
-		layout.addWidget(QLabel(error_byte[1]), 6, 4)
+			self.model_code = QLabel("Model Code: Not connected")
+			self.device_id = QLabel("Device ID: Not connected")
+			self.firmware = QLabel("Firmware Version: Not connected")
+			self.wavelength = QLabel("Operation Wavelength: Not connected")
+			self.max_power = QLabel("Maximum Power: Not connected")
+			self.status = QLabel("Device Stats: Not connected")
+			layout = QVBoxLayout()
+			layout.addWidget(self.model_code)
+			layout.addWidget(self.device_id)
+			layout.addWidget(self.firmware)
+			layout.addWidget(self.wavelength)
+			layout.addWidget(self.max_power)
+			layout.addWidget(self.status)
+
+			self.group.setLayout(layout)
+
+			main_layout = QVBoxLayout()
+			main_layout.addWidget(self.group)
+			self.setLayout(main_layout)
+			return
+
+		def update_data(self, data: Dict[str, Any]) -> None:
+			data_list = []
+			for key, data in data.items():
+				data_list.append(data)
+
+			self.model_code.setText("Model Code: " + str(data_list[0]))
+			self.device_id.setText("Device ID :" + str(data_list[1]))
+			self.firmware.setText(str(data_list[2]))
+			self.wavelength.setText(str(data_list[3]))
+			self.max_power.setText(str(data_list[4]))
+			self.status.setText(str(data_list[5]))
+			return
+
+
+
+	def __init__(self, parent=None) -> None:
+		super().__init__(parent)
+		# set window information
+		self.setWindowTitle("Laser Information")
+		self.setFixedSize(600, 400)
 
 		# set layout
+		layout = QHBoxLayout()
+
+		self.laser1_widget = self.SingleLaserWidget(laser_name="Laser 1")
+		self.laser2_widget = self.SingleLaserWidget(laser_name="Laser 2")
+
+		layout.addWidget(self.laser1_widget)
+		layout.addWidget(self.laser2_widget)
+
 		self.setLayout(layout)
+		return
+
+	@Slot(object)
+	def update_info(self, data:Dict[str, dict]) -> None:
+		if "Laser1" in data:
+			self.laser1_widget.update_data(data["Laser1"])
+
+		if "Laser2" in data:
+			self.laser2_widget.update_data(data["Laser2"])
+
+		return
+
 
 class PortSelectionDialog(QWidget):
 	"""
@@ -185,6 +208,7 @@ class SettingsDialog(QWidget):
 		self.username_input = create_input_field(layout, "Username:", username, "", 0, 0)
 		self.username_input.setAlignment(Qt.AlignLeft)
 		self.debug_mode_box = QCheckBox("Debug Mode")
+		self.debug_mode_box.setChecked(debug_mode)
 		self.apply_button = QPushButton("Apply")
 
 		layout.addItem(QSpacerItem(10, 100), 4, 0)
