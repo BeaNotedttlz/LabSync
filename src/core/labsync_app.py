@@ -139,6 +139,11 @@ class LabSync(QObject):
 		self.shutdownFinished.connect(self.main_window.finalize_exit)
 		self.returnResult.connect(self.main_window.handle_device_result)
 
+		self.main_window.getCurrentPorts.connect(self._get_current_device_ports)
+		self.main_window.savePorts.connect(self.manage_device_ports)
+		self.main_window.setDefaultPorts.connect(self._set_default_ports)
+
+
 		# Setup device profiles and Instances / Workers
 		self._setup_profiles()
 		return
@@ -334,11 +339,29 @@ class LabSync(QObject):
 		:return: None
 		"""
 		ports = self.file_utils.read_port_file()
-		self.stage_port = ports["EcoVario"][0]; self.stage_baudrate = ports["EcoVario"][1]
-		self.laser1_port = ports["Laser1"][0]; self.laser1_baudrate = ports["Laser1"][1]
-		self.laser2_port = ports["Laser2"][0]; self.laser2_baudrate = ports["Laser2"][1]
-		self.freq_gen_port = ports["TGA1244"][0]; self.freq_gen_baudrate = ports["TGA1244"][1]
-		self.fsv_port = ports["FSV3000"][0]; self.fsv_baudrate = ports["FSV3000"][1]
+		try:
+			self.stage_port = ports["EcoVario"][0]; self.stage_baudrate = ports["EcoVario"][1]
+			self.laser1_port = ports["Laser1"][0]; self.laser1_baudrate = ports["Laser1"][1]
+			self.laser2_port = ports["Laser2"][0]; self.laser2_baudrate = ports["Laser2"][1]
+			self.freq_gen_port = ports["TGA1244"][0]; self.freq_gen_baudrate = ports["TGA1244"][1]
+			self.fsv_port = ports["FSV3000"][0]; self.fsv_baudrate = ports["FSV3000"][1]
+			return
+		except KeyError:
+			QMessageBox.critical(
+				self.main_window,
+				"Device Port Read Error",
+				"There was an error reading the device port file! "
+				"The file will be reset to default ports."
+			)
+			self.file_utils.set_ports("", "", "", "", "", set_def=True)
+			ports = self.file_utils.read_port_file()
+			self.stage_port = ports["EcoVario"][0]; self.stage_baudrate = ports["EcoVario"][1]
+			self.laser1_port = ports["Laser1"][0]; self.laser1_baudrate = ports["Laser1"][1]
+			self.laser2_port = ports["Laser2"][0]; self.laser2_baudrate = ports["Laser2"][1]
+			self.freq_gen_port = ports["TGA1244"][0]; self.freq_gen_baudrate = ports["TGA1244"][1]
+			self.fsv_port = ports["FSV3000"][0]; self.fsv_baudrate = ports["FSV3000"][1]
+			return
+
 
 		for device_id, port in ports.items():
 			self.device_ports.set_port(device_id, port)
@@ -545,4 +568,18 @@ class LabSync(QObject):
 			worker = self.workers.worker[device_request.device_id]
 			# Send request to worker instance
 			worker.send_request(device_request)
+		return
+
+	@Slot()
+	def _get_current_device_ports(self) -> None:
+		"""
+		Get the current device ports and emit to the ports dialog
+		:return: None
+		"""
+		port_result = RequestResult(
+			request_id="POLL-None-Ports",
+			device_id="None",
+			value=self.device_ports.ports
+		)
+		self.returnResult.emit(port_result)
 		return

@@ -14,8 +14,6 @@ from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, QProgressBar,
 from src.frontend.widgets.utilities import create_input_field
 from typing import Dict, Any
 
-
-
 class LaserInfoDialog(QDialog):
 	class SingleLaserWidget(QWidget):
 		def __init__(self, laser_name: str="Laser", parent=None) -> None:
@@ -45,6 +43,8 @@ class LaserInfoDialog(QDialog):
 			return
 
 		def update_data(self, data: Dict[str, Any]) -> None:
+			# Convert dict to a list
+			# This is done because the data will always be the same and the keys can be ignored
 			data_list = []
 			for key, data in data.items():
 				data_list.append(data)
@@ -56,8 +56,6 @@ class LaserInfoDialog(QDialog):
 			self.max_power.setText(str(data_list[4]))
 			self.status.setText(str(data_list[5]))
 			return
-
-
 
 	def __init__(self, parent=None) -> None:
 		super().__init__(parent)
@@ -87,49 +85,30 @@ class LaserInfoDialog(QDialog):
 
 		return
 
+class PortSelectionDialog(QDialog):
 
-class PortSelectionDialog(QWidget):
-	"""
-	Class for creating widgets and functionality of the port selection dialog.
+	applyPorts = Signal(str, str, str, str, str)
+	defaultPorts = Signal(str, str, str, str, str)
 
-	:param stage_port: Stage port
-	:type stage_port: str
-	:param freq_gen_port: Frequency generation port
-	:type freq_gen_port: str
-	:param laser1_port: Laser 1 port
-	:type laser1_port: str
-	:param laser2_port: Laser 2 port
-	:type laser2_port: str
-	:param fsv_port: FSV port
-	:type fsv_port: str
-	:return: None
-	:rtype: None
-	"""
-	# signals for functionality
-	applySig = Signal(str, str, str, str, str)
-	defaultSig = Signal(str, str, str, str, str)
-
-	def __init__(self, stage_port: str, freq_gen_port: str, laser1_port: str, laser2_port: str, fsv_port: str) -> None:
+	def __init__(self, parent=None) -> None:
 		"""Constructor method
 		"""
-		super().__init__()
-
-		# create layout and spacing
-		layout = QGridLayout()
-		layout.setVerticalSpacing(10)
+		super().__init__(parent)
 		self.setWindowTitle("Port Selection")
-		self.setMinimumSize(300, 400)
+		self.setFixedSize(300, 400)
+
+		layout = QGridLayout()
 
 		# crea input fields
-		self.stage_port = create_input_field(layout, "EcoVatio Port:", stage_port, "", 0, 0)
+		self.stage_port = create_input_field(layout, "EcoVatio Port:", "", "", 0, 0)
 		self.stage_port.setAlignment(Qt.AlignLeft)
-		self.freq_gen_port = create_input_field(layout, "TGA 1244 Port:", freq_gen_port, "", 2, 0)
+		self.freq_gen_port = create_input_field(layout, "TGA 1244 Port:", "", "", 2, 0)
 		self.freq_gen_port.setAlignment(Qt.AlignLeft)
-		self.laser1_port = create_input_field(layout, "Laser 1 Port:", laser1_port, "", 4, 0)
+		self.laser1_port = create_input_field(layout, "Laser 1 Port:", "", "", 4, 0)
 		self.laser1_port.setAlignment(Qt.AlignLeft)
-		self.laser2_port = create_input_field(layout, "Laser 2 Port:", laser2_port, "", 6, 0)
+		self.laser2_port = create_input_field(layout, "Laser 2 Port:", "", "", 6, 0)
 		self.laser2_port.setAlignment(Qt.AlignLeft)
-		self.fsv_port = create_input_field(layout, "FSV Port:", fsv_port, "", 8, 0)
+		self.fsv_port = create_input_field(layout, "FSV Port:", "", "", 8, 0)
 		self.fsv_port.setAlignment(Qt.AlignLeft)
 
 		# create apply button
@@ -144,14 +123,13 @@ class PortSelectionDialog(QWidget):
 		self.setLayout(layout)
 		apply_button.clicked.connect(self._apply_ports)
 		def_button.clicked.connect(self._set_default)
+		return
 
 	@Slot()
 	def _apply_ports(self) -> None:
 		"""
-		Get all ports and emit signal to close
-
-		:return: Only emits signal does not return anything
-		:rtype: None
+		Get all ports and emit signal to save and close
+		:return: None
 		"""
 		stage = self.stage_port.text()
 		freq_gen = self.freq_gen_port.text()
@@ -159,16 +137,14 @@ class PortSelectionDialog(QWidget):
 		laser2 = self.laser2_port.text()
 		fsv = self.fsv_port.text()
 
-		self.applySig.emit(stage, freq_gen, laser1, laser2, fsv)
+		self.applyPorts.emit(stage, freq_gen, laser1, laser2, fsv)
 		return
 
 	@Slot()
 	def _set_default(self) -> None:
 		"""
-		Get all ports and emit signal to save and close
-
-		:return: Only emits signal does not return anything
-		:rtype: None
+		Get all ports and save to default file
+		:return: None
 		"""
 		stage = self.stage_port.text()
 		freq_gen = self.freq_gen_port.text()
@@ -176,7 +152,21 @@ class PortSelectionDialog(QWidget):
 		laser2 = self.laser2_port.text()
 		fsv = self.fsv_port.text()
 
-		self.defaultSig.emit(stage, freq_gen, laser1, laser2, fsv)
+		self.defaultPorts.emit(stage, freq_gen, laser1, laser2, fsv)
+		return
+
+	@Slot(object)
+	def get_current_ports(self, current_ports: Dict[str, str]) -> None:
+		"""
+		Get the currently set device ports and show in the dialog
+		:return: None
+		"""
+		# TODO no baudrate -> add baudrate selection?
+		self.stage_port.setText(current_ports["EcoVario"][0])
+		self.freq_gen_port.setText(current_ports["TGA1244"][0])
+		self.laser1_port.setText(current_ports["Laser1"][0])
+		self.laser2_port.setText(current_ports["Laser2"][0])
+		self.fsv_port.setText(current_ports["FSV3000"])
 		return
 
 class SettingsDialog(QWidget):

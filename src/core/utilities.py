@@ -41,6 +41,8 @@ class FilesUtils:
 		self.filename = file_name
 		# create folder and settings paths
 		self.ports_path = os.path.join(file_path, "ports", "default_ports.json")
+		self.ports_folder = os.path.join(file_path, "ports")
+		os.makedirs(self.ports_folder, exist_ok=True)
 		self.folder = os.path.join(file_path, "settings")
 		self.settings_path = os.path.join(file_path, "settings", self.filename)
 		os.makedirs(self.folder, exist_ok=True)
@@ -114,9 +116,12 @@ class FilesUtils:
 				ports = json.load(f)
 			return ports
 		except (json.decoder.JSONDecodeError, OSError):
+			with open(self.ports_path, "w", encoding="utf-8") as f:
+				json.dump(self.default_ports.copy(), f, indent=2)
+				f.close()
 			return self.default_ports.copy()
 
-	def set_ports(self, stage: str, freq_gen: str, laser1: str, laser2: str, fsv: str) -> None:
+	def set_ports(self, stage: str, freq_gen: str, laser1: str, laser2: str, fsv: str, set_def:bool=False) -> None:
 		"""
 		Update the new ports and save to ports file.
 
@@ -134,6 +139,11 @@ class FilesUtils:
 		:rtype: dict
 		"""
 		# TODO need to implement the baud rates
+		if set_def:
+			with open(self.ports_path, "w", encoding="utf-8") as f:
+				json.dump(self.default_ports.copy(), f, indent=2)
+				f.close()
+			return
 		ports = {
 			"EcoVario": [stage, 9600],
 			"Laser1": [laser1, 500000],
@@ -142,13 +152,13 @@ class FilesUtils:
 			"FSV3000": fsv,
 		}
 		# atomic write
-		fd, tmp_path = tempfile.mkstemp(dir=self.folder, prefix="ports_", text=True)
+		fd, tmp_path = tempfile.mkstemp(dir=self.ports_folder, prefix="ports_", text=True)
 		try:
 			with os.fdopen(fd, "w", encoding="utf-8") as f:
 				json.dump(ports, f, indent=2)
 				f.flush()
 				os.fsync(f.fileno())
-			os.replace(tmp_path, self.settings_path)
+			os.replace(tmp_path, self.ports_path)
 		except (json.decoder.JSONDecodeError, OSError):
 			raise PortSetError
 		finally:

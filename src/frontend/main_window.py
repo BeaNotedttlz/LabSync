@@ -24,7 +24,7 @@ from src.frontend.widgets.devices.luxx_expert import LaserWidgetExpert
 from src.frontend.widgets.devices.luxx_normal import LaserWidgetNormal
 from src.frontend.widgets.devices.fsv_normal import FsvNormalWidget
 
-from src.frontend.widgets.dialogs import LaserInfoDialog
+from src.frontend.widgets.dialogs import LaserInfoDialog, PortSelectionDialog
 
 
 class MainWindow(QMainWindow):
@@ -44,6 +44,7 @@ class MainWindow(QMainWindow):
 	# save ports
 	savePorts = Signal(str, str, str, str, str)
 	setDefaultPorts = Signal(str, str, str, str, str)
+	getCurrentPorts = Signal()
 
 	def __init__(self, app) -> None:
 		"""Constructor method
@@ -54,6 +55,7 @@ class MainWindow(QMainWindow):
 
 		self._is_ready_to_close = False
 		self.laser_dialog = None
+		self.port_dialog = None
 
 		# set window title
 		self.setWindowTitle("LabSync")
@@ -153,10 +155,10 @@ class MainWindow(QMainWindow):
 		expert_mode = mode_menu.addAction("Expert Mode")
 		expert_mode.triggered.connect(self.toggle_expert_mode)
 
-		# # create port secltion and settings entrires
-		# port_select = mode_menu.addAction("Select Ports")
-		# port_select.triggered.connect(self._show_port_dialog)
-		#
+		# create port secltion and settings entrires
+		port_select = mode_menu.addAction("Select Ports")
+		port_select.triggered.connect(self._show_port_dialog)
+
 		# settings = mode_menu.addAction("Settings")
 		# settings.triggered.connect(self._show_settings_dialog)
 		#
@@ -368,12 +370,16 @@ class MainWindow(QMainWindow):
 		request_type, device_id, parameter = result.request_id.split("-")
 		if request_type == "POLL" and parameter == "INFO":
 			if self.laser_dialog is not None:
+				# TODO this works - is there a better way?
 				if result.value is None:
 					return
 				data = {
 					device_id: result.value
 				}
 				self.laser_dialog.update_info(data)
+		elif request_type == "POLL" and parameter == "Ports":
+			if self.port_dialog is not None:
+				self.port_dialog.get_current_ports(result.value)
 		return
 
 	@Slot()
@@ -402,4 +408,30 @@ class MainWindow(QMainWindow):
 	def _on_laser_dialog_closed(self, result: int) -> None:
 		self.laser_dialog.finished.disconnect(self._on_laser_dialog_closed)
 		self.laser_dialog = None
+		return
+
+	@Slot()
+	def _show_port_dialog(self) -> None:
+		if self.port_dialog is None:
+			self.port_dialog = PortSelectionDialog(self)
+			self.port_dialog.finished.connect(self._on_port_dialog_closed)
+			self.port_dialog.applyPorts.connect(self.savePorts)
+			self.port_dialog.defaultPorts.connect(self.setDefaultPorts)
+			# self.port_dialog.applyPorts.connect(lambda: self.port_dialog.close())
+
+			self.port_dialog.show()
+		else:
+			if not self.port_dialog.isVisible():
+				self.port_dialog.show()
+			self.port_dialog.raise_()
+
+		self.getCurrentPorts.emit()
+		return
+
+	@Slot(int)
+	def _on_port_dialog_closed(self, result: int) -> None:
+		self.port_dialog.finished.disconnect(self._on_port_dialog_closed)
+		self.port_dialog.applyPorts.disconnect(self.savePorts)
+		self.port_dialog.defaultPorts.disconnect(self.setDefaultPorts)
+		self.port_dialog = None
 		return
