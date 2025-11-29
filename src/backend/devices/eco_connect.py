@@ -140,7 +140,7 @@ class EcoConnect:
 		# generate message
 		message = [id, 0x22, object_2, object_1, value_list[0], value_list[1], value_list[2], value_list[3]]
 		# caculate and append checksum
-		trailing_byte = self._calculate_checsum(message)
+		trailing_byte = self._calculate_checksum(message)
 		message.append(trailing_byte)
 
 		# write message and read response

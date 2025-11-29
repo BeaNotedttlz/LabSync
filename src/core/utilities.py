@@ -43,7 +43,7 @@ class FilesUtils:
 		self.ports_path = os.path.join(file_path, "ports", "default_ports.json")
 		self.folder = os.path.join(file_path, "settings")
 		self.settings_path = os.path.join(file_path, "settings", self.filename)
-		os.makedirs(self.settings_path, exist_ok=True)
+		os.makedirs(self.folder, exist_ok=True)
 		return
 
 	def read_settings(self) -> dict | None:
