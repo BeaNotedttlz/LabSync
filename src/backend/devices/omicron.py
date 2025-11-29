@@ -62,7 +62,6 @@ class OmicronLaser:
 			# only read if connected
 			response = self.Laser.query("?" + command)
 			# split response by '|' and remove first 4 characters
-			print(response)
 			return response[4:].split("|")
 		# otherwise return empty list
 		return [""]

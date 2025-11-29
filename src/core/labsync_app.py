@@ -272,11 +272,11 @@ class LabSync(QObject):
 		for key, parameter in freq_gen_keys.items():
 			self.freq_gen_profile.add(Parameter(
 				key=key,
-				method=parameter[0],  # type: ignore[index]
-				min_value=parameter[1],  # type: ignore[index,index]
-				max_value=parameter[2],  # type: ignore[index]
-				unit=parameter[3],  # type: ignore[index]
-				data_type=parameter[4]  # type: ignore[index]
+				method=parameter[0],
+				min_value=parameter[1],
+				max_value=parameter[2],
+				unit=parameter[3],
+				data_type=parameter[4]
 			))
 		self.fsv_profile = DeviceProfile()
 		for key, parameter in fsv_keys.items():

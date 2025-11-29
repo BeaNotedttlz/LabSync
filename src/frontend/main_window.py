@@ -372,6 +372,9 @@ class MainWindow(QMainWindow):
 	@Slot(RequestResult)
 	def handle_device_result(self, result: RequestResult) -> None:
 		request_type, device_id, parameter = result.request_id.split("-")
+		if request_type == "SET" and parameter == "emission_status":
+			self.info_panel.update_indicator(device_id+"Status", result.value)
+
 		if request_type == "POLL" and parameter == "INFO":
 			if self.laser_dialog is not None:
 				# TODO this works - is there a better way?

@@ -68,7 +68,22 @@ class LabSyncWorker(QObject):
 			try:
 				if cmd.cmd_type == RequestType.SET:
 					if not param_def.method:
-						raise ValueError(f"Parameter '{cmd.parameter}' has no method to call.")
+						self.resultReady.emit(RequestResult(
+							self.device_id,
+							cmd.id,
+							error=f"Parameter '{cmd.parameter}' has no method to call.",
+							error_type=ErrorType.TASK
+						))
+						return
+					if not param_def.validate(cmd.value):
+						self.resultReady.emit(RequestResult(
+							self.device_id,
+							cmd.id,
+							error=f"Validation failed for parameter '{cmd.parameter}' with value '{cmd.value}'\n"
+								  f"{cmd.value} not in valid parameter range: {param_def.min_value} - {param_def.max_value}!",
+							error_type=ErrorType.TASK
+						))
+						return
 
 					method_to_call = getattr(self.driver, param_def.method)
 					if isinstance(cmd.value, tuple):
