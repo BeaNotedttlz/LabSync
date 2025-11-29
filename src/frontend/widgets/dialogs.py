@@ -169,36 +169,23 @@ class PortSelectionDialog(QDialog):
 		self.fsv_port.setText(current_ports["FSV3000"])
 		return
 
-class SettingsDialog(QWidget):
-	"""
-	Module for creating widgets and functionality of the settings dialog.
 
-	:param username: Username
-	:type username: str
-	:param debug_mode: Enable / Disable debug mode
-	:type debug_mode: bool
-	:return: None
-	:rtype: None
-	"""
-	# signals for functionality
-	applySig = Signal(str, bool)
+class SettingsDialog(QDialog):
+	applySettings = Signal(str, bool)
 
-	def __init__(self,username: str, debug_mode: bool) -> None:
-		"""Constructor method
-		"""
-		super().__init__()
-		layout = QGridLayout()
-		layout.setVerticalSpacing(10)
-		self.setWindowTitle("Port Selection")
+	def __init__(self, parent=None) -> None:
+		super().__init__(parent)
+
+		self.setWindowTitle("Settings")
 		self.setMinimumSize(300, 150)
 
-		self.username = username
-		self.debug_mode = debug_mode
+		layout = QGridLayout()
+		layout.setVerticalSpacing(10)
 
-		self.username_input = create_input_field(layout, "Username:", username, "", 0, 0)
+		self.username_input = create_input_field(layout, "Username:", "", "", 0, 0)
 		self.username_input.setAlignment(Qt.AlignLeft)
 		self.debug_mode_box = QCheckBox("Debug Mode")
-		self.debug_mode_box.setChecked(debug_mode)
+		self.debug_mode_box.setChecked(False)
 		self.apply_button = QPushButton("Apply")
 
 		layout.addItem(QSpacerItem(10, 100), 4, 0)
@@ -207,6 +194,7 @@ class SettingsDialog(QWidget):
 
 		self.setLayout(layout)
 		self.apply_button.clicked.connect(self._apply)
+		return
 
 	@Slot()
 	def _apply(self) -> None:
@@ -214,10 +202,25 @@ class SettingsDialog(QWidget):
 		Get all settings and emit signal to close
 
 		:return: Only emits signal does not return anything
-		:rtype: None
 		"""
 		username = self.username_input.text()
 		debug_mode = self.debug_mode_box.isChecked()
 
-		self.applySig.emit(username, debug_mode)
+		self.applySettings.emit(username, debug_mode)
+		return
+
+	def load_settings(self, settings: Dict[str, Any]) -> None:
+		"""
+		Get the currently set settings and show in the dialog
+		:return: None
+		"""
+		try:
+			username = settings["username"]
+			debug_mode = settings["debug_mode"]
+		except KeyError:
+			username = ""
+			debug_mode = False
+
+		self.username_input.setText(username)
+		self.debug_mode_box.setChecked(debug_mode)
 		return

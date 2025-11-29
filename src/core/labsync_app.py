@@ -102,8 +102,6 @@ class LabSync(QObject):
 
 		# save file dir and simulate flag
 		self.file_dir = file_dir
-		self.simulate = True
-
 
 		# initialize the device ports as None
 		self.stage_port = None
@@ -114,8 +112,19 @@ class LabSync(QObject):
 
 		# create main window widgets
 		self.main_window = MainWindow(app)
+		self.main_window.show()
 
-		# self.simulate = self.file_utils.read_settings()["debug_mode"]
+		try:
+			self.simulate = self.file_utils.read_settings()["debug_mode"]
+		except KeyError:
+			self.simulate = False
+			QMessageBox.warning(
+				self.main_window,
+				"Settings Load Error",
+				"There was an error loading the settings file! "
+				"The debug mode will be set to False. REALOAD FILE!"
+			)
+
 		if self.simulate:
 			response = QMessageBox.question(
 				self.main_window,
@@ -126,8 +135,6 @@ class LabSync(QObject):
 			)
 			if response == QMessageBox.StandardButton.No:
 				self.simulate = False
-
-		self.main_window.show()
 
 		# connect signals
 		# update connection status in UI
@@ -143,6 +150,8 @@ class LabSync(QObject):
 		self.main_window.savePorts.connect(self.manage_device_ports)
 		self.main_window.setDefaultPorts.connect(self._set_default_ports)
 
+		self.main_window.getSettings.connect(self._get_current_settings)
+		self.main_window.saveSettings.connect(self._save_setting)
 
 		# Setup device profiles and Instances / Workers
 		self._setup_profiles()
@@ -586,3 +595,36 @@ class LabSync(QObject):
 		)
 		self.returnResult.emit(port_result)
 		return
+
+	@Slot()
+	def _get_current_settings(self) -> None:
+		"""
+		Get the current application settings and emit to the settings dialog
+		:return: None
+		"""
+		settings = self.file_utils.read_settings()
+		settings_result = RequestResult(
+			request_id="POLL-None-Settings",
+			device_id="None",
+			value=settings
+		)
+		self.returnResult.emit(settings_result)
+		return
+
+	@Slot(str, bool)
+	def _save_setting(self, username: str, debug_mode: bool) -> None:
+		"""
+		Save a new application setting to the settings file.
+		:return: None
+		"""
+		try:
+			self.file_utils.edit_settings("username", username)
+			self.file_utils.edit_settings("debug_mode", debug_mode)
+			return
+		except PortSetError as e:
+			QMessageBox.critical(
+				None,
+				"Error",
+				f"Something went wrong while saving the setting\n{e}"
+			)
+			return

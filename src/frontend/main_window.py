@@ -24,7 +24,7 @@ from src.frontend.widgets.devices.luxx_expert import LaserWidgetExpert
 from src.frontend.widgets.devices.luxx_normal import LaserWidgetNormal
 from src.frontend.widgets.devices.fsv_normal import FsvNormalWidget
 
-from src.frontend.widgets.dialogs import LaserInfoDialog, PortSelectionDialog
+from src.frontend.widgets.dialogs import LaserInfoDialog, PortSelectionDialog, SettingsDialog
 
 
 class MainWindow(QMainWindow):
@@ -46,6 +46,9 @@ class MainWindow(QMainWindow):
 	setDefaultPorts = Signal(str, str, str, str, str)
 	getCurrentPorts = Signal()
 
+	saveSettings = Signal(str, bool)
+	getSettings = Signal()
+
 	def __init__(self, app) -> None:
 		"""Constructor method
 		"""
@@ -56,6 +59,7 @@ class MainWindow(QMainWindow):
 		self._is_ready_to_close = False
 		self.laser_dialog = None
 		self.port_dialog = None
+		self.settings_dialog = None
 
 		# set window title
 		self.setWindowTitle("LabSync")
@@ -159,9 +163,9 @@ class MainWindow(QMainWindow):
 		port_select = mode_menu.addAction("Select Ports")
 		port_select.triggered.connect(self._show_port_dialog)
 
-		# settings = mode_menu.addAction("Settings")
-		# settings.triggered.connect(self._show_settings_dialog)
-		#
+		settings = mode_menu.addAction("Settings")
+		settings.triggered.connect(self._show_settings_dialog)
+
 		# # BodePlot window #
 		# window_menu = menu_bar.addMenu("&Windows")
 		# bode_window = window_menu.addAction("BodePlot")
@@ -380,6 +384,9 @@ class MainWindow(QMainWindow):
 		elif request_type == "POLL" and parameter == "Ports":
 			if self.port_dialog is not None:
 				self.port_dialog.get_current_ports(result.value)
+		elif request_type == "POLL" and parameter == "Settings":
+			if self.settings_dialog is not None:
+				self.settings_dialog.load_settings(result.value)
 		return
 
 	@Slot()
@@ -417,7 +424,7 @@ class MainWindow(QMainWindow):
 			self.port_dialog.finished.connect(self._on_port_dialog_closed)
 			self.port_dialog.applyPorts.connect(self.savePorts)
 			self.port_dialog.defaultPorts.connect(self.setDefaultPorts)
-			# self.port_dialog.applyPorts.connect(lambda: self.port_dialog.close())
+			self.port_dialog.applyPorts.connect(lambda: self.port_dialog.close())
 
 			self.port_dialog.show()
 		else:
@@ -434,4 +441,27 @@ class MainWindow(QMainWindow):
 		self.port_dialog.applyPorts.disconnect(self.savePorts)
 		self.port_dialog.defaultPorts.disconnect(self.setDefaultPorts)
 		self.port_dialog = None
+		return
+
+	@Slot()
+	def _show_settings_dialog(self) -> None:
+		if self.settings_dialog is None:
+			self.settings_dialog = SettingsDialog(self)
+			self.settings_dialog.finished.connect(self._on_settings_dialog_closed)
+			self.settings_dialog.applySettings.connect(self.saveSettings)
+			self.settings_dialog.applySettings.connect(lambda: self.settings_dialog.close())
+			self.settings_dialog.show()
+		else:
+			if not self.settings_dialog.isVisible():
+				self.settings_dialog.show()
+			self.settings_dialog.raise_()
+
+		self.getSettings.emit()
+		return
+
+	@Slot(int)
+	def _on_settings_dialog_closed(self, result: int) -> None:
+		self.settings_dialog.finished.disconnect(self._on_settings_dialog_closed)
+		self.settings_dialog.applySettings.disconnect(self.saveSettings)
+		self.settings_dialog = None
 		return

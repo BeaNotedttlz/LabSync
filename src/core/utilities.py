@@ -46,14 +46,13 @@ class FilesUtils:
 		self.folder = os.path.join(file_path, "settings")
 		self.settings_path = os.path.join(file_path, "settings", self.filename)
 		os.makedirs(self.folder, exist_ok=True)
+
+		_ = self.read_settings()
 		return
 
 	def read_settings(self) -> dict | None:
 		"""
 		Read the settings file and return a specific settin.
-
-		:param setting: Setting want to be read
-		:type setting: str
 		:return: The settings dictionary, Returns the default on reading error and None otherwise
 		:rtype: dict | None
 		"""
