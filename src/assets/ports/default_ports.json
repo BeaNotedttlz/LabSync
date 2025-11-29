@@ -1,18 +1,18 @@
 {
   "EcoVario": [
-    "COM20",
+    "COM0",
     9600
   ],
   "Laser1": [
-    "COM2",
+    "COM1",
     500000
   ],
   "Laser2": [
-    "COM3",
+    "COM2",
     500000
   ],
   "TGA1244": [
-    "COM1",
+    "COM3",
     9600
   ],
   "FSV3000": "COM4"

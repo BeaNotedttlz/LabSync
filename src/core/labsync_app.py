@@ -345,14 +345,12 @@ class LabSync(QObject):
 			self.laser2_port = ports["Laser2"][0]; self.laser2_baudrate = ports["Laser2"][1]
 			self.freq_gen_port = ports["TGA1244"][0]; self.freq_gen_baudrate = ports["TGA1244"][1]
 			self.fsv_port = ports["FSV3000"][0]; self.fsv_baudrate = ports["FSV3000"][1]
+
+			for device_id, port in ports.items():
+				self.device_ports.set_port(device_id, port)
+
 			return
 		except KeyError:
-			QMessageBox.critical(
-				self.main_window,
-				"Device Port Read Error",
-				"There was an error reading the device port file! "
-				"The file will be reset to default ports."
-			)
 			self.file_utils.set_ports("", "", "", "", "", set_def=True)
 			ports = self.file_utils.read_port_file()
 			self.stage_port = ports["EcoVario"][0]; self.stage_baudrate = ports["EcoVario"][1]
@@ -360,12 +358,17 @@ class LabSync(QObject):
 			self.laser2_port = ports["Laser2"][0]; self.laser2_baudrate = ports["Laser2"][1]
 			self.freq_gen_port = ports["TGA1244"][0]; self.freq_gen_baudrate = ports["TGA1244"][1]
 			self.fsv_port = ports["FSV3000"][0]; self.fsv_baudrate = ports["FSV3000"][1]
+
+			for device_id, port in ports.items():
+				self.device_ports.set_port(device_id, port)
+
+			QMessageBox.critical(
+				self.main_window,
+				"Device Port Read Error",
+				"There was an error reading the device port file! "
+				"The file will be reset to default ports."
+			)
 			return
-
-
-		for device_id, port in ports.items():
-			self.device_ports.set_port(device_id, port)
-		return
 
 	@Slot(str, str, str, str, str)
 	def _set_default_ports(self, stage: str, laser1: str, laser2: str,
