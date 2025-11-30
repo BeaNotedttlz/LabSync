@@ -163,8 +163,9 @@ class MainWindow(QMainWindow):
 		port_select = mode_menu.addAction("Select Ports")
 		port_select.triggered.connect(self._show_port_dialog)
 
-		settings = mode_menu.addAction("Settings")
-		settings.triggered.connect(self._show_settings_dialog)
+		settings_menu = menu_bar.addMenu("&Settings")
+		edit_settings = settings_menu.addAction("Edit Settings")
+		edit_settings.triggered.connect(self._show_settings_dialog)
 
 		# # BodePlot window #
 		# window_menu = menu_bar.addMenu("&Windows")
