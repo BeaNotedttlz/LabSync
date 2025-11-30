@@ -5,6 +5,8 @@ Main application for controlling backend and frontend of the LabSync application
 @file: src/core/labsync_app.py
 @note:
 """
+import numpy as np
+
 from src.core.context import (DeviceRequest, RequestType, RequestResult,
 							  ErrorType, DeviceProfile, Parameter)
 from src.core.context import UIRequest
@@ -338,6 +340,31 @@ class LabSync(QObject):
 			worker.receivedResult.connect(self.receive_worker_result)
 
 			self.connect_device(device_id, if_silent=True)
+		self._set_poll_parameters()
+		return
+
+	def _set_poll_parameters(self) -> None:
+		stage_worker = self.workers.worker["EcoVario"]
+		position_poll = DeviceRequest(
+			device_id="EcoVario",
+			cmd_type=RequestType.START_POLL,
+			parameter="current_pos",
+			value=2000
+		)
+		error_poll = DeviceRequest(
+			device_id="EcoVario",
+			cmd_type=RequestType.START_POLL,
+			parameter="current_error_code",
+			value=2000
+		)
+		stage_worker.send_request(position_poll)
+		stage_worker.send_request(error_poll)
+		# initialize target position in cache
+		# THis is done because the cache values are onyl set after a device request
+		# TODO however this is bad design, need to find a better way -> initialize cache values on profile setup?
+		self.cache.set_value("EcoVario", "target_pos", 0.0)
+
+
 		return
 
 	def _load_default_ports(self) -> None:
@@ -506,11 +533,24 @@ class LabSync(QObject):
 			request_type, device_id, parameter = result.request_id.split("-")
 			if request_type == "SET" or request_type == "POLL":
 				self.cache.set_value(device_id, parameter, result.value)
-				return
 			elif request_type == RequestType.CONNECT.value or request_type == RequestType.DISCONNECT.value:
 				self.connectionChanged.emit(device_id, result.value)
 			else:
 				pass
+
+			if request_type == "POLL" and parameter == "current_pos":
+				if isinstance(result.value, str):
+					# TODO this works but maybe bad design -> need to restructure request handling for optimized structure generally, then redo this
+					return
+				current_position = float(result.value)
+				if current_position is not None:
+					self.returnResult.emit(result)
+					target_position = self.cache.get_value(device_id, "target_pos")
+					if np.abs(current_position - target_position) <= 0.01:
+						self.main_window.info_panel.update_indicator("EcoVarioStatus", True)
+					else:
+						self.main_window.info_panel.update_indicator("EcoVarioStatus", False)
+
 
 	def _handle_worker_error(self, error_result: RequestResult) -> None:
 		"""

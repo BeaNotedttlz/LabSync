@@ -7,7 +7,7 @@ This allows for single device commands and loop calls of methods
 @note:
 """
 import traceback
-from typing import Optional, Any
+from typing import Optional, List, Tuple
 
 from PySide6.QtCore import QTimer, QThread, QObject, Signal, Slot
 from src.core.context import DeviceConnectionError, ErrorType
@@ -36,7 +36,7 @@ class LabSyncWorker(QObject):
 		self._timer.timeout.connect(self._handle_poll)
 
 		# save poll_context
-		self._poll_context: Optional[DeviceRequest] = None
+		self._poll_contexts: List[Tuple[DeviceRequest, int]] = []
 		return
 
 	@Slot(DeviceRequest)
@@ -51,14 +51,35 @@ class LabSyncWorker(QObject):
 		"""
 		if cmd.cmd_type == RequestType.CONNECT:
 			self._connect_device(cmd)
-		elif cmd.cmd_type == RequestType.DISCONNECT or cmd.cmd_type == RequestType.QUIT:
+		elif cmd.cmd_type == RequestType.DISCONNECT:
 			self._disconnect_device(cmd)
+		elif cmd.cmd_type == RequestType.QUIT:
+			self._disconnect_device(cmd)
+			self._poll_contexts.clear()
 		elif cmd.cmd_type == RequestType.START_POLL:
-			self._poll_context = cmd
-			self._timer.start(cmd.value if cmd.value else 500)
+			interval = int(cmd.value) if cmd.value else 500
+			if not any(ctx.parameter == cmd.parameter for ctx, _ in self._poll_contexts):
+				poll_request = DeviceRequest(
+					device_id=cmd.device_id,
+					cmd_type=RequestType.POLL,
+					parameter=cmd.parameter
+				)
+				self._poll_contexts.append((poll_request, interval))
+
+			if self._poll_contexts:
+				min_interval = min(interval for _, interval in self._poll_contexts)
+				self._timer.start(min_interval)
 		elif cmd.cmd_type == RequestType.STOP_POLL:
-			self._timer.stop()
-			self._poll_context = None
+			if cmd.parameter is None:
+				self._timer.stop()
+				self._poll_contexts.clear()
+			else:
+				self._poll_contexts = [(c, i) for (c, i) in self._poll_contexts if c.parameter != cmd.parameter]
+				if not self._poll_contexts:
+					self._timer.stop()
+				else:
+					min_interval = min(interval for _, interval in self._poll_contexts)
+					self._timer.start(min_interval)
 		else:
 			try:
 				param_def = self.profile.parameters[cmd.parameter]
@@ -115,6 +136,9 @@ class LabSyncWorker(QObject):
 		try:
 			self.driver.open_port(cmd.value[0], cmd.value[1])
 			self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=True))
+			if self._poll_contexts:
+				min_interval = min(interval for _, interval in self._poll_contexts)
+				self._timer.start(min_interval)
 			return
 		except DeviceConnectionError as e:
 			if cmd.parameter is not None and cmd.parameter == "SILENT":
@@ -130,9 +154,15 @@ class LabSyncWorker(QObject):
 		:type cmd: DeviceRequest
 		:return:
 		"""
+		if self._poll_contexts:
+			for ctx, _ in self._poll_contexts:
+				self.resultReady.emit(RequestResult(
+					device_id=self.device_id,
+					request_id=ctx.id,
+					value="Not Connected!"
+				))
 		if self._timer.isActive():
 			self._timer.stop()
-			self._poll_context = None
 
 		try:
 			self.driver.close_port()
@@ -144,13 +174,12 @@ class LabSyncWorker(QObject):
 	@Slot()
 	def _handle_poll(self) -> None:
 		"""
-		Handles the polling of the device. This Slot will be called each time after the timer timeouts.
-		:return: None
+		Handles the polling of the device. Iterate over all active poll contexts.
 		"""
-		if self._poll_context is not None:
-			self.execute_request(self._poll_context)
-		else:
-			pass
+		# copy to avoid modification during iteration
+		for ctx, _ in list(self._poll_contexts):
+			self.execute_request(ctx)
+		return
 
 
 class WorkerHandler(QObject):

@@ -375,6 +375,21 @@ class MainWindow(QMainWindow):
 		if request_type == "SET" and parameter == "emission_status":
 			self.info_panel.update_indicator(device_id+"Status", result.value)
 
+		if request_type == "POLL" and parameter == "current_pos":
+			self.eco_normal_widget.get_update(
+				{(device_id, "current_pos"): result.value}
+			)
+			self.eco_expert_widget.get_update(
+				{(device_id, "current_pos"): result.value}
+			)
+		elif request_type == "POLL" and parameter == "current_error_code":
+			self.eco_normal_widget.get_update(
+				{(device_id, "error_code"): result.value}
+			)
+			self.eco_expert_widget.get_update(
+				{(device_id, "error_code"): result.value}
+			)
+
 		if request_type == "POLL" and parameter == "INFO":
 			if self.laser_dialog is not None:
 				# TODO this works - is there a better way?

@@ -119,7 +119,7 @@ class StageWidgetNormal(QWidget):
 				return
 			else:
 				widget = getattr(self, supproted_parameters[key[1]])
-				widget.setText(parameter)
+				widget.setText(str(parameter))
 		return
 
 	@Slot()
