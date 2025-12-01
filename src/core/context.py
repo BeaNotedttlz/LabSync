@@ -129,6 +129,9 @@ class Parameter:
 		:rtype: bool
 		"""
 		if self.data_type in [int, float] and (self.min_value is None or value is not None):
+			if isinstance(value, tuple):
+				value = value[0]
+
 			if value < self.min_value or value > self.max_value:
 				return False
 		return True

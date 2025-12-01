@@ -5,6 +5,9 @@ Main application for controlling backend and frontend of the LabSync application
 @file: src/core/labsync_app.py
 @note:
 """
+import json
+import os
+
 import numpy as np
 
 from src.core.context import (DeviceRequest, RequestType, RequestResult,
@@ -20,7 +23,7 @@ from src.backend.devices.fsv import SpectrumAnalyzer
 from src.frontend.main_window import MainWindow
 
 from PySide6.QtCore import QObject, Signal, Slot
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox, QFileDialog
 
 from src.core.storage import InstrumentCache
 from src.core.utilities import ValueHandler, FilesUtils
@@ -155,6 +158,9 @@ class LabSync(QObject):
 		self.main_window.getSettings.connect(self._get_current_settings)
 		self.main_window.saveSettings.connect(self._save_setting)
 
+		self.main_window.savePreset.connect(self.save_preset)
+		self.main_window.loadPreset.connect(self.load_preset)
+
 		# Setup device profiles and Instances / Workers
 		self._setup_profiles()
 		return
@@ -219,7 +225,7 @@ class LabSync(QObject):
 		laser_keys = {
 			"temp_power": ["set_temp_power", 0.0, 100.0, "%", float],
 			"operating_mode": ["set_op_mode", 0, 5, "", int],
-			"emission_status": ["set_emission", None, None, "", bool],
+			"emission_status": ["set_emission", False, True, "", bool],
 			"INFO": ["get_device_information", None, None, None, None]
 		}
 		freq_gen_keys = {
@@ -515,6 +521,58 @@ class LabSync(QObject):
 			value = None
 		)
 		worker_handler.send_request(disconnect_request)
+		return
+
+	@Slot()
+	def save_preset(self) -> None:
+		save_path, _ = QFileDialog.getSaveFileName(
+			self.main_window,
+			"Save Preset File",
+			os.path.join(os.path.dirname(self.file_dir), "presets"),
+			"JSON Files (*.json)"
+		)
+		if save_path:
+			if not save_path.endswith(".json"):
+				save_path += ".json"
+
+			with open(save_path, 'w') as preset_file:
+				current_cache = self.cache.save_cache()
+				json.dump(current_cache, preset_file, indent=2)
+				preset_file.close()
+		else:
+			QMessageBox.information(
+				self.main_window,
+				"Save Preset Cancelled",
+				"No file selected, preset save cancelled."
+			)
+		return
+
+	@Slot()
+	def load_preset(self) -> None:
+		preset_path, _ = QFileDialog.getOpenFileName(
+			self.main_window,
+			"Load Preset File",
+			os.path.join(os.path.dirname(self.file_dir), "presets"),
+			"JSON Files (*.json)"
+		)
+		if preset_path:
+			with open(preset_path, 'r') as preset_file:
+				try:
+					preset_data = json.load(preset_file)
+					self.cache.load_preset(preset_data)
+					preset_file.close()
+				except json.decoder.JSONDecodeError:
+					QMessageBox.critical(
+						self.main_window,
+						"Preset Load Error",
+						"The selected preset file is not a valid JSON file!"
+					)
+		else:
+			QMessageBox.information(
+				self.main_window,
+				"Load Preset Cancelled",
+				"No file selected, preset load cancelled."
+			)
 		return
 
 	@Slot(RequestResult)
