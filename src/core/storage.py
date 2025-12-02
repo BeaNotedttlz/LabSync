@@ -1,101 +1,106 @@
-# python
-from typing import Any, Dict
+"""
+Module for storing device parameters dynamically on runtime. This will then be used to save and load a preset.
+@author: Merlin Schmidt
+@date: 2025-02-12
+@file: src/core/storage.py
+@note:
+"""
+
+from typing import Any, Dict, Tuple
 from PySide6.QtCore import QObject, Signal
+from src.core.lab_parser import LabFileParser
 
 class InstrumentCache(QObject):
-	"""
-	Class for caching instrument parameters and respective values.
-	Stores values internally with keys as (device, parameter) tuples but
-	serializes to a nested dict for JSON compatibility.
-	"""
-	# TODO This signal can be used to update the UI from loading cached values
-	# However this will double update if values are set normally!
-	valueChanged = Signal(tuple)
 
-	def __init__(self) -> None:
-		super().__init__()
-		self._cache: Dict[tuple, Any] = {}
+	valueChanged = Signal(str, str, object)
 
-	def get_value(self, device: str, parameter: str) -> Any | None:
-		key = (device, parameter)
-		return self._cache.get(key)
-
-	def set_value(self, device: str, parameter: str, value: Any) -> None:
-		key = (device, parameter)
-		if key in self._cache:
-			if self._cache[key] != value:
-				self._cache[key] = value
-		else:
-			self._cache[key] = value
-
-	def save_cache(self) -> Dict[str, Dict[str, Any]]:
+	def __init__(self, parent=None) -> None:
+		"""Constructor method
 		"""
-		Return a JSON-serializable nested dictionary:
-		{ device_id: { parameter: value, ... }, ... }
-		"""
-		out: Dict[str, Dict[str, Any]] = {}
-		for (device, parameter), value in self._cache.items():
-			out.setdefault(device, {})[parameter] = value
-		return out
-
-	def load_preset(self, cache: Any) -> None:
-		"""
-		Load a preset into the internal cache. Accepts multiple shapes for
-		compatibility:
-		 - nested dict: { device: { parameter: value } }
-		 - list of entries: [ { "device": "...", "parameter": "...", "value": ... }, ... ]
-		 - legacy dict with stringified tuple keys: "{('device','param'): value, ...}" or "device:param"
-		Values are set via set_value so change signals fire.
-		"""
-		# Nested dict format: { device: { parameter: value } }
-		if isinstance(cache, dict):
-			# check for nested-dict shape
-			if all(isinstance(k, str) and isinstance(v, dict) for k, v in cache.items()):
-				for device, params in cache.items():
-					if isinstance(params, dict):
-						for parameter, value in params.items():
-							self.set_value(device, parameter, value)
-				return
-
-			# fallback: dict with tuple-like or custom string keys
-			parsed_any = False
-			for key, value in cache.items():
-				if isinstance(key, tuple) and len(key) == 2:
-					self.set_value(key[0], key[1], value)
-					parsed_any = True
-					continue
-				if isinstance(key, str):
-					s = key.strip()
-					# pattern: (device, parameter) or 'device','parameter'
-					if s.startswith("(") and s.endswith(")"):
-						inner = s[1:-1]
-						parts = inner.split(",", 1)
-						if len(parts) == 2:
-							dev = parts[0].strip().strip('\'" ')
-							param = parts[1].strip().strip('\'" ')
-							self.set_value(dev, param, value)
-							parsed_any = True
-							continue
-					# pattern: device:parameter
-					if ":" in s:
-						dev, param = s.split(":", 1)
-						self.set_value(dev.strip(), param.strip(), value)
-						parsed_any = True
-						continue
-			if parsed_any:
-				return
-
-		# List of entry dicts format
-		if isinstance(cache, list):
-			for entry in cache:
-				if not isinstance(entry, dict):
-					continue
-				dev = entry.get("device")
-				param = entry.get("parameter")
-				val = entry.get("value")
-				if dev is not None and param is not None:
-					self.set_value(dev, param, val)
-			return
-
-		# If nothing matched, do nothing
+		super().__init__(parent)
+		# Parameter storage cache, dynamically created on runtime
+		self._cache: Dict[Tuple[str, str], Any] = {}
+		# Key is tuple: (device_id, parameter_name)
 		return
+
+	def get_value(self, device_id: str, parameter: str) -> Any | None:
+		"""
+		Get the value of a device and parameter from the cache.
+		:param device_id: Device ID
+		:type device_id: str
+		:param parameter: Parameter name
+		:type parameter: str
+		:return: The value in the cache for the given key or None if not found
+		:rtype: Any | None
+		"""
+		key = (device_id, parameter)
+		return self._cache.get(key, None)
+
+	def set_value(self, device_id: str, parameter: str, value: Any, emit_signal: bool = False) -> None:
+		key = (device_id, parameter)
+
+		# check the value is a tuple -> nested dict for the frequency generator
+		if isinstance(value, tuple):
+			# --- FIX IS HERE ---
+			# Worker returns (Value, Channel), so we unpack in that order
+			actual_value, channel_idx = value
+
+			# create nested dict of the key if not exists
+			if key not in self._cache or not isinstance(self._cache[key], dict):
+				self._cache[key] = {}
+
+			current_channel_val = self._cache[key].get(channel_idx, None)
+
+			if current_channel_val != actual_value:
+				self._cache[key][channel_idx] = actual_value
+				if emit_signal:
+					# Ensure the signal matches the cache structure: (Channel, Value)
+					# NOTE: Check if your UI expects (Channel, Value) or (Value, Channel).
+					# Usually UI slots prefer (Channel, Value) to index lists easily.
+					self.valueChanged.emit(device_id, parameter, (channel_idx, actual_value))
+
+		else:
+			# Standard scalar handling
+			if self._cache.get(key, None) != value:
+				self._cache[key] = value
+				if emit_signal:
+					self.valueChanged.emit(device_id, parameter, value)
+
+		return
+
+	def save_cache(self, filepath: str) -> None:
+		"""
+		Save the current device states to a custom .lab file.
+		This logic is intentionally exported to the InstrumentCache class to allow easy access from other modules.
+		:param filepath: Filepath to save the .lab file
+		:type filepath: str
+		:return: None
+		"""
+		success, error = LabFileParser.save(filepath, self._cache)
+
+		if not success:
+			raise IOError(f"Could not save .lab file to {filepath}") from error
+		return
+
+	def load_cache(self, filepath: str) -> None:
+		"""
+		Load device states from a custom .lab file.
+		This logic is intentionally exported to the InstrumentCache class to allow easy access from other modules.
+		:param filepath: Filepath to load the .lab file from
+		:type filepath: str
+		:return: None
+		"""
+		new_data, error = LabFileParser.load(filepath)
+
+		if not new_data:
+			raise IOError(f"Could not load .lab file from {filepath}") from error
+
+		for (device, parameter), value in new_data.items():
+			if isinstance(value, dict):
+				for ch_idx, ch_val in value.items():
+					self.set_value(device, parameter, (ch_idx, ch_val), emit_signal=True)
+			else:
+				self.set_value(device, parameter, value, emit_signal=True)
+		return
+
+

@@ -28,7 +28,7 @@ from PySide6.QtWidgets import QMessageBox, QFileDialog
 from src.core.storage import InstrumentCache
 from src.core.utilities import ValueHandler, FilesUtils
 
-from typing import Dict
+from typing import Dict, Any
 
 class MapWorkers:
 	"""
@@ -88,6 +88,8 @@ class LabSync(QObject):
 
 	returnResult = Signal(RequestResult)
 
+	returnStorageUpdate = Signal(str, str, object)
+
 	def __init__(self, app, file_dir: str) -> None:
 		"""Constructor method
 		"""
@@ -95,6 +97,7 @@ class LabSync(QObject):
 
 		# create cache
 		self.cache = InstrumentCache()
+		self.cache.valueChanged.connect(self._handle_cache_update)
 		# handler for comparing values
 		self.value_handler = ValueHandler()
 		# File utility
@@ -150,6 +153,8 @@ class LabSync(QObject):
 		# Signal that the application can be closed
 		self.shutdownFinished.connect(self.main_window.finalize_exit)
 		self.returnResult.connect(self.main_window.handle_device_result)
+
+		self.returnStorageUpdate.connect(self.main_window.get_cache_update)
 
 		self.main_window.getCurrentPorts.connect(self._get_current_device_ports)
 		self.main_window.savePorts.connect(self.manage_device_ports)
@@ -529,16 +534,20 @@ class LabSync(QObject):
 			self.main_window,
 			"Save Preset File",
 			os.path.join(os.path.dirname(self.file_dir), "presets"),
-			"JSON Files (*.json)"
+			"lab Files (*.lab)"
 		)
 		if save_path:
-			if not save_path.endswith(".json"):
-				save_path += ".json"
+			if not save_path.endswith(".lab"):
+				save_path += ".lab"
 
-			with open(save_path, 'w') as preset_file:
-				current_cache = self.cache.save_cache()
-				json.dump(current_cache, preset_file, indent=2)
-				preset_file.close()
+			try:
+				self.cache.save_cache(save_path)
+			except Exception as e:
+				QMessageBox.critical(
+					self.main_window,
+					"Preset Save Error",
+					f"Could not save preset file!\n{e}"
+				)
 		else:
 			QMessageBox.information(
 				self.main_window,
@@ -553,20 +562,18 @@ class LabSync(QObject):
 			self.main_window,
 			"Load Preset File",
 			os.path.join(os.path.dirname(self.file_dir), "presets"),
-			"JSON Files (*.json)"
+			"lab Files (*.lab)"
 		)
 		if preset_path:
-			with open(preset_path, 'r') as preset_file:
-				try:
-					preset_data = json.load(preset_file)
-					self.cache.load_preset(preset_data)
-					preset_file.close()
-				except json.decoder.JSONDecodeError:
-					QMessageBox.critical(
-						self.main_window,
-						"Preset Load Error",
-						"The selected preset file is not a valid JSON file!"
-					)
+			try:
+				self.cache.load_cache(preset_path)
+
+			except Exception as e:
+				QMessageBox.critical(
+					self.main_window,
+					"Preset Load Error",
+					f"Could not load preset file!\n{e}"
+				)
 		else:
 			QMessageBox.information(
 				self.main_window,
@@ -726,3 +733,18 @@ class LabSync(QObject):
 				f"Something went wrong while saving the setting\n{e}"
 			)
 			return
+
+	@Slot(str, str, object)
+	def _handle_cache_update(self, device_id: str, parameter: str, value: Any) -> None:
+		"""
+		Update the cache with a new value.
+		:param device_id: Device ID of the parameter
+		:type device_id: str
+		:param parameter: Parameter name
+		:type parameter: str
+		:param value: New value of the parameter
+		:type value: Any
+		:return: None
+		"""
+		self.returnStorageUpdate.emit(device_id, parameter, value)
+		return
