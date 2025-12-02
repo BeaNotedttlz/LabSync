@@ -21,7 +21,7 @@ class FrequencyGeneratorWidget(QWidget):
 
 	wave_forms = ["sine", "square", "triang", "dc"]
 	input_modes = ["Amp+Offset", "Low+High"]
-	lock_modes = ["indep", "maser", "slave", "off"]
+	lock_modes = ["indep", "master", "slave", "off"]
 
 	def __init__(self, device_id: str, channel_index = int) -> None:
 		super().__init__()
@@ -102,7 +102,7 @@ class FrequencyGeneratorWidget(QWidget):
 		return
 
 	@Slot(dict)
-	def get_update(self, parameters: Dict[str, Any]) -> None:
+	def get_update(self, parameters: Dict[tuple, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.
 		:param parameters: Parameters from the controller.
@@ -119,8 +119,8 @@ class FrequencyGeneratorWidget(QWidget):
 			"output": "output",
 		}
 		for key, parameter in parameters.items():
-			channel_index = parameter[0]
-			actual_value = parameter[1]
+			channel_index = parameter[1]
+			actual_value = parameter[0]
 			if key[1] not in supported_parameters:
 				QMessageBox.warning(
 					self,

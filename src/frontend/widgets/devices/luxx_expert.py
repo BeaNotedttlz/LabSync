@@ -133,7 +133,7 @@ class LaserWidgetExpert(QWidget):
 		return
 
 	@Slot(object)
-	def get_update(self, parameters: Dict[str, Any]) -> None:
+	def get_update(self, parameters: Dict[tuple, Any]) -> None:
 		"""
 		Gets updated parameters from the controller and shows them in the UI.
 		:param parameters: Parameters from the controller
@@ -162,7 +162,7 @@ class LaserWidgetExpert(QWidget):
 			else:
 				widget = getattr(self, supported_parameters[key[1]])
 				widget.clear()
-				widget.setText(parameter)
+				widget.setText(str(parameter))
 		return
 
 	@staticmethod

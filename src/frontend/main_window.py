@@ -279,7 +279,7 @@ class MainWindow(QMainWindow):
 		)
 		self.freq_gen_expert_widget_4.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.freq_gen_tab_layout.addWidget(self.freq_gen_expert_widget_4)
-		self.freq_gen_expert_widget_2.sendRequest.connect(self.handle_ui_request)
+		self.freq_gen_expert_widget_4.sendRequest.connect(self.handle_ui_request)
 
 		self.laser_1_widget = LaserWidgetExpert(device_id="Laser1", laser_index=1,
 												max_power=laser1_max_power)
@@ -483,4 +483,45 @@ class MainWindow(QMainWindow):
 		self.settings_dialog.finished.disconnect(self._on_settings_dialog_closed)
 		self.settings_dialog.applySettings.disconnect(self.saveSettings)
 		self.settings_dialog = None
+		return
+
+	@Slot(str, str, object)
+	def get_cache_update(self, device_id: str, parameter: str, value: Any) -> None:
+		"""
+		Handles cache updates from the storage system.
+		:param device_id: Device ID
+		:type device_id: str
+		:param parameter: Parameter name
+		:type parameter: str
+		:param value: Update value
+		:type value: Any
+		:return: None
+		"""
+		if device_id == "EcoVario":
+			self.eco_normal_widget.get_update({(device_id, parameter): value})
+			self.eco_expert_widget.get_update({(device_id, parameter): value})
+		elif device_id == "Laser1" or device_id == "Laser2":
+			if device_id == "Laser1":
+				self.laser_1_widget.get_update({(device_id, parameter): value})
+			else:
+				self.laser_2_widget.get_update({(device_id, parameter): value})
+		elif device_id == "TGA1244":
+			channel_index = int(value[1])
+			if channel_index == 1:
+				self.freq_gen_expert_widget_1.get_update({(device_id, parameter): value})
+			elif channel_index == 2:
+				self.freq_gen_expert_widget_2.get_update({(device_id, parameter): value})
+			elif channel_index == 3:
+				self.freq_gen_expert_widget_3.get_update({(device_id, parameter): value})
+			elif channel_index == 4:
+				self.freq_gen_expert_widget_4.get_update({(device_id, parameter): value})
+		elif device_id == "FSV3000":
+			self.fsv_normal_widget.get_update({(device_id, parameter): value})
+		else:
+			QMessageBox.warning(
+				self,
+				"UI Error",
+				"An Interal UI Error occurred."
+				"Unknown device ID: {}".format(device_id)
+			)
 		return

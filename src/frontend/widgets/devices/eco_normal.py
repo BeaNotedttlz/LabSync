@@ -104,19 +104,12 @@ class StageWidgetNormal(QWidget):
 		supproted_parameters = {
 			"target_pos": "out_target_position",
 			"target_vel": "in_speed",
-			"target_acc": "in_accel",
-			"target_deacc": "in_deaccel",
 			"current_pos": "out_current_position",
 			"error_code": "out_error_code"
 		}
 		for key, parameter in parameters.items():
 			if not key[1] in supproted_parameters:
-				QMessageBox.warning(
-					self,
-					"UI Error",
-					f"something went wrong:\n{parameter} not supported."
-				)
-				return
+				pass
 			else:
 				widget = getattr(self, supproted_parameters[key[1]])
 				widget.setText(str(parameter))
