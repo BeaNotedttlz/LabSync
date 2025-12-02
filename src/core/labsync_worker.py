@@ -6,9 +6,7 @@ This allows for single device commands and loop calls of methods
 @file: src/core/labsync_worker.py
 @note:
 """
-import traceback
-from typing import Optional, List, Tuple
-
+from typing import List, Tuple
 from PySide6.QtCore import QTimer, QThread, QObject, Signal, Slot
 from src.core.context import DeviceConnectionError, ErrorType
 from src.core.context import DeviceRequest, RequestResult, RequestType, DeviceProfile
