@@ -1,21 +1,41 @@
-'''
-Interface of backend TGA1244 functions and PySide6 frontend
-'''
+"""
+Module for the FrequencyGenerator functions. This handles most of the logic outside the backend driver.
+@autor: Merlin Schmidt
+@date: 2025-15-10
+@file: Classes/App/TgaFunc.py
+@note: use at your own risk.
+"""
+
 from PySide6.QtCore import QObject, Slot, Signal
 from PySide6.QtWidgets import QMessageBox
-
 from Devices.TGA import FrequencyGenerator
 from src.utils import DeviceParameterError
 
 class FrequencyGeneratorFunctions(QObject):
+	"""
+	FrequencyGeneratorFunctions for handling TGA functions and logic.
+
+	:param port: Device serial port
+	:type port: str
+	:param _storage: Parameter storage instance
+	:type _storage: ParameterStorage
+	:param _simulate: Flag for device simulation
+	:type _simulate: bool
+	:return: None
+	:rtype: None
+	"""
+	# device signals
 	port_status_signal = Signal(str, bool)
 
 	def __init__(self, port: str, _storage, _simulate) -> None:
+		"""Constructor method
+		"""
 		super().__init__()
 
+		# save port and storage in self
 		self.port = port
 		self.storage = _storage
-		self.connected = False
+		# create OmicronLaser backend driver
 		self.TGA1244 = FrequencyGenerator(
 			name="TGA",
 			_storage=self.storage,
@@ -23,34 +43,47 @@ class FrequencyGeneratorFunctions(QObject):
 		)
 
 	def __post_init__(self) -> None:
+		"""
+		Post init method that opens the port after signals have been routed.
+
+		:return: None
+		:rtype: None
+		"""
 		try:
+			# try to open device port
 			self.TGA1244.open_port(self.port, baudrate=9600)
-			self.connected = True
+			# emit port status signal to change indicator
 			self.port_status_signal.emit("TGAPort", True)
 		except ConnectionError:
-			self.connected = False
+			# if it fails send close signal
 			self.port_status_signal.emit("TGAPort", False)
 
 	@Slot(bool)
 	def manage_port(self, state: bool) -> None:
+		"""
+		Manage device port after initial opening. This is called by pressing the status buttons.
+
+		:param state: Desired state of the device port
+		:type state: bool
+		:return: None
+		:rtype: None
+		"""
 		if state:
 			try:
 				self.TGA1244.open_port(self.port, baudrate=9600)
-				self.connected = True
 				self.port_status_signal.emit("TGAPort", True)
 			except ConnectionError as e:
-				self.connected = False
 				self.port_status_signal.emit("TGAPort", False)
 				QMessageBox.information(
 					None,
 					"Error",
 					"Could not open TGA Port!\n%s"%e
 				)
-				return
+			return None
 		else:
 			self.TGA1244.close_port()
-			self.connected = False
 			self.port_status_signal.emit("TGAPort", False)
+			return None
 
 	@Slot(int, str, float, float, float, float, str, str, bool)
 	def apply(
@@ -65,6 +98,32 @@ class FrequencyGeneratorFunctions(QObject):
 			lockmode,
 			output
 	) -> None:
+		"""
+		Apply the changed parameters to the TGA1244.
+
+		:param channel: Index of the selected channel
+		:type channel: int
+		:param waveform: Selected waveform
+		:type waveform: str
+		:param amplitude: Target amplitude
+		:type amplitude: float
+		:param offset: Target offset
+		:type offset: float
+		:param phase: Target phase
+		:type phase: float
+		:param frequency: Target modulation frequency
+		:type frequency: float
+		:param inputmode: Selected input mode
+		:type inputmode: str
+		:param lockmode: Selected lock mode
+		:type lockmode: str
+		:param output: Output state of the channel
+		:type output: bool
+		:raises DeviceParameterError: If a unsupported parameter get passed.
+				This cannot happen for normal LabSync use.
+		:return: None
+		:rtype: None
+		"""
 		parameters = {
 			"waveform":	waveform,
 			"amplitude": amplitude,
@@ -75,7 +134,9 @@ class FrequencyGeneratorFunctions(QObject):
 			"lockmode": lockmode,
 			"output": output
 		}
+		# set current channel
 		self.TGA1244.current_channel = channel
+		# set each provided device parameter
 		for param, value in parameters.items():
 			if not hasattr(self.TGA1244, param):
 				raise DeviceParameterError(f"TGA1244: unsupported parameter {param}")
@@ -88,6 +149,7 @@ class FrequencyGeneratorFunctions(QObject):
 					"Error",
 					"TGA ERROR" + str(e)
 				)
+		return None
 	@Slot(int, str, float, float, str, bool, int)
 	def apply_on_normal(
 			self,
@@ -99,10 +161,33 @@ class FrequencyGeneratorFunctions(QObject):
 			output,
 			laser_index
 	) -> None:
+		"""
+		This is for the special parameters on the normal LabSync tab.
+		This calls the 'apply' method after calculating necessary parameters.
+
+		:param channel: Index of the selected channel
+		:type channel: int
+		:param waveform: Selected waveform
+		:type waveform: str
+		:param frequency: Target modulation frequency
+		:type frequency: float
+		:param power: Target laser power
+		:type power: float
+		:param lockmode: Selected lock mode
+		:type lockmode: str
+		:param output: Ouput state of the channel
+		:type output: bool
+		:param laser_index: Index of the laser
+		:type laser_index: int
+		:return: None
+		:rtype: None
+		"""
+		# calculate all device parameters out of look up table
 		values = self._calc_values(power)
 		amplitude = values[0] if laser_index == 1 else values[2]
 		offset = values[1] if laser_index == 1 else values[3]
 
+		# call apply method with calculated parameters
 		self.apply(channel=channel,
 				waveform=waveform,
 				amplitude=amplitude,
@@ -113,9 +198,19 @@ class FrequencyGeneratorFunctions(QObject):
 				lockmode=lockmode,
 				output=output
 	)
+		return None
 
 	@staticmethod
-	def _calc_values(power: float) -> [float, float, float, float]:
+	def _calc_values(power: float) -> list:
+		"""
+		Look up table for the laser power and sine modulation for each laser power in %.
+
+		:param power: Target laser power
+		:type power: float
+		:return: The list of amplitude and offset for the laser power
+				 [amplitude 1, offset 1, amplitude 2, offset 2]
+		:rtype: list
+		"""
 		table = {
 			5: [2.30, 4.45, 1.75, 2.65],
 			10: [2.80, 4.00, 2.50, 2.30],

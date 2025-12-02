@@ -1,0 +1,246 @@
+spec: "1.1"
+
+resources:
+  ASRL1::INSTR:
+    device: omicron
+  ASRL3::INSTR:
+    device: tga
+  ASRL4::INSTR:
+    device: ecovario
+
+devices:
+  omicron:
+    eom:
+      ASRL INSTR:
+        q: "\r"
+        r: "\r"
+    error: "!UK"
+    dialogues:
+      - q: "?GFw|"
+        r: "!GFwSimDevice|18|42-1337"
+      - q: "?GSI"
+        r: "!GSI420|100"
+      - q: "?GMP"
+        r: "!GMP400"
+      - q: "?LOn"
+        r: "!LOn>"
+      - q: "?LOf"
+        r: "!LOf>"
+      - q: "?POn"
+        r: "!POn>"
+      - q: "?GAS"
+        r: "!GAS0x0000"
+    properties:
+      temporarypower:
+        default: 50.0
+        getter:
+          q: "?TPP"
+          r: "!TPP{:.1f}"
+          r_expr: "{value} * (0.9 + 0.2 * random())"
+        setter:
+          q: "?TPP{:.1f}"
+          r: "!TPP>"
+          e: "!TPPx"
+        specs:
+          min: 0.0
+          max: 100.0
+          type: float
+      operatingmode:
+        default: 0
+        getter:
+          q: "?ROM"
+          r: "!ROM{:1d}"
+        setter:
+          q: "?ROM{:1d}"
+          r: "!ROm>"
+          e: "!ROMx"
+        specs:
+          min: 0
+          max: 5
+          type: int
+      hex_op_mode:
+        default: 0
+        getter:
+          q: "?GOM"
+          r: "!GOM{:#X}"
+        setter:
+          q: "?SOM{:#X}"
+          r: "!SOM>"
+          e: "!SOMx"
+        specs:
+          min: 0
+          max: 65535
+          type: int
+
+  tga:
+    eom:
+      ASRL INSTR:
+        q: "\r"
+        r: "\r"
+    error: ERROR
+    properties:
+      channel:
+        default: 0
+        setter:
+          q: "SETUPCH{:1d}"
+          r: "channel set"
+          e: "channel error"
+        specs:
+          min: 0
+          max: 4
+          type: int
+      waveform:
+        default: "sine"
+        setter:
+          q: "WAVE{:1s}"
+          r: "waveform set"
+          e: "waveform error"
+        specs:
+          valid: ["sine", "square", "triag", "dc"]
+          type: str
+      frequency:
+        default: 0.0
+        setter:
+          q: "WAVFREQ{:.1f}"
+          r: "frequency set"
+          e: "frequency error"
+        specs:
+          min: 0.0
+          max: 40000000.0
+          type: float
+      amplitude:
+        default: 0.0
+        setter:
+          q: "AMPL{:.1f}"
+          r: "amplitude set"
+          e: "amplitude error"
+        specs:
+          min: 0.0
+          max: 10.0
+          type: float
+      offset:
+        default: 0.0
+        setter:
+          q: "DCOFFS{:.1f}"
+          r: "offset set"
+          e: "offset error"
+        specs:
+          min: 0.0
+          max: 5.0
+          type: float
+      phase:
+        default: 0.0
+        setter:
+          q: "PHASE{:.1f}"
+          r: "phase set"
+          e: "phase error"
+        specs:
+          min: 0.0
+          max: 360.0
+          type: float
+      lockmode:
+        default: "INDEP"
+        setter:
+          q: "LOCKMODE{:1s}"
+          r: "lockmode set"
+          e: "lockmode error"
+        specs:
+          valid: ["INDEP", "MASTER", "SLAVE", "OFF"]
+          type: str
+      output:
+        default: "OFF"
+        setter:
+          q: "OUTPUT{:1s}"
+          r: "output set"
+          e: "output error"
+        specs:
+          valid: ["ON", "OFF"]
+          type: str
+      unit:
+        default: "VPP"
+        setter:
+          q: "AMPUNIT{:1s}"
+          r: "Ampunit set to vpp"
+          e: "Ampunit error"
+        specs:
+          valid: ["VPP"]
+          type: str
+      impedance:
+        default: "50"
+        setter:
+          q: "ZLOAD{:1s}"
+          r: "impedance set"
+          e: "impedance error"
+        specs:
+          valid: ["50", "75"]
+          type: str
+      lockstat:
+        default: "ON"
+        setter:
+          q: "LOCKSTAT{:1s}"
+          r: "lockstat set"
+          e: "lockstat error"
+        specs:
+          valid: ["ON", "OFF"]
+          type: str
+
+  ecovario:
+    eom:
+      ASRL INSTR:
+        q: "\r"
+        r: "\r"
+    error: ERROR
+    dialogues:
+      - q: "control word"
+        r: "control word set"
+      - q: "start"
+        r: "stage startet"
+      - q: "stop"
+        r: "stage stopped"
+      - q: "currpos"
+        r: "100000"
+      - q: "currerror"
+        r: "0000"
+      - q: "currstatus"
+        r: "0000"
+    properties:
+      pos:
+        default: 0.0
+        setter:
+          q: "pos{:.1f}"
+          r: "position set"
+          e: "position error"
+        specs:
+          min: 0.0
+          max: 2600.0
+          type: float
+      speed:
+        default: 25.0
+        setter:
+          q: "speed{:.1f}"
+          r: "speed set"
+          e: "speed error"
+        specs:
+          min: 0.0
+          max: 100.0
+          type: float
+      accel:
+        default: 501.30
+        setter:
+          q: "accel{:.1f}"
+          r: "accel set"
+          e: "accel error"
+        specs:
+          min: 0.0
+          max: 1000.0
+          type: float
+      deaccel:
+        default: 501.30
+        setter:
+          q: "deaccel{:.1f}"
+          r: "deaccel set"
+          e: "deaccel error"
+        specs:
+          min: 0.0
+          max: 1000.0
+          type: float
