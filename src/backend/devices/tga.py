@@ -136,10 +136,10 @@ class FrequencyGenerator:
 		:return: None
 		:rtype: None
 		"""
-		waveforms = ["sine", "square", "dc", "triag"]
+		waveforms = ["sine", "square", "dc", "triang"]
 		if waveform not in waveforms:
 			# raise error if the waveform is not supported
-			raise DeviceRequestError(f"Wavefrom {waveform} is not supported!")
+			raise AttributeError(f"Wavefrom {waveform} is not supported!")
 		return self._write(channel, "WAVE", waveform)
 
 	def set_frequency(self, channel: int, frequency: float) -> None:
@@ -221,7 +221,7 @@ class FrequencyGenerator:
 		lockmodes = ["indep", "master", "slave", "off"]
 		print(lockmode)
 		if lockmode not in lockmodes:
-			raise ValueError(f"Lockmode {lockmode} is not supported.")
+			raise AttributeError(f"Lockmode {lockmode} is not supported.")
 		if lockmode == "indep":
 			self._write(channel, 'LOCKMODE', 'INDEP')
 			return self._write(channel, 'LOCKSTAT', 'ON')
