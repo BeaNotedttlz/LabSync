@@ -31,7 +31,7 @@ For this the following device backends are included:
 
 To run the following needs to be installed:
 
-* Python 3.13 (Recommended) or lower 
+
 * pip (Python Package installer)
 
 (Python 3.13 is the latest version compatible with PySide6)
@@ -78,7 +78,7 @@ pip install -r requirements.txt
 
 When first starting LabSync you get the following Window (Linux):
 
-![LabSync normal tab](.github/NormTab.png)
+![LabSync normal tab](NormTab.png)
 
 This window provides
 
@@ -97,7 +97,7 @@ This window provides
 
 The FSV Controller Window looks as follows:
 
-![LabSync FSV tab](.github/FSV.png)
+![LabSync FSV tab](FSV.png)
 
 This window provides
 
@@ -120,7 +120,7 @@ This allows for the precise determination of device parameters and subsequent ab
 ### 4. Bode plot Window
 By Selecting the Bodeplot Window from the Windows menu a pop-up window appears as follows (example Plot - will not show this by default)
 
-![LabSync Bode plot window](.github/Bode.png)
+![LabSync Bode plot window](Bode.png)
 
 The Bode plot requires
 1. R & S FSV3000
