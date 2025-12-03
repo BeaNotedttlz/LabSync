@@ -1,8 +1,15 @@
-#! /usr/bin/env python
-import os, sys
+#!/usr/bin/env python3
+# File: `LabSync-Unix`
+import os
+import sys
+import runpy
 
 project_root = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(project_root, "src"))
-import LabSync
+src_path = os.path.join(project_root, "src")
 
-LabSync.main()
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+
+if __name__ == "__main__":
+    # run the module that contains main() and starts the QApplication
+    runpy.run_module("core.labsync", run_name="__main__")
