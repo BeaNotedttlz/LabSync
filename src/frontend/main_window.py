@@ -226,6 +226,10 @@ class MainWindow(QMainWindow):
 		fsv_tab.setLayout(self.fsv_tab_layout)
 		self.fsv_tab_index = tab_widget.addTab(fsv_tab, "FSV3000 Controller")
 
+		tab_widget.setTabVisible(self.stage_tab_index, False)
+		tab_widget.setTabVisible(self.freq_gen_tab_index, False)
+		tab_widget.setTabVisible(self.laser_tab_index, False)
+
 		# return widget for layout
 		return tab_widget
 
