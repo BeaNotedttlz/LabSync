@@ -1,7 +1,0 @@
-{
-    "EcoVario": "COM0",
-    "Laser1": "COM1",
-    "Laser2": "COM2",
-    "TGA1244": "COM3",
-    "FSV3000": "TCPIP::141.99.144.147::INSTR"
-}

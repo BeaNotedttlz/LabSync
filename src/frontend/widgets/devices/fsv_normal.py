@@ -48,20 +48,11 @@ class FsvNormalWidget(QWidget):
 		layout.addItem(QSpacerItem(200, 10), 0, 1)
 		layout.addItem(QSpacerItem(10, 70), 7, 0)
 		layout.addWidget(start_button, 8, 0)
-		# self.save_path = _create_input_field(layout, "Save path", "", "", 9, 0)
-		save_button = QPushButton("Select save path")
-		layout.addWidget(save_button, 9, 0)
-		self.fig_name = create_input_field(layout, "Figure name", "", "", 11, 0)
-		self.fig_name.setAlignment(Qt.AlignLeft)
-		fig_text = QLabel("Leave this empty to not save Figure from Data")
-		fig_text.setAlignment(Qt.AlignLeft)
-		layout.addWidget(fig_text, 12, 1)
 
 		self.setLayout(layout)
 		start_button.clicked.connect(self._start_measurement)
 		self.meas_type.currentIndexChanged.connect(self._toggle_avg_count)
 		self._toggle_avg_count(self.meas_type.currentIndex())
-		save_button.clicked.connect(self._get_save_path)
 		return
 
 	@Slot()
