@@ -29,7 +29,7 @@ class StageWidgetExpert(QWidget):
 
 		start_button = QPushButton("Start")
 		stop_button = QPushButton("Stop")
-		home_stage_button = QPushButton("Home Stage \n to position")
+		home_stage_button = QPushButton("Home Stage")
 		self.sync = QCheckBox("Sync Accel. \n and Deaccel.")
 		self.sync.setChecked(True)
 		reset_error_button = QPushButton("Reset \n Error")
@@ -62,6 +62,7 @@ class StageWidgetExpert(QWidget):
 		# signal routing #
 		stop_button.clicked.connect(self._stop)
 		start_button.clicked.connect(self._start)
+		home_stage_button.clicked.connect(self._home_stage)
 
 		self.in_new_position.returnPressed.connect(self._send_update)
 		self.in_speed.editingFinished.connect(self._send_update)
@@ -148,3 +149,9 @@ class StageWidgetExpert(QWidget):
 		self.sendUpdate.emit(update, "expert")
 		return
 
+	@Slot()
+	def _home_stage(self) -> None:
+		self.sendRequest.emit({
+			(self.device_id, "HOME"): None
+		})
+		return

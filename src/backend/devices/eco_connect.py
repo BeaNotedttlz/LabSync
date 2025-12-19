@@ -388,8 +388,16 @@ class EcoConnect:
 		else:
 			return None
 
-
-"""
-The homing method was removed since it did not work correctly.
-Currently the stage will be homed via the official software.
-"""
+	def home_stage(self) -> None:
+		if self.simulate:
+			print("homing stage ...")
+		else:
+			# Turning on Stage / Ready to start
+			self._write_sdo(0x01, 0x6040, 0xF)
+			# Set the homing method
+			self._write_sdo(0x01, 0x6098, 0x11)
+			# Set the operating mode to homing
+			self._write_sdo(0x01, 0x6060, 0x6)
+			# Start the homing process
+			self._write_sdo(0x01, 0x6040, 0x1F)
+		return
