@@ -249,7 +249,8 @@ class LabSync(QObject):
 			"unit": ["set_unit", None, None, "", str],
 			"sweep_type": ["set_sweep_type", None, None, "", str],
 			"sweep_points": ["set_sweep_points", 0, 1e6, "", int],
-			"avg_count": ["set_avg_count", 0, 1e3, "", int]
+			"avg_count": ["set_avg_count", 0, 1e3, "", int],
+			"measurement_type": ["start_measurement", None, None, "", str]
 		}
 		self.stage_profile = DeviceProfile()
 		for key, parameter in ecovario_keys.items():

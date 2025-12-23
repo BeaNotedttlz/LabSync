@@ -45,6 +45,7 @@ class SpectrumAnalyzer:
 		"""
 		# set port for simulation
 		if self.simulate:
+			self.status = ConnectionStatus.CONNECTED
 			return print("Port opened (simulation)")
 		try:
 			# open serial port
@@ -85,6 +86,7 @@ class SpectrumAnalyzer:
 			else:
 				self.FSV3000.close()
 				self.status = ConnectionStatus.DISCONNECTED
+				return None
 		else:
 			return None
 
@@ -229,6 +231,23 @@ class SpectrumAnalyzer:
 				return None
 		else:
 			return None
+
+	def start_measurement(self, measurement_type: str) -> None:
+		"""
+		Start a measurement based on the selected measurement type.
+
+		:param measurement_type: The type of measurement to start ('Single' or 'Average')
+		:type measurement_type: str
+		:return: None
+		:rtype: None
+		"""
+		if measurement_type == "Single":
+			self.start_single_measurement()
+		elif measurement_type == "Average":
+			self.start_avg_measurement()
+		else:
+			raise ValueError(f"Unknown measurement type: {measurement_type}")
+		return None
 
 	def start_single_measurement(self) -> tuple:
 		"""
