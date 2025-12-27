@@ -11,3 +11,8 @@ Devices/__pycache__/
 # ignore test files
 test.*
 
+# Ignore all github / git related files
+.venv/
+.guthub/
+.git/
+.mypy_cache/
