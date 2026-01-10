@@ -565,7 +565,6 @@ class LabSync(QObject):
 			self.main_window,
 			"Load Preset File",
 			os.path.join(os.path.dirname(self.file_dir), "presets"),
-			"lab Files (*.gnt)"
 		)
 		if preset_path:
 			try:
