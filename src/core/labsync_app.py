@@ -143,6 +143,7 @@ class LabSync(QObject):
 			)
 			if response == QMessageBox.StandardButton.No:
 				self.simulate = False
+				self.file_utils.edit_settings("debug_mode", False)
 
 		# connect signals
 		# update connection status in UI
