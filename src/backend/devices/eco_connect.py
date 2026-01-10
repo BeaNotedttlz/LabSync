@@ -19,18 +19,18 @@ class EcoConnect:
 	"""
 	EcoConnect class for serial communication with EcoVario linear stage. Using PyVISA for communication protocols.
 
-	:param name: Name of the device instance.
-	:type name: str
+	:param ID: Name of the device instance.
+	:type ID: str
 	:param simulate: Flag to indicate simulation mode.
 	:type simulate: bool
 	:return None
 	:rtype: None
 	"""
-	def __init__(self, name: str, simulate: bool) -> None :
+	def __init__(self, ID: str, simulate: bool) -> None :
 		"""Constructor method
 		"""
 		# save variables to self
-		self.name = name
+		self.ID = ID
 		self.simulate = simulate
 		self.EcoVario = None
 		# connection status
@@ -72,7 +72,7 @@ class EcoConnect:
 			self.status = ConnectionStatus.CONNECTED
 		except (errors.VisaIOError, SerialException) as e:
 			self.status = ConnectionStatus.DISCONNECTED
-			raise DeviceConnectionError(device_id=self.name, original_error=e) from e
+			raise DeviceConnectionError(device_id=self.ID, original_error=e) from e
 
 	def close_port(self) -> None:
 		"""

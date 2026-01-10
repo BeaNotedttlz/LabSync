@@ -317,25 +317,24 @@ class LabSync(QObject):
 					self.freq_gen_port, self.fsv_port]:
 			self._load_default_ports()
 		# otherwise create devices and workers
-		# TODO rename 'name' to 'ID'
 		# EcoVario Stage
-		stage_instance = EcoConnect(name="EcoVario", simulate=self.simulate)
+		stage_instance = EcoConnect(ID="EcoVario", simulate=self.simulate)
 		self.stage_worker = WorkerHandler(device_id="EcoVario", driver_instance=stage_instance,
 										  profile_instance=self.stage_profile)
 		# LuxX+ Laser 1
-		laser1_instance = OmicronLaser(name="Laser1", simulate=self.simulate)
+		laser1_instance = OmicronLaser(ID="Laser1", simulate=self.simulate)
 		self.laser1_worker = WorkerHandler(device_id="Laser1", driver_instance=laser1_instance,
 										   profile_instance=self.laser1_profile)
 		# LuxX+ Laser 2
-		laser2_instance = OmicronLaser(name="Laser2", simulate=self.simulate)
+		laser2_instance = OmicronLaser(ID="Laser2", simulate=self.simulate)
 		self.laser2_worker = WorkerHandler(device_id="Laser2", driver_instance=laser2_instance,
 										   profile_instance=self.laser2_profile)
 		# TGA1244 Frequency Generator
-		freq_gen_instance = FrequencyGenerator(name="TGA1244", simulate=self.simulate)
+		freq_gen_instance = FrequencyGenerator(ID="TGA1244", simulate=self.simulate)
 		self.freq_gen_worker = WorkerHandler(device_id="TGA1244", driver_instance=freq_gen_instance,
 											 profile_instance=self.freq_gen_profile)
 		# FSV3000 Spectrum Analyzer
-		fsv_instance = SpectrumAnalyzer(name="FSV3000", simulate=self.simulate)
+		fsv_instance = SpectrumAnalyzer(ID="FSV3000", simulate=self.simulate)
 		self.fsv_worker = WorkerHandler(device_id="FSV3000", driver_instance=fsv_instance,
 										profile_instance=self.fsv_profile)
 		# Add all created workers to the Map with the corresponding IDs

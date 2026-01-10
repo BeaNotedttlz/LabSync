@@ -20,19 +20,19 @@ class OmicronLaser:
 	"""
 	OmicronLaser class for controlling Omicron LuxX+ laser devices.
 
-	:param name: Name of the laser device.
-	:type name: str
+	:param ID: Name of the laser device.
+	:type ID: str
 	:param simulate: Flag to indicate if simulation mode is enabled.
 	:type simulate: bool
 	:return: None
 	:rtype: None
 	"""
-	def __init__(self, name: str, simulate: bool) -> None:
+	def __init__(self, ID: str, simulate: bool) -> None:
 		"""Constructor method
 		"""
 		# save variables to self and create connected variable
 		self.Laser = None
-		self.name = name
+		self.ID = ID
 		self.status = ConnectionStatus.DISCONNECTED
 		self.simulate = simulate
 		self.max_power = 1.0
@@ -117,7 +117,7 @@ class OmicronLaser:
 			self.max_power = float(self._ask("GMP")[0])
 		except (errors.VisaIOError, SerialException) as e:
 			self.status = ConnectionStatus.DISCONNECTED
-			raise DeviceConnectionError(device_id=self.name, original_error=e) from e
+			raise DeviceConnectionError(device_id=self.ID, original_error=e) from e
 
 	def close_port(self) -> None:
 		"""
