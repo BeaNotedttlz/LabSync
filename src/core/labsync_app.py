@@ -536,11 +536,11 @@ class LabSync(QObject):
 			self.main_window,
 			"Save Preset File",
 			os.path.join(os.path.dirname(self.file_dir), "presets"),
-			"lab Files (*.lab)"
+			"lab Files (*.gnt)"
 		)
 		if save_path:
-			if not save_path.endswith(".lab"):
-				save_path += ".lab"
+			if not save_path.endswith(".gnt"):
+				save_path += ".gnt"
 
 			try:
 				self.cache.save_cache(save_path)
@@ -564,7 +564,7 @@ class LabSync(QObject):
 			self.main_window,
 			"Load Preset File",
 			os.path.join(os.path.dirname(self.file_dir), "presets"),
-			"lab Files (*.lab)"
+			"lab Files (*.gnt)"
 		)
 		if preset_path:
 			try:
@@ -596,28 +596,31 @@ class LabSync(QObject):
 			self._handle_worker_error(result)
 			return
 		else:
-			self.returnResult.emit(result)
 			request_type, device_id, parameter = result.request_id.split("-")
-			if request_type == "SET" or request_type == "POLL":
-				self.cache.set_value(device_id, parameter, result.value)
-			elif request_type == RequestType.CONNECT.value or request_type == RequestType.DISCONNECT.value:
-				self.connectionChanged.emit(device_id, result.value)
-			else:
-				pass
-
 			if request_type == "POLL" and parameter == "current_pos":
-				if isinstance(result.value, str):
-					# TODO this works but maybe bad design -> need to restructure request handling for optimized structure generally, then redo this
-					return
-				current_position = float(result.value)
-				if current_position is not None:
+				if result.value is not None:
+					current_position = float(result.value)
 					self.returnResult.emit(result)
 					target_position = self.cache.get_value(device_id, "target_pos")
 					if np.abs(current_position - target_position) <= 0.01:
 						self.main_window.info_panel.update_indicator("EcoVarioStatus", True)
 					else:
 						self.main_window.info_panel.update_indicator("EcoVarioStatus", False)
-
+				else:
+					result.value = "Not Connected!"
+					self.returnResult.emit(result)
+			elif request_type == "POLL" and parameter == "current_error_code":
+				if result.value is None:
+					result.value = "Not Connected!"
+				self.returnResult.emit(result)
+			else:
+				if request_type == "SET" or request_type == "POLL":
+					self.cache.set_value(device_id, parameter, result.value)
+				elif request_type == RequestType.CONNECT.value or request_type == RequestType.DISCONNECT.value:
+					self.connectionChanged.emit(device_id, result.value)
+				else:
+					pass
+		return
 
 	def _handle_worker_error(self, error_result: RequestResult) -> None:
 		"""

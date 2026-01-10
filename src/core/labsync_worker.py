@@ -157,7 +157,7 @@ class LabSyncWorker(QObject):
 				self.resultReady.emit(RequestResult(
 					device_id=self.device_id,
 					request_id=ctx.id,
-					value="Not Connected!"
+					value=None
 				))
 		if self._timer.isActive():
 			self._timer.stop()
