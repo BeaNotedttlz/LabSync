@@ -15,18 +15,24 @@ from typing import Dict, Any
 class StageWidgetExpert(QWidget):
 	"""
 	Create EcoVario expert mode widgets and functionality.
-	:return: None
 	"""
+	# Send request signal to the controller
 	sendRequest = Signal(object)
+	# Send update singal to the main application
 	sendUpdate = Signal(object, str)
 
 	def __init__(self, device_id: str) -> None:
+		"""Constructor method
+		"""
 		super().__init__()
+		# Store the device ID
 		self.device_id = device_id
 
+		# creating layout
 		layout = QGridLayout()
 		layout.setVerticalSpacing(10)
 
+		# creating and adding widgets to layout
 		start_button = QPushButton("Start")
 		stop_button = QPushButton("Stop")
 		home_stage_button = QPushButton("Home Stage")
@@ -75,11 +81,14 @@ class StageWidgetExpert(QWidget):
 		:return: None
 		"""
 		try:
+			# Read and convert input values
 			pos = float(self.out_target_position.text().replace(",", "."))
 			vel = float(self.in_speed.text().replace(",", "."))
 			accell = float(self.in_accell.text().replace(",", "."))
 			deaccell = float(self.in_deaccell.text().replace(",", "."))
 
+			# TODO: Does the sync checkbox have any effect in expert mode?
+			# Store parameters in a dictionary
 			parameters = {
 				(self.device_id,"target_pos"): pos,
 				(self.device_id,"target_vel"): vel,
@@ -87,7 +96,7 @@ class StageWidgetExpert(QWidget):
 				(self.device_id,"target_deacc"): deaccell,
 				(self.device_id,"START"): None
 			}
-
+			# Emit the parameters to the controller
 			self.sendRequest.emit(parameters)
 			return
 		except Exception as e:
@@ -118,6 +127,7 @@ class StageWidgetExpert(QWidget):
 		:type parameters: Dict[str, Any]
 		:return: None
 		"""
+		# define supproted parameters and their corresponding UI elements
 		supproted_parameters = {
 			"target_pos": "out_target_position",
 			"target_vel": "in_speed",
@@ -126,22 +136,32 @@ class StageWidgetExpert(QWidget):
 			"current_pos": "out_current_position",
 			"error_code": "out_error_code"
 		}
+		# Update UI elements with received parameters
 		for key, parameter in parameters.items():
 			if not key[1] in supproted_parameters:
 				pass
 			else:
+				# get the corresponding widget
 				widget = getattr(self, supproted_parameters[key[1]])
+				# update the widget with the new parameter value
 				widget.setText(str(parameter))
 		return
 
 	@Slot()
 	def _send_update(self) -> None:
+		"""
+		Sends updated target position and speed to the controller
+		:return: None
+		"""
+		# Read and format input values
 		speed = self.in_speed.text().replace(",", ".")
 		pos = self.in_new_position.text().replace(",", ".")
 
+		# Update the target position output field
 		self.out_target_position.clear()
 		self.out_target_position.setText(pos)
 
+		# Create update dictionary and emit it to the MainWindow
 		update = {
 			(self.device_id,"target_pos"): pos,
 			(self.device_id,"target_vel"): speed,
