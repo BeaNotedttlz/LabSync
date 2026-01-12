@@ -8,7 +8,7 @@ Module for creating and operating the PySide6 dialog window widgets.
 
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import Qt
-from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, QProgressBar,
+from PySide6.QtWidgets import (QWidget, QLabel, QPushButton,
 							   QSpacerItem, QGridLayout, QCheckBox, QDialog,
 							   QGroupBox, QVBoxLayout, QHBoxLayout)
 from src.frontend.widgets.utilities import create_input_field
@@ -140,11 +140,11 @@ class PortSelectionDialog(QDialog):
 		# create input fields
 		self.stage_port = create_input_field(layout, "EcoVatio Port:", "", "", 0, 0)
 		self.stage_port.setAlignment(Qt.AlignLeft)
-		self.freq_gen_port = create_input_field(layout, "TGA 1244 Port:", "", "", 2, 0)
-		self.freq_gen_port.setAlignment(Qt.AlignLeft)
-		self.laser1_port = create_input_field(layout, "Laser 1 Port:", "", "", 4, 0)
+		self.laser1_port = create_input_field(layout, "Laser 1 Port:", "", "", 2, 0)
 		self.laser1_port.setAlignment(Qt.AlignLeft)
-		self.laser2_port = create_input_field(layout, "Laser 2 Port:", "", "", 6, 0)
+		self.laser2_port = create_input_field(layout, "Laser 2 Port:", "", "", 4, 0)
+		self.freq_gen_port = create_input_field(layout, "TGA 1244 Port:", "", "", 6, 0)
+		self.freq_gen_port.setAlignment(Qt.AlignLeft)
 		self.laser2_port.setAlignment(Qt.AlignLeft)
 		self.fsv_port = create_input_field(layout, "FSV Port:", "", "", 8, 0)
 		self.fsv_port.setAlignment(Qt.AlignLeft)
@@ -175,7 +175,7 @@ class PortSelectionDialog(QDialog):
 		laser2 = self.laser2_port.text()
 		fsv = self.fsv_port.text()
 
-		self.applyPorts.emit(stage, freq_gen, laser1, laser2, fsv)
+		self.applyPorts.emit(stage, laser1, laser2, freq_gen, fsv)
 		return
 
 	@Slot()
@@ -190,7 +190,7 @@ class PortSelectionDialog(QDialog):
 		laser2 = self.laser2_port.text()
 		fsv = self.fsv_port.text()
 
-		self.defaultPorts.emit(stage, freq_gen, laser1, laser2, fsv)
+		self.defaultPorts.emit(stage, laser1, laser2, freq_gen, fsv)
 		return
 
 	@Slot(object)

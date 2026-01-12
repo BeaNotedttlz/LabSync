@@ -498,8 +498,6 @@ class LabSync(QObject):
 		:type fsv: str
 		:return: None
 		"""
-		# TODO: Check if port changed -> No need to change port if not changed
-		# TODO: Disconnect all devices first -> cant change port while connected
 		# TODO: Add baudrate management
 		# set new device ports
 		new_port_config = {
@@ -509,29 +507,29 @@ class LabSync(QObject):
 			"TGA1244": [freq_gen, 9600],
 			"FSV3000": fsv
 		}
-		# Get device ID and new port from dictionary
-		for dev_id, new_port in new_port_config.items():
-			# Get worker handler from map
-			handler = self.workers.worker[dev_id]
-
-			# If handler exists send connect request with new port
-			if handler:
-				cmd = DeviceRequest(
-					device_id=dev_id,
-					cmd_type=RequestType.CONNECT,
-					value=new_port
-				)
-				# send connect request to worker with new port
-				handler.send_request(cmd)
-				# Store new port in port map
-				self.device_ports.set_port(dev_id, new_port)
-			else:
-				# Show critical message box if handler is missing
+		for device_id, new_port in new_port_config.items():
+			# Get device worker and current port
+			worker = self.workers.worker.get(device_id, None)
+			if worker is None:
 				QMessageBox.critical(
 					self.main_window,
 					"Error",
-					"Something went wrong!\n Missing device ID: {}".format(dev_id)
+					"Something went wrong!\n Missing device ID: {}".format(device_id)
 				)
+				continue
+			current_port = self.device_ports.ports.get(device_id, None)
+			# Only disconnect if port is different
+			if new_port != current_port:
+				if worker.is_connected:
+					self.disconnect_device(device_id)
+				# After device has been disconnected, set new port and create request
+				cmd = DeviceRequest(
+					device_id=device_id,
+					cmd_type=RequestType.CONNECT,
+					value=new_port
+				)
+				worker.send_request(cmd)
+				self.device_ports.set_port(device_id, new_port)
 		return
 
 	def _disconnect_all(self) -> None:
