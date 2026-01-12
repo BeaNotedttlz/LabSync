@@ -14,13 +14,6 @@ from src.core.context import DeviceConnectionError
 class SpectrumAnalyzer:
 	"""
 	SpectrumAnalyzer class for controlling R&S FSV devices.
-
-	:param ID: Name of the frequency generator device.
-	:type ID: str
-	:param simulate: Flag to indicate if simulation mode is enabled.
-	:type simulate: bool
-	:return: None
-	:rtype: None
 	"""
 	def __init__(self, ID: str, simulate: bool) -> None:
 		"""Constructor method
@@ -45,6 +38,7 @@ class SpectrumAnalyzer:
 		"""
 		# set port for simulation
 		if self.simulate:
+			# only simulate opening port
 			self.status = ConnectionStatus.CONNECTED
 			return print("Port opened (simulation)")
 		try:
@@ -82,8 +76,10 @@ class SpectrumAnalyzer:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# print only command for simulation mode
 				return print("Port closed (simulation)")
 			else:
+				self.status = ConnectionStatus.DISCONNECTING
 				self.FSV3000.close()
 				self.status = ConnectionStatus.DISCONNECTED
 				return None
@@ -101,6 +97,7 @@ class SpectrumAnalyzer:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# print only command for simulation mode
 				print(f"set center frequency to {value}")
 				return None
 			else:
@@ -121,6 +118,7 @@ class SpectrumAnalyzer:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# print only command for simulation mode
 				print(f"set span to {value}")
 				return None
 			else:
@@ -141,6 +139,7 @@ class SpectrumAnalyzer:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# print only command for simulation mode
 				print(f"set bandwidth to {value}")
 				return None
 			else:
@@ -163,6 +162,7 @@ class SpectrumAnalyzer:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# print only command for simulation mode
 				print(f"set sweep type to {value}")
 				return None
 			else:
@@ -185,6 +185,7 @@ class SpectrumAnalyzer:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# print only command for simulation mode
 				print(f"set unit to {value}")
 				return None
 			else:
@@ -202,6 +203,7 @@ class SpectrumAnalyzer:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# print only command for simulation mode
 				print(f"set sweep points to {value}")
 				return None
 			else:
@@ -223,6 +225,7 @@ class SpectrumAnalyzer:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# print only command for simulation mode
 				print(f"set average count to {value}")
 				return None
 			else:
@@ -259,6 +262,7 @@ class SpectrumAnalyzer:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# print only command for simulation mode
 				print(f"start single measurement")
 				return None, None, None
 			else:
@@ -294,6 +298,7 @@ class SpectrumAnalyzer:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# print only command for simulation mode
 				print(f"start average measurement")
 				return None, None, None
 			else:
