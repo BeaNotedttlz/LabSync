@@ -47,6 +47,8 @@ class FilesUtils:
 		self.settings_path = os.path.join(file_path, "settings", self.filename)
 		os.makedirs(self.folder, exist_ok=True)
 
+		# Read Settings but discard result
+		# this ensures that the settings file is created if it does not exist
 		_ = self.read_settings()
 		return
 
@@ -56,18 +58,24 @@ class FilesUtils:
 		:return: The settings dictionary, Returns the default on reading error and None otherwise
 		:rtype: dict | None
 		"""
+		# Create settings file if it does not exist
 		if not os.path.exists(self.settings_path):
 			with open(self.settings_path, "w", encoding="utf-8") as f:
+				# dump default settings
 				json.dump(self.default_settings, f, indent=4)
 
 		try:
+			# Try to read settings file
 			with open(self.settings_path, "r", encoding="utf-8") as f:
 				data = json.load(f)
-
+			# Return the data
 			return data
 		except (json.decoder.JSONDecodeError, OSError):
+			# On Error return default settings
+			# TODO: This should probably notify the user that their settings file was corrupted
 			return self.default_settings.copy()
 		except KeyError:
+			# Otherwise return None
 			return None
 
 	def edit_settings(self, setting: str, value: Any) -> None:
@@ -81,19 +89,26 @@ class FilesUtils:
 		:return: None
 		:rtype: None
 		"""
+		# Read the current settigns
 		data = self.read_settings()
+		# Edit the specific setting
 		data[setting] = value
 
+		# Atomic write
 		fd, tmp_path = tempfile.mkstemp(dir=self.folder, prefix="settings_", text=True)
 		try:
 			with os.fdopen(fd, "w", encoding="utf-8") as f:
+				# Create temp file and write data
 				json.dump(data, f, indent=2)
 				f.flush()
 				os.fsync(f.fileno())
+			# Replace original file with temp file
 			os.replace(tmp_path, self.settings_path)
 		except (json.decoder.JSONDecodeError, OSError):
+			# TODO: PortSetError?
 			raise PortSetError
 		finally:
+			# Remove temp file if it still exists
 			if os.path.exists(tmp_path):
 				try:
 					os.remove(tmp_path)
@@ -111,10 +126,13 @@ class FilesUtils:
 		# read port file and return contents
 
 		try:
+			# Try to read ports file
 			with open(self.ports_path, "r", encoding="utf-8") as f:
 				ports = json.load(f)
 			return ports
 		except (json.decoder.JSONDecodeError, OSError):
+			# On error recreate default ports file and return default ports
+			# TODO: This should probably notify the user that their ports file was corrupted
 			with open(self.ports_path, "w", encoding="utf-8") as f:
 				json.dump(self.default_ports.copy(), f, indent=2)
 				f.close()
@@ -140,10 +158,13 @@ class FilesUtils:
 		"""
 		# TODO need to implement the baud rates
 		if set_def:
+			# For setting default ports, just overwrite with default ports
+			# TODO: Why do I need this?
 			with open(self.ports_path, "w", encoding="utf-8") as f:
 				json.dump(self.default_ports.copy(), f, indent=2)
 				f.close()
 			return
+		# Create new ports dictionary
 		ports = {
 			"EcoVario": [stage, 9600],
 			"Laser1": [laser1, 500000],
@@ -151,7 +172,7 @@ class FilesUtils:
 			"TGA1244": [freq_gen, 9600],
 			"FSV3000": fsv,
 		}
-		# atomic write
+		# Atomic write
 		fd, tmp_path = tempfile.mkstemp(dir=self.ports_folder, prefix="ports_", text=True)
 		try:
 			with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -224,12 +245,29 @@ class DeviceTaskError(Exception):
 		return self.message
 
 class ValueHandler:
+	"""
+	Utility class for handling value comparisons.
+	THis is mainly used for checking if two float values are different within a certain tolerance.
+	"""
 	@staticmethod
 	def check_values(value_1: float, value_2: float) -> bool:
+		"""
+		Check if two values are different, considering float tolerance.
+		:param value_1: First value to check
+		:type value_1: float
+		:param value_2: Second value to check
+		:type value_2: float
+		:return: True if values are different, False otherwise
+		:rtype: bool
+		"""
 		if value_1 is None:
+			# If value 1 is None, consider them different
 			return True
 
 		if isinstance(value_2, float) and isinstance(value_1, float):
+			# For float values, use isclose with a tolerance
+			# Return True if they are not close
 			return not math.isclose(value_1, value_2, abs_tol=1e-4)
 
+		# For other types, use direct comparison
 		return value_1 != value_2

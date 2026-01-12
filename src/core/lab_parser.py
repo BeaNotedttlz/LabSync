@@ -1,8 +1,8 @@
 """
 Module for storing device parameters dynamically on runtime. This will then be used to save and load a preset.
 This acts as a parser for the custom .lab file format used by LabSync.
-This allows for human readable storage of parameters as well as easy editing syntax.
-However the .toml format could be considered in the future for more complex structures.
+This allows for human-readable storage of parameters as well as easy editing syntax.
+However, the .toml format could be considered in the future for more complex structures.
 @author: Merlin Schmidt
 @date: 2025-02-12
 @file: src/core/storage.py
@@ -32,8 +32,8 @@ class LabFileParser:
 		:return: The data and respective type
 		:rtype: bool | int | float | str
 		"""
+		# Strip app whitespaces
 		val_str = val_str.strip()
-
 		# check for boolean values
 		# return True for "TRUE", "ON"
 		if val_str.upper() in ("TRUE", "ON"): return True
@@ -64,8 +64,10 @@ class LabFileParser:
 		:return: The cache dictionary
 		:rtype: dict
 		"""
+		# Initialize empty data dictionary
 		data: Dict[Tuple[str, str], Any] = {}
-		current_device = "Global"
+		# Set the current parameter device to None
+		current_device = "None"
 
 		# Regex: Matches "Parameter" or "Parameter[Index]"
 		# Group 1: Parameter Name, Group 2: Index (optional) Group 3: Value
@@ -73,38 +75,49 @@ class LabFileParser:
 		section_pattern = re.compile(r"^\[(.*)]$")
 
 		try:
+			# Read all file lines
 			with open(filepath, 'r', encoding='utf-8') as f:
 				lines = f.readlines()
 				f.close()
 
+			# Prase each line individually
 			for line in lines:
+				# Strip whitespace and ignore comments/empty lines
 				line = line.strip()
 				if not line or line.startswith('#'): continue
 
+				# Check for section headers
 				sec_match = section_pattern.match(line)
 				if sec_match:
+					# Update current device
 					current_device = sec_match.group(1).strip()
 					continue
 
+				# Check for parameter lines
 				match = line_pattern.match(line)
 				if match:
+					# Extract parameter, index and value
 					parameter = match.group(1)
 					index = match.group(2)
 					value_str = match.group(3).split('#')[0].strip()
 
+					# Parse the value string into the correct type
 					value = LabFileParser.parse_value_string(value_str)
-
 					key = (current_device, parameter)
 
+					# If index is present, store in a sub-dictionary
 					if index:
 						idx = int(index)
 						if key not in data: data[key] = {}
 						if not isinstance(data[key], dict): data[key] = {}
 						data[key][idx] = value
 					else:
+						# Store the value directly
 						data[key] = value
+			# Return the parsed data and no error
 			return data, None
 		except FileNotFoundError as e:
+			# return no data and the error
 			return {}, e
 
 	@staticmethod
@@ -118,32 +131,38 @@ class LabFileParser:
 		:return: If the saving process was successful and error message if any
 		:rtype: Tuple[bool, str]
 		"""
+		# Organize data by device for easier writing
 		organized = {}
+		# Iterate through data and group by device
 		for (device, parameter), value in data.items():
 			if device not in organized: organized[device] = {}
 			organized[device][parameter] = value
 
 		try:
+			# Create and write to the file
 			with open(filepath, 'w', encoding='utf-8') as f:
+				# Write header comments
 				f.write('# Lab Instrument configuration file\n')
 				save_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 				f.write(f"# Saved on {save_time}\n\n")
 
+				# Write each device section
 				for device, params in organized.items():
 					f.write(f"[{device}]\n")
-
-
+					# Write each parameter
 					for param, value in params.items():
 						if isinstance(value, dict):
 							for idx in sorted(value.keys()):
 								f.write(f"\t{param}[{idx}] = {value[idx]}\n")
-
+						# Non-indexed parameter
 						else:
 							f.write(f"\t{param} = {value}\n")
+					# Add a newline after each parameter for readability
 					f.write("\n")
-
 				f.close()
+				# Return success and no error
 				return True, None
 		except Exception as e:
+			# Return failure and the error
 			return False, e
 

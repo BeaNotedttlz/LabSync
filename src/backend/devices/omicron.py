@@ -7,7 +7,7 @@ however this version only implements basic operations to allow control in the La
 @file: src/backend/devices/omicron.py
 @note: Use at your own risk.
 """
-# TODO implement the other functions of the lasers
+# TODO: implement the other functions of the lasers
 
 import pyvisa, os, time
 from pyvisa import errors
@@ -19,20 +19,13 @@ from src.backend.connection_status import ConnectionStatus
 class OmicronLaser:
 	"""
 	OmicronLaser class for controlling Omicron LuxX+ laser devices.
-
-	:param name: Name of the laser device.
-	:type name: str
-	:param simulate: Flag to indicate if simulation mode is enabled.
-	:type simulate: bool
-	:return: None
-	:rtype: None
 	"""
-	def __init__(self, name: str, simulate: bool) -> None:
+	def __init__(self, ID: str, simulate: bool) -> None:
 		"""Constructor method
 		"""
 		# save variables to self and create connected variable
 		self.Laser = None
-		self.name = name
+		self.ID = ID
 		self.status = ConnectionStatus.DISCONNECTED
 		self.simulate = simulate
 		self.max_power = 1.0
@@ -47,6 +40,7 @@ class OmicronLaser:
 			f"{sim_path}@sim"
 			if self.simulate else ""
 		)
+		return
 
 	def _ask(self, command: str) -> list:
 		"""
@@ -100,6 +94,7 @@ class OmicronLaser:
 		"""
 		# set port for simulation
 		if self.simulate:
+			# use preset port for simulation
 			port = "ASRL1::INSTR"
 
 		try:
@@ -117,7 +112,7 @@ class OmicronLaser:
 			self.max_power = float(self._ask("GMP")[0])
 		except (errors.VisaIOError, SerialException) as e:
 			self.status = ConnectionStatus.DISCONNECTED
-			raise DeviceConnectionError(device_id=self.name, original_error=e) from e
+			raise DeviceConnectionError(device_id=self.ID, original_error=e) from e
 
 	def close_port(self) -> None:
 		"""
@@ -127,7 +122,9 @@ class OmicronLaser:
 		:rtype: None
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
+			self.status = ConnectionStatus.DISCONNECTING
 			self.Laser.close()
+			self.status = ConnectionStatus.DISCONNECTED
 		return None
 
 	def _setup_device(self) -> None:
@@ -154,6 +151,7 @@ class OmicronLaser:
 		:return: None
 		:rtype: None
 		"""
+		# TODO: Dont know of this works correctly
 		# set a timeout for waiting for response
 		timeout = time.time() + 10
 		# reset controller

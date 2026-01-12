@@ -5,7 +5,6 @@ Main application for controlling backend and frontend of the LabSync application
 @file: src/core/labsync_app.py
 @note:
 """
-import json
 import os
 
 import numpy as np
@@ -61,6 +60,7 @@ class MapWorkers:
 		:return: None
 		"""
 		self._workers[device_id] = worker
+		return
 
 class MapPorts:
 	def __init__(self) -> None:
@@ -317,25 +317,24 @@ class LabSync(QObject):
 					self.freq_gen_port, self.fsv_port]:
 			self._load_default_ports()
 		# otherwise create devices and workers
-		# TODO rename 'name' to 'ID'
 		# EcoVario Stage
-		stage_instance = EcoConnect(name="EcoVario", simulate=self.simulate)
+		stage_instance = EcoConnect(ID="EcoVario", simulate=self.simulate)
 		self.stage_worker = WorkerHandler(device_id="EcoVario", driver_instance=stage_instance,
 										  profile_instance=self.stage_profile)
 		# LuxX+ Laser 1
-		laser1_instance = OmicronLaser(name="Laser1", simulate=self.simulate)
+		laser1_instance = OmicronLaser(ID="Laser1", simulate=self.simulate)
 		self.laser1_worker = WorkerHandler(device_id="Laser1", driver_instance=laser1_instance,
 										   profile_instance=self.laser1_profile)
 		# LuxX+ Laser 2
-		laser2_instance = OmicronLaser(name="Laser2", simulate=self.simulate)
+		laser2_instance = OmicronLaser(ID="Laser2", simulate=self.simulate)
 		self.laser2_worker = WorkerHandler(device_id="Laser2", driver_instance=laser2_instance,
 										   profile_instance=self.laser2_profile)
 		# TGA1244 Frequency Generator
-		freq_gen_instance = FrequencyGenerator(name="TGA1244", simulate=self.simulate)
+		freq_gen_instance = FrequencyGenerator(ID="TGA1244", simulate=self.simulate)
 		self.freq_gen_worker = WorkerHandler(device_id="TGA1244", driver_instance=freq_gen_instance,
 											 profile_instance=self.freq_gen_profile)
 		# FSV3000 Spectrum Analyzer
-		fsv_instance = SpectrumAnalyzer(name="FSV3000", simulate=self.simulate)
+		fsv_instance = SpectrumAnalyzer(ID="FSV3000", simulate=self.simulate)
 		self.fsv_worker = WorkerHandler(device_id="FSV3000", driver_instance=fsv_instance,
 										profile_instance=self.fsv_profile)
 		# Add all created workers to the Map with the corresponding IDs
@@ -353,32 +352,43 @@ class LabSync(QObject):
 			worker.handlerFinished.connect(self._on_worker_finish)
 			worker.receivedResult.connect(self.receive_worker_result)
 
+			# Call helper method to connect to device
+			# Silent flag to not show error messageboxes on startup
 			self.connect_device(device_id, if_silent=True)
+		# Set polling parameters for devices
 		self._set_poll_parameters()
 		return
 
 	def _set_poll_parameters(self) -> None:
+		"""
+		Helper method to set all the polling parameters needed for the application
+		:return: None
+		"""
+		# Get the stage worker from map
 		stage_worker = self.workers.worker["EcoVario"]
+		# Generate position polling request
+		# Poll every 2000ms -> This needs to be changed later to a more dynamic approach
 		position_poll = DeviceRequest(
 			device_id="EcoVario",
 			cmd_type=RequestType.START_POLL,
 			parameter="current_pos",
 			value=2000
 		)
+		# Generate error code polling request
+		# Poll every 2000ms -> This needs to be changed later to a more dynamic approach
 		error_poll = DeviceRequest(
 			device_id="EcoVario",
 			cmd_type=RequestType.START_POLL,
 			parameter="current_error_code",
 			value=2000
 		)
+		# Send polling requests to worker
 		stage_worker.send_request(position_poll)
 		stage_worker.send_request(error_poll)
 		# initialize target position in cache
-		# THis is done because the cache values are onyl set after a device request
+		# THis is done because the cache values are only set after a device request
 		# TODO however this is bad design, need to find a better way -> initialize cache values on profile setup?
 		self.cache.set_value("EcoVario", "target_pos", 0.0)
-
-
 		return
 
 	def _load_default_ports(self) -> None:
@@ -388,20 +398,36 @@ class LabSync(QObject):
 
 		:return: None
 		"""
+		# get the ports from the file using the file utils
 		ports = self.file_utils.read_port_file()
 		try:
+			# get ports from the dictionary
+			# Even on error this should return the default ports
 			self.stage_port = ports["EcoVario"][0]; self.stage_baudrate = ports["EcoVario"][1]
 			self.laser1_port = ports["Laser1"][0]; self.laser1_baudrate = ports["Laser1"][1]
 			self.laser2_port = ports["Laser2"][0]; self.laser2_baudrate = ports["Laser2"][1]
 			self.freq_gen_port = ports["TGA1244"][0]; self.freq_gen_baudrate = ports["TGA1244"][1]
 			self.fsv_port = ports["FSV3000"][0]; self.fsv_baudrate = ports["FSV3000"][1]
 
+			# Set device ports
 			for device_id, port in ports.items():
 				self.device_ports.set_port(device_id, port)
-
 			return
+		# If any key is missing reset the file to default ports
+		# This should normally not happen due to the file utils implementation
+		# But just to be safe any error will be handled and the default ports file overwritten
 		except KeyError:
-			self.file_utils.set_ports("", "", "", "", "", set_def=True)
+			# reset port file to default ports
+			try:
+				self.file_utils.set_ports("COM0", "COM1", "COM2", "COM3", "COM4", set_def=True)
+			except PortSetError:
+				QMessageBox.critical(
+					self.main_window,
+					"Critical Error",
+					"Could not reset the device port file to default ports! "
+					"Please check file permissions and restart the application."
+				)
+			# read the default ports again
 			ports = self.file_utils.read_port_file()
 			self.stage_port = ports["EcoVario"][0]; self.stage_baudrate = ports["EcoVario"][1]
 			self.laser1_port = ports["Laser1"][0]; self.laser1_baudrate = ports["Laser1"][1]
@@ -409,9 +435,11 @@ class LabSync(QObject):
 			self.freq_gen_port = ports["TGA1244"][0]; self.freq_gen_baudrate = ports["TGA1244"][1]
 			self.fsv_port = ports["FSV3000"][0]; self.fsv_baudrate = ports["FSV3000"][1]
 
+			# Set device ports
 			for device_id, port in ports.items():
 				self.device_ports.set_port(device_id, port)
 
+			# Show critical message box to notify user
 			QMessageBox.critical(
 				self.main_window,
 				"Device Port Read Error",
@@ -441,9 +469,11 @@ class LabSync(QObject):
 		:rtype: None
 		"""
 		try:
+			# set the new default ports using the file utils
 			self.file_utils.set_ports(stage, freq_gen, laser1, laser2, fsv)
 			return
 		except PortSetError as e:
+			# Show critical message box on port set error
 			QMessageBox.critical(
 				None,
 				"Error",
@@ -468,6 +498,9 @@ class LabSync(QObject):
 		:type fsv: str
 		:return: None
 		"""
+		# TODO: Check if port changed -> No need to change port if not changed
+		# TODO: Disconnect all devices first -> cant change port while connected
+		# TODO: Add baudrate management
 		# set new device ports
 		new_port_config = {
 			"EcoVario": [stage, 9600],
@@ -476,18 +509,24 @@ class LabSync(QObject):
 			"TGA1244": [freq_gen, 9600],
 			"FSV3000": fsv
 		}
+		# Get device ID and new port from dictionary
 		for dev_id, new_port in new_port_config.items():
+			# Get worker handler from map
 			handler = self.workers.worker[dev_id]
 
+			# If handler exists send connect request with new port
 			if handler:
 				cmd = DeviceRequest(
 					device_id=dev_id,
 					cmd_type=RequestType.CONNECT,
 					value=new_port
 				)
+				# send connect request to worker with new port
 				handler.send_request(cmd)
-				self.device_ports.set_port(dev_id, new_port)  # type: ignore[arg-type]
+				# Store new port in port map
+				self.device_ports.set_port(dev_id, new_port)
 			else:
+				# Show critical message box if handler is missing
 				QMessageBox.critical(
 					self.main_window,
 					"Error",
@@ -497,53 +536,84 @@ class LabSync(QObject):
 
 	def _disconnect_all(self) -> None:
 		"""
-		Disconnect all devices.
+		Helper Method to disconnect all devices.
 		:return: None
 		"""
 		for dev_id, handler in self.workers.worker.items():
+			# generate disconnect request for each device
 			cmd = DeviceRequest(
 				device_id=dev_id,
 				cmd_type=RequestType.DISCONNECT,
 			)
+			# send disconnect request to worker
 			handler.send_request(cmd)
 		return
 
 	@Slot()
 	def connect_device(self, device_id, if_silent: bool=False) -> None:
+		"""
+		Helper method to send connect request to device workers.
+		:param device_id: ID of the device to connect
+		:type device_id: str
+		:param if_silent: Silent flag to not show error messageboxes
+		:type if_silent: bool
+		:return: None
+		"""
+		# Get worker handler object from map
 		worker_handler = self.workers.worker[device_id]
+		# generate connect request
 		connect_request = DeviceRequest(
 			device_id=device_id,
 			cmd_type=RequestType.CONNECT,
-			parameter="SILENT" if if_silent else None,
+			parameter="SILENT" if if_silent else None,	# Add silent flag if needed
 			value = self.device_ports.ports[device_id]
 		)
+		# send connect request to worker
 		worker_handler.send_request(connect_request)
 		return
 
 	@Slot()
 	def disconnect_device(self, device_id) -> None:
+		"""
+		Helper method to send disconnect request to device workers.
+		:param device_id:
+		:return:
+		"""
+		# get worker handler object from map
 		worker_handler = self.workers.worker[device_id]
+		# Generate disconnect request
 		disconnect_request = DeviceRequest(
 			device_id=device_id,
 			cmd_type=RequestType.DISCONNECT,
 			value = None
 		)
+		# send disconnect request to worker
 		worker_handler.send_request(disconnect_request)
 		return
 
 	@Slot()
 	def save_preset(self) -> None:
+		"""
+		Save the current chache as a preset file. This uses the custom lab_parser and the .gnt file format.
+
+		:return: None
+		"""
+		# Get the save file path from the user with a file dialog
 		save_path, _ = QFileDialog.getSaveFileName(
 			self.main_window,
 			"Save Preset File",
 			os.path.join(os.path.dirname(self.file_dir), "presets"),
 			"lab Files (*.gnt)"
 		)
+		# If the user selected a file path save the preset
 		if save_path:
+			# append .gnt file extension if not present
+			# This is done to avoid user errors
 			if not save_path.endswith(".gnt"):
 				save_path += ".gnt"
 
 			try:
+				# Save the cache to the selected file path
 				self.cache.save_cache(save_path)
 			except Exception as e:
 				QMessageBox.critical(
@@ -561,13 +631,21 @@ class LabSync(QObject):
 
 	@Slot()
 	def load_preset(self) -> None:
+		"""
+		Load a preset file into the current cache. This uses the custom lab_parser and the .gnt file format.
+
+		:return: None
+		"""
+		# Get the load file path from the user with a file dialog
 		preset_path, _ = QFileDialog.getOpenFileName(
 			self.main_window,
 			"Load Preset File",
 			os.path.join(os.path.dirname(self.file_dir), "presets"),
 		)
+		# If the user selected a file path load the preset
 		if preset_path:
 			try:
+				# Load the preset file into the cache
 				self.cache.load_cache(preset_path)
 
 			except Exception as e:
@@ -592,33 +670,56 @@ class LabSync(QObject):
 		:type result: RequestResult
 		:return: None
 		"""
+		# Check if the result is an error
 		if not result.is_success:
+			# Handle the error accordingly
 			self._handle_worker_error(result)
 			return
 		else:
+			# Handle successful result
+			# Get the request type, device ID and parameter from the request ID
+			# This is done by splitting the request ID, since the format is known
 			request_type, device_id, parameter = result.request_id.split("-")
+			# Special handling for EcoVario position polling
+			# This is done first to avoid necessary checking at higher polling rates
 			if request_type == "POLL" and parameter == "current_pos":
 				if result.value is not None:
+					# Get actual float value
 					current_position = float(result.value)
+					# Emit the result to the UI
 					self.returnResult.emit(result)
+					# Get current target position from cache
 					target_position = self.cache.get_value(device_id, "target_pos")
+					# Check if current position is within tolerance of target position
+					# Then update the EcoVario status indicator in the UI
 					if np.abs(current_position - target_position) <= 0.01:
 						self.main_window.info_panel.update_indicator("EcoVarioStatus", True)
 					else:
 						self.main_window.info_panel.update_indicator("EcoVarioStatus", False)
 				else:
+					# If the value is None the device is not connected! update accordingly
+					# TODO: This should be avoided -> pause polling on disconnect?
 					result.value = "Not Connected!"
 					self.returnResult.emit(result)
+			# Special handling for EcoVario position polling
+			# This is done first to avoid necessary checking at higher polling rates
 			elif request_type == "POLL" and parameter == "current_error_code":
 				if result.value is None:
+					# If the value is None the device is not connected! update accordingly
+					# TODO: This should be avoided -> pause polling on disconnect?
 					result.value = "Not Connected!"
 				self.returnResult.emit(result)
 			else:
+				# For all other request types update handle accordingly
 				if request_type == "SET" or request_type == "POLL":
+					# Update the chache with the new value
 					self.cache.set_value(device_id, parameter, result.value)
+					# Handle Connect and Disconnect results
+					# TODO: This should be handled in a better way -> remake this structure
 				elif request_type == RequestType.CONNECT.value or request_type == RequestType.DISCONNECT.value:
 					self.connectionChanged.emit(device_id, result.value)
 				else:
+					# I dont even know what this is?
 					pass
 		return
 
@@ -695,7 +796,7 @@ class LabSync(QObject):
 	@Slot()
 	def _get_current_device_ports(self) -> None:
 		"""
-		Get the current device ports and emit to the ports dialog
+		Helper Method: Get the current device ports and emit to the ports dialog
 		:return: None
 		"""
 		port_result = RequestResult(
@@ -709,7 +810,7 @@ class LabSync(QObject):
 	@Slot()
 	def _get_current_settings(self) -> None:
 		"""
-		Get the current application settings and emit to the settings dialog
+		Helper Method: Get the current application settings and emit to the settings dialog
 		:return: None
 		"""
 		settings = self.file_utils.read_settings()
@@ -751,5 +852,6 @@ class LabSync(QObject):
 		:type value: Any
 		:return: None
 		"""
+		# TODO: Not quite sure what this is useful for?
 		self.returnStorageUpdate.emit(device_id, parameter, value)
 		return

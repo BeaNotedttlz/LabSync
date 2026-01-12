@@ -18,24 +18,18 @@ from src.core.context import DeviceConnectionError
 class EcoConnect:
 	"""
 	EcoConnect class for serial communication with EcoVario linear stage. Using PyVISA for communication protocols.
-
-	:param name: Name of the device instance.
-	:type name: str
-	:param simulate: Flag to indicate simulation mode.
-	:type simulate: bool
-	:return None
-	:rtype: None
 	"""
-	def __init__(self, name: str, simulate: bool) -> None :
+	def __init__(self, ID: str, simulate: bool) -> None :
 		"""Constructor method
 		"""
 		# save variables to self
-		self.name = name
+		self.ID = ID
 		self.simulate = simulate
 		self.EcoVario = None
 		# connection status
 		self.status = ConnectionStatus.DISCONNECTED
 
+		# Get simulation path
 		sim_path = os.path.join(
 			os.path.dirname(os.path.abspath(__file__)),
 			"simulation.yaml"
@@ -45,6 +39,7 @@ class EcoConnect:
 			f"{sim_path}@sim"
 			if self.simulate else ""
 		)
+		return
 
 	def open_port(self, port: str, baudrate: int) -> None:
 		"""
@@ -60,6 +55,7 @@ class EcoConnect:
 		"""
 		# port for simulation
 		if self.simulate:
+			# predefined port for simulation
 			port = "ASRL4::INSTR"
 
 		try:
@@ -71,8 +67,9 @@ class EcoConnect:
 			# if successful
 			self.status = ConnectionStatus.CONNECTED
 		except (errors.VisaIOError, SerialException) as e:
+			# set status to disconnected and raise error
 			self.status = ConnectionStatus.DISCONNECTED
-			raise DeviceConnectionError(device_id=self.name, original_error=e) from e
+			raise DeviceConnectionError(device_id=self.ID, original_error=e) from e
 
 	def close_port(self) -> None:
 		"""
@@ -81,9 +78,13 @@ class EcoConnect:
 		:return: None
 		:rtype: None
 		"""
+		# Only close port if connected
 		if self.status == ConnectionStatus.CONNECTED:
-			self.EcoVario.close()
+			# Set status to disconnecting
 			self.status = ConnectionStatus.DISCONNECTING
+			self.EcoVario.close()
+			# On successful close, set status to disconnected
+			self.status = ConnectionStatus.DISCONNECTED
 		return None
 
 	def start(self) -> None:
@@ -111,6 +112,7 @@ class EcoConnect:
 
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print(self.EcoVario.query("stop"))
 			else:
 				self._write_sdo(0x01, 0x6040, 0x0037)
@@ -223,6 +225,7 @@ class EcoConnect:
 		:rtype: None
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
+			# only print command in simulation mode
 			if self.simulate:
 				print(self.EcoVario.query(f"pos{position}"))
 			else:
@@ -245,6 +248,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print(self.EcoVario.query(f"speed{speed}"))
 			else:
 				# convert speed from mm/s to encoder units
@@ -266,6 +270,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print(self.EcoVario.query(f"accel{acceleration}"))
 			else:
 				# convert acceleration from mm/s² to encoder units
@@ -287,6 +292,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print(self.EcoVario.query(f"deaccel{deacceleration}"))
 			else:
 				# convert deceleration from mm/s² to encoder units
@@ -350,6 +356,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print("resetting error...")
 			else:
 				self._write_sdo(0x01, 0x6040, 0x01AF)
@@ -367,6 +374,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print(self.EcoVario.query("control word"))
 			else:
 				self._write_sdo(0x01, 0x6040, control_word)
@@ -381,6 +389,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command and response in simulation mode
 				return self.EcoVario.query("currstatus")
 			else:
 				status_hex = self._read_sdo(0x01, 0x6041)
@@ -390,6 +399,7 @@ class EcoConnect:
 
 	def home_stage(self) -> None:
 		if self.simulate:
+			# only print command in simulation mode
 			print("homing stage ...")
 		else:
 			# Turning on Stage / Ready to start

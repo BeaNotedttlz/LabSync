@@ -15,19 +15,33 @@ from src.frontend.widgets.utilities import create_input_field
 from typing import Dict, Any
 
 class LaserInfoDialog(QDialog):
+	"""
+	Dialog to show information about connected lasers.
+	"""
 	class SingleLaserWidget(QWidget):
+		"""
+		Nested class to create the widget for a single laser.
+		Note that this is generally not a good practice, but it is done here to keep the code organized.
+		"""
 		def __init__(self, laser_name: str="Laser", parent=None) -> None:
+			"""Constructor method
+			"""
 			super().__init__(parent)
 
+			# make group box
 			self.group = QGroupBox(laser_name)
 
+			# create labels
+			# The labels are initialized with "Not connected" text
 			self.model_code = QLabel("Model Code: Not connected")
 			self.device_id = QLabel("Device ID: Not connected")
 			self.firmware = QLabel("Firmware Version: Not connected")
 			self.wavelength = QLabel("Operation Wavelength: Not connected")
 			self.max_power = QLabel("Maximum Power: Not connected")
 			self.status = QLabel("Device Stats: Not connected")
+			# set layout
 			layout = QVBoxLayout()
+			# add widgets to layout
 			layout.addWidget(self.model_code)
 			layout.addWidget(self.device_id)
 			layout.addWidget(self.firmware)
@@ -35,20 +49,29 @@ class LaserInfoDialog(QDialog):
 			layout.addWidget(self.max_power)
 			layout.addWidget(self.status)
 
+			# set layout to group box
 			self.group.setLayout(layout)
 
+			# set main layout
 			main_layout = QVBoxLayout()
 			main_layout.addWidget(self.group)
 			self.setLayout(main_layout)
 			return
 
 		def update_data(self, data: Dict[str, Any]) -> None:
+			"""
+			Update the laser information labels with new data.
+			:param data: New data dictionary
+			:type data: Dict[str, Any]
+			:return: None
+			"""
 			# Convert dict to a list
 			# This is done because the data will always be the same and the keys can be ignored
 			data_list = []
 			for key, data in data.items():
 				data_list.append(data)
 
+			# Update labels
 			self.model_code.setText("Model Code: " + str(data_list[0]))
 			self.device_id.setText("Device ID :" + str(data_list[1]))
 			self.firmware.setText(str(data_list[2]))
@@ -58,6 +81,8 @@ class LaserInfoDialog(QDialog):
 			return
 
 	def __init__(self, parent=None) -> None:
+		"""Constructor method
+		"""
 		super().__init__(parent)
 		# set window information
 		self.setWindowTitle("Laser Information")
@@ -77,29 +102,42 @@ class LaserInfoDialog(QDialog):
 
 	@Slot(object)
 	def update_info(self, data:Dict[str, dict]) -> None:
+		"""
+		Update the laser information widgets with new data.
+		:param data: New Data dictionary
+		:type data: Dict[str, dict]
+		:return: None
+		"""
+		# Update laser 1 data if available
 		if "Laser1" in data:
 			self.laser1_widget.update_data(data["Laser1"])
 
+		# Update laser 2 data if available
 		if "Laser2" in data:
 			self.laser2_widget.update_data(data["Laser2"])
-
 		return
 
 class PortSelectionDialog(QDialog):
-
+	"""
+	Dialog to select the device ports for the connected devices.
+	"""
+	# Signal to apply the port changes
 	applyPorts = Signal(str, str, str, str, str)
+	# Signal to set the default ports
 	defaultPorts = Signal(str, str, str, str, str)
 
 	def __init__(self, parent=None) -> None:
 		"""Constructor method
 		"""
 		super().__init__(parent)
+		# Set window information
 		self.setWindowTitle("Port Selection")
 		self.setFixedSize(300, 400)
 
+		# set layout
 		layout = QGridLayout()
 
-		# crea input fields
+		# create input fields
 		self.stage_port = create_input_field(layout, "EcoVatio Port:", "", "", 0, 0)
 		self.stage_port.setAlignment(Qt.AlignLeft)
 		self.freq_gen_port = create_input_field(layout, "TGA 1244 Port:", "", "", 2, 0)
@@ -171,17 +209,26 @@ class PortSelectionDialog(QDialog):
 
 
 class SettingsDialog(QDialog):
+	"""
+	Dialog to change application settings.
+	"""
+	# Signal to apply the settings changes
 	applySettings = Signal(str, bool)
 
 	def __init__(self, parent=None) -> None:
+		"""Constructor method
+		"""
 		super().__init__(parent)
 
+		# Set window information
 		self.setWindowTitle("Settings")
 		self.setMinimumSize(300, 150)
 
+		# set layout
 		layout = QGridLayout()
 		layout.setVerticalSpacing(10)
 
+		# create input fields
 		self.username_input = create_input_field(layout, "Username:", "", "", 0, 0)
 		self.username_input.setAlignment(Qt.AlignLeft)
 		self.debug_mode_box = QCheckBox("Debug Mode")
@@ -200,12 +247,13 @@ class SettingsDialog(QDialog):
 	def _apply(self) -> None:
 		"""
 		Get all settings and emit signal to close
-
 		:return: Only emits signal does not return anything
 		"""
+		# get settings
 		username = self.username_input.text()
 		debug_mode = self.debug_mode_box.isChecked()
 
+		# emit signal
 		self.applySettings.emit(username, debug_mode)
 		return
 
@@ -215,12 +263,15 @@ class SettingsDialog(QDialog):
 		:return: None
 		"""
 		try:
+			# extract settings from dict
 			username = settings["username"]
 			debug_mode = settings["debug_mode"]
 		except KeyError:
+			# set default values
 			username = ""
 			debug_mode = False
 
+		# set values in dialog
 		self.username_input.setText(username)
 		self.debug_mode_box.setChecked(debug_mode)
 		return

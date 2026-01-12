@@ -15,19 +15,28 @@ from src.frontend.widgets.utilities import create_input_field, create_combo_box
 from typing import Dict, Any
 
 class FsvNormalWidget(QWidget):
+	"""
+	Create FSV3000 normal mode widgets and functionality.
+	"""
+	# Request signal to send parameters to device handler
 	sendRequest = Signal(object)
+	# Signal to send data to be saved
 	saveDataRequest = Signal(object)
 
+	# Define possible device parameter options for combo boxes
 	sweep_types = ["Sweep", "FFT"]
 	meas_types = ["Single", "Average"]
 	units = ["dBm", "dBmV"]
 
 	def __init__(self, device_id: str) -> None:
+		"""Constructor method
+		"""
 		super().__init__()
+		# Store device ID
 		self.device_id = device_id
 
+		# creating and adding widgets to layout
 		start_button = QPushButton("Start")
-
 		layout = QGridLayout()
 		layout.setVerticalSpacing(10)
 
@@ -50,6 +59,7 @@ class FsvNormalWidget(QWidget):
 		layout.addWidget(start_button, 8, 0)
 
 		self.setLayout(layout)
+		# Connect button and combo box signals to their respective slots
 		start_button.clicked.connect(self._start_measurement)
 		self.meas_type.currentIndexChanged.connect(self._toggle_avg_count)
 		self._toggle_avg_count(self.meas_type.currentIndex())
@@ -57,6 +67,11 @@ class FsvNormalWidget(QWidget):
 
 	@Slot()
 	def _start_measurement(self) -> None:
+		"""
+		Start measurement with current parameters
+		:return: None
+		"""
+		# Retrieve and process input values, converting as necessary
 		center_frequency = float(self.center_frequency.text().replace(",", "."))
 		span = float(self.span.text().replace(",", "."))
 		bandwidth = float(self.bandwidth.text().replace(",", "."))
@@ -66,6 +81,7 @@ class FsvNormalWidget(QWidget):
 		meas_type = self.meas_types[self.meas_type.currentIndex()]
 		unit = self.units[self.unit.currentIndex()]
 
+		# Create parameter dictionary to send as request
 		parameters = {
 			(self.device_id,"center_freq"): center_frequency,
 			(self.device_id,"freq_span"): span,
@@ -81,14 +97,26 @@ class FsvNormalWidget(QWidget):
 
 	@Slot()
 	def _toggle_avg_count(self, index: int) -> None:
+		"""
+		Helper method to show/hide average count input based on measurement type.
+		:param index:
+		:return:
+		"""
 		if self.meas_types[index] == "Average":
+			# For average measurement, show average count input
 			self.avg_count.show()
 		else:
+			# For single measurement, hide average count input
 			self.avg_count.hide()
 		return
 
 	@Slot()
 	def _get_save_path(self) -> None:
+		"""
+		Helper method to get save directory from user.
+		:return: None
+		"""
+		# TODO: This is not necessary anymore since this will be implemented in the controller
 		file_path = QFileDialog.getExistingDirectory(
 		    self,
 		    "Select Directory",
@@ -102,6 +130,13 @@ class FsvNormalWidget(QWidget):
 
 	@Slot(dict)
 	def get_update(self, parameters: Dict[tuple, Any]) -> None:
+		"""
+		Gets updated parameters from the controller and shows them in the UI.
+		:param parameters: Updated parameters from the controller
+		:type parameters: Dict[str, Any]
+		:return: None
+		"""
+		# Define supported parameters and their corresponding UI elements
 		supported_params = {
 			"center_frequency": "center_frequency",
 			"span": "span",
@@ -111,27 +146,40 @@ class FsvNormalWidget(QWidget):
 			"meas_type": "meas_type",
 			"unit": "unit",
 		}
+		# Iterate through received parameters and update UI accordingly
 		for key, parameter in parameters.items():
 			if not key[1] in supported_params:
 				pass
 			else:
 				if key[1] == "sweep_type":
+					# Map and set sweep type index
 					idx = self._map_sweep_type(parameter)
 					self.sweep_type.setCurrentIndex(idx)
 				elif key[1] == "meas_type":
+					# Map and set measurement type index
 					idx = self._map_meas_type(parameter)
 					self.meas_type.setCurrentIndex(idx)
 				elif key[1] == "unit":
+					# Map and set unit index
 					idx = self._map_unit(parameter)
 					self.unit.setCurrentIndex(idx)
 				else:
+					# Update text fields for other parameters
 					widget = getattr(self, supported_params[key[1]])
+					# Clear and set new value
 					widget.clear()
 					widget.setText(parameter)
 			return
 
 	@staticmethod
 	def _map_sweep_type(value: str) -> int:
+		"""
+		Helper method to map sweep type string to corresponding index.
+		:param value: Name of sweep type
+		:type value: str
+		:return: The corresponding index in the UI
+		:rtype: int
+		"""
 		if value == "Sweep":
 			return 0
 		else:
@@ -139,6 +187,13 @@ class FsvNormalWidget(QWidget):
 
 	@staticmethod
 	def _map_meas_type(value: str) -> int:
+		"""
+		Helper method to map measurement type string to corresponding index.
+		:param value: Name of measurement type
+		:type value: str
+		:return: The corresponding index in the UI
+		:rtype: int
+		"""
 		if value == "single":
 			return 0
 		else:
@@ -146,6 +201,13 @@ class FsvNormalWidget(QWidget):
 
 	@staticmethod
 	def _map_unit(value: str) -> int:
+		"""
+		Helper method to map unit string to corresponding index.
+		:param value: Name of unit
+		:type value: str
+		:return: The corresponding index in the UI
+		:rtype: int
+		"""
 		if value == "dBm":
 			return 0
 		else:
