@@ -5,7 +5,6 @@ Main application for controlling backend and frontend of the LabSync application
 @file: src/core/labsync_app.py
 @note:
 """
-import json
 import os
 
 import numpy as np
@@ -61,6 +60,7 @@ class MapWorkers:
 		:return: None
 		"""
 		self._workers[device_id] = worker
+		return
 
 class MapPorts:
 	def __init__(self) -> None:
