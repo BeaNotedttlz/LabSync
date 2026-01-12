@@ -6,7 +6,7 @@ This focuses on the RS232 serial interface of the device. However the GPIO shoul
 @file: src/backend/devices/tga.py
 @note: Use at your own risk.
 """
-# TODO this needs a rework without the attributes
+# TODO this needs a rework without the attributes (?)
 
 import pyvisa, os
 from pyvisa import errors
@@ -44,6 +44,7 @@ class FrequencyGenerator:
 			f"{sim_path}@sim"
 			if self.simulate else ""
 		)
+		return
 
 	def open_port(self, port: str, baudrate: int) -> None:
 		"""
@@ -59,6 +60,7 @@ class FrequencyGenerator:
 		"""
 		# set port for simulation
 		if self.simulate:
+			# use predefined simulation port
 			port = "ASRL3::INSTR"
 		try:
 			# open serial port
@@ -72,6 +74,7 @@ class FrequencyGenerator:
 			# set connected variable
 			self.status = ConnectionStatus.CONNECTED
 			self.current_channel = 1
+			return
 		except (errors.VisaIOError, SerialException) as e:
 			self.status = ConnectionStatus.DISCONNECTED
 			raise DeviceConnectionError(device_id=self.ID, original_error=e) from e
@@ -85,7 +88,9 @@ class FrequencyGenerator:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			# only close port if connected
+			self.status = ConnectionStatus.DISCONNECTING
 			self.TGA.close()
+			self.status = ConnectionStatus.DISCONNECTED
 		return None
 
 	def _write(self, channel: int, what: str, value: str) -> None:
