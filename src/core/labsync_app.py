@@ -532,21 +532,6 @@ class LabSync(QObject):
 				self.device_ports.set_port(device_id, new_port)
 		return
 
-	def _disconnect_all(self) -> None:
-		"""
-		Helper Method to disconnect all devices.
-		:return: None
-		"""
-		for dev_id, handler in self.workers.worker.items():
-			# generate disconnect request for each device
-			cmd = DeviceRequest(
-				device_id=dev_id,
-				cmd_type=RequestType.DISCONNECT,
-			)
-			# send disconnect request to worker
-			handler.send_request(cmd)
-		return
-
 	@Slot()
 	def connect_device(self, device_id, if_silent: bool=False) -> None:
 		"""
