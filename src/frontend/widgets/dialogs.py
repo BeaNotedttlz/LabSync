@@ -8,7 +8,7 @@ Module for creating and operating the PySide6 dialog window widgets.
 
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import Qt
-from PySide6.QtWidgets import (QWidget, QLabel, QPushButton,
+from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, QMessageBox,
 							   QSpacerItem, QGridLayout, QCheckBox, QDialog,
 							   QGroupBox, QVBoxLayout, QHBoxLayout)
 from src.frontend.widgets.utilities import create_input_field
@@ -122,9 +122,9 @@ class PortSelectionDialog(QDialog):
 	Dialog to select the device ports for the connected devices.
 	"""
 	# Signal to apply the port changes
-	applyPorts = Signal(str, str, str, str, str)
+	applyPorts = Signal(list, list, list, list, list)
 	# Signal to set the default ports
-	defaultPorts = Signal(str, str, str, str, str)
+	defaultPorts = Signal(list, list, list, list, list)
 
 	def __init__(self, parent=None) -> None:
 		"""Constructor method
@@ -132,7 +132,7 @@ class PortSelectionDialog(QDialog):
 		super().__init__(parent)
 		# Set window information
 		self.setWindowTitle("Port Selection")
-		self.setFixedSize(300, 400)
+		self.setFixedSize(400, 400)
 
 		# set layout
 		layout = QGridLayout()
@@ -140,14 +140,23 @@ class PortSelectionDialog(QDialog):
 		# create input fields
 		self.stage_port = create_input_field(layout, "EcoVatio Port:", "", "", 0, 0)
 		self.stage_port.setAlignment(Qt.AlignLeft)
+		self.stage_baud = create_input_field(layout, "Baudrate:", "", "baud", 0, 1)
+
 		self.laser1_port = create_input_field(layout, "Laser 1 Port:", "", "", 2, 0)
 		self.laser1_port.setAlignment(Qt.AlignLeft)
+		self.laser1_baud = create_input_field(layout, "Baudrate:", "", "baud", 2, 1)
+
 		self.laser2_port = create_input_field(layout, "Laser 2 Port:", "", "", 4, 0)
+		self.laser2_port.setAlignment(Qt.AlignLeft)
+		self.laser2_baud = create_input_field(layout, "Baudrate:", "", "baud", 4, 1)
+
 		self.freq_gen_port = create_input_field(layout, "TGA 1244 Port:", "", "", 6, 0)
 		self.freq_gen_port.setAlignment(Qt.AlignLeft)
-		self.laser2_port.setAlignment(Qt.AlignLeft)
+		self.freq_gen_baud = create_input_field(layout, "Baudrate:", "", "baud", 6, 1)
+
 		self.fsv_port = create_input_field(layout, "FSV Port:", "", "", 8, 0)
 		self.fsv_port.setAlignment(Qt.AlignLeft)
+		self.fsv_baud = create_input_field(layout, "Baudrate:", "", "", 8, 1)
 
 		# create apply button
 		apply_button = QPushButton("Apply")
@@ -169,11 +178,20 @@ class PortSelectionDialog(QDialog):
 		Get all ports and emit signal to save and close
 		:return: None
 		"""
-		stage = self.stage_port.text()
-		freq_gen = self.freq_gen_port.text()
-		laser1 = self.laser1_port.text()
-		laser2 = self.laser2_port.text()
-		fsv = self.fsv_port.text()
+		try:
+			stage = [self.stage_port.text(), int(self.stage_baud.text()) if self.stage_baud.text() != "None" else None]
+			laser1 = [self.laser1_port.text(), int(self.laser1_baud.text()) if self.laser1_baud.text() != "None" else None]
+			laser2 = [self.laser2_port.text(), int(self.laser2_baud.text()) if self.laser2_baud.text() != "None" else None]
+			freq_gen = [self.freq_gen_port.text(), int(self.freq_gen_baud.text()) if self.freq_gen_baud.text() != "None" else None]
+			fsv = [self.fsv_port.text(), int(self.fsv_baud.text()) if self.fsv_baud.text() != "None" else None]
+		except ValueError as e:
+			QMessageBox.critical(
+				self.parent(),
+				"Error",
+				"One of the entered Values is not allowed\n"
+				f"{e}"
+			)
+			return
 
 		self.applyPorts.emit(stage, laser1, laser2, freq_gen, fsv)
 		return
@@ -184,11 +202,23 @@ class PortSelectionDialog(QDialog):
 		Get all ports and save to default file
 		:return: None
 		"""
-		stage = self.stage_port.text()
-		freq_gen = self.freq_gen_port.text()
-		laser1 = self.laser1_port.text()
-		laser2 = self.laser2_port.text()
-		fsv = self.fsv_port.text()
+		try:
+			stage = [self.stage_port.text(), int(self.stage_baud.text()) if self.stage_baud.text() != "None" else None]
+			laser1 = [self.laser1_port.text(),
+					  int(self.laser1_baud.text()) if self.laser1_baud.text() != "None" else None]
+			laser2 = [self.laser2_port.text(),
+					  int(self.laser2_baud.text()) if self.laser2_baud.text() != "None" else None]
+			freq_gen = [self.freq_gen_port.text(),
+						int(self.freq_gen_baud.text()) if self.freq_gen_baud.text() != "None" else None]
+			fsv = [self.fsv_port.text(), int(self.fsv_baud.text()) if self.fsv_baud.text() != "None" else None]
+		except ValueError as e:
+			QMessageBox.critical(
+				self.parent(),
+				"Error",
+				"One of the entered Values is not allowed\n"
+				f"{e}"
+			)
+			return
 
 		self.defaultPorts.emit(stage, laser1, laser2, freq_gen, fsv)
 		return
@@ -199,14 +229,26 @@ class PortSelectionDialog(QDialog):
 		Get the currently set device ports and show in the dialog
 		:return: None
 		"""
-		# TODO no baudrate -> add baudrate selection?
-		self.stage_port.setText(current_ports["EcoVario"][0])
-		self.freq_gen_port.setText(current_ports["TGA1244"][0])
-		self.laser1_port.setText(current_ports["Laser1"][0])
-		self.laser2_port.setText(current_ports["Laser2"][0])
-		self.fsv_port.setText(current_ports["FSV3000"])
+		for device_id, port_config in current_ports.items():
+			match device_id:
+				case "EcoVario":
+					self.stage_port.setText(port_config[0])
+					self.stage_baud.setText(str(port_config[1]))
+				case "Laser1":
+					self.laser1_port.setText(port_config[0])
+					self.laser1_baud.setText(str(port_config[1]))
+				case "Laser2":
+					self.laser2_port.setText(port_config[0])
+					self.laser2_baud.setText(str(port_config[1]))
+				case "TGA1244":
+					self.freq_gen_port.setText(port_config[0])
+					self.freq_gen_baud.setText(str(port_config[1]))
+				case "FSV3000":
+					self.fsv_port.setText(port_config[0])
+					self.fsv_baud.setText(str(port_config[1]))
+				case _:
+					continue
 		return
-
 
 class SettingsDialog(QDialog):
 	"""
