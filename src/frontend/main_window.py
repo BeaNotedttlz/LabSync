@@ -38,8 +38,8 @@ class MainWindow(QMainWindow):
 	savePreset = Signal()
 	loadPreset = Signal()
 	# save / load ports
-	savePorts = Signal(str, str, str, str, str)
-	setDefaultPorts = Signal(str, str, str, str, str)
+	savePorts = Signal(list, list, list, list, list)
+	setDefaultPorts = Signal(list, list, list, list, list)
 	getCurrentPorts = Signal()
 	# save / load settings
 	saveSettings = Signal(str, bool)
