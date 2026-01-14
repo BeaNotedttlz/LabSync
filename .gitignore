@@ -16,3 +16,6 @@ test.*
 .guthub/
 .git/
 .mypy_cache/
+
+# Ignore TODO files
+TODO.*
