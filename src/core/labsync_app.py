@@ -8,6 +8,7 @@ Main application for controlling backend and frontend of the LabSync application
 import os
 
 import numpy as np
+from mypyc.primitives.str_ops import str_get_item_unsafe_op
 
 from src.core.context import (DeviceRequest, RequestType, RequestResult,
 							  ErrorType, DeviceProfile, Parameter)
@@ -452,7 +453,7 @@ class LabSync(QObject):
 	def _set_default_ports(self, stage: str, laser1: str, laser2: str,
 						   freq_gen: str, fsv: str) -> None:
 		"""
-		Set the default ports of the devices. This is called by the ports dialog.
+		Set the default ports of the devices. This is called by the ports dialog.str
 		TODO implement the baudrates
 
 		:param stage: Stage port from dialog window
@@ -481,9 +482,9 @@ class LabSync(QObject):
 			)
 			return
 
-	@Slot(str, str, str, str, str)
-	def manage_device_ports(self, stage: str, laser1: str, laser2: str,
-						   freq_gen: str, fsv: str) -> None:
+	@Slot(list, list, list, list, list)
+	def manage_device_ports(self, stage: list, laser1: list, laser2: list,
+						   freq_gen: list, fsv: list) -> None:
 		"""
 		Disconnects all devices and requests a reconnect with new ports.
 		:param stage: New stage port
@@ -498,38 +499,40 @@ class LabSync(QObject):
 		:type fsv: str
 		:return: None
 		"""
-		# TODO: Add baudrate management
-		# set new device ports
-		new_port_config = {
-			"EcoVario": [stage, 9600],
-			"Laser1": [laser1, 500000],
-			"Laser2": [laser2, 500000],
-			"TGA1244": [freq_gen, 9600],
+		# Define new device ports for easy access
+		new_port_info = {
+			"EcoVario": stage,
+			"Laser1": laser1,
+			"Laser2": laser2,
+			"TGA1244": freq_gen,
 			"FSV3000": fsv
 		}
-		for device_id, new_port in new_port_config.items():
+
+		for device_id, new_port_config in new_port_info.items():
 			# Get device worker and current port
 			worker = self.workers.worker.get(device_id, None)
 			if worker is None:
-				QMessageBox.critical(
+				QMessageBox.warning(
 					self.main_window,
-					"Error",
+					"Internal Error Occurred",
 					"Something went wrong!\n Missing device ID: {}".format(device_id)
 				)
-				continue
-			current_port = self.device_ports.ports.get(device_id, None)
-			# Only disconnect if port is different
-			if new_port != current_port:
-				if worker.is_connected:
+			else:
+				current_port_config = self.device_ports.ports.get(device_id, None)
+				if new_port_config[1] is None:
+					# If the baudrate is None, device uses TCPIP
+					new_port_config = new_port_config[0]
+				# Only disconnect and change port config if something changed
+				if current_port_config != new_port_config:
 					self.disconnect_device(device_id)
-				# After device has been disconnected, set new port and create request
-				cmd = DeviceRequest(
-					device_id=device_id,
-					cmd_type=RequestType.CONNECT,
-					value=new_port
-				)
-				worker.send_request(cmd)
-				self.device_ports.set_port(device_id, new_port)
+					# After device has been disconnected, set new port config and create open request
+					cmd = DeviceRequest(
+						device_id=device_id,
+						cmd_type=RequestType.CONNECT,
+						value=new_port_config
+					)
+					worker.send_request(cmd)
+					self.device_ports.set_port(device_id, new_port_config)
 		return
 
 	@Slot()
