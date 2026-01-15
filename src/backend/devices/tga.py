@@ -114,6 +114,7 @@ class FrequencyGenerator:
 				print(self.TGA.query(what + value))
 				return None
 			else:
+				print(f"channel: {channel}, {type(channel)} what: {what}, value: {value}")
 				# write selected channel if different to lastly selected channel
 				if channel != self.current_channel:
 					self.TGA.write_raw(b"SETUPCH" + str(channel).encode() + b"\n")
@@ -224,7 +225,6 @@ class FrequencyGenerator:
 		:rtype: None
 		"""
 		lockmodes = ["indep", "master", "slave", "off"]
-		print(lockmode)
 		if lockmode not in lockmodes:
 			raise AttributeError(f"Lockmode {lockmode} is not supported.")
 		if lockmode == "indep":
