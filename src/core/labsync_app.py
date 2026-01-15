@@ -384,8 +384,8 @@ class LabSync(QObject):
 			value=2000
 		)
 		# Send polling requests to worker
-		stage_worker.send_request(position_poll)
-		stage_worker.send_request(error_poll)
+		# stage_worker.send_request(position_poll)
+		# stage_worker.send_request(error_poll)
 		# initialize target position in cache
 		# THis is done because the cache values are only set after a device request
 		# TODO however this is bad design, need to find a better way -> initialize cache values on profile setup?
