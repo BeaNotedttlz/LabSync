@@ -1,21 +1,25 @@
 {
-  "EcoVario": [
-    "COM0",
-    9600
-  ],
-  "Laser1": [
-    "COM1",
-    500000
-  ],
-  "Laser2": [
-    "COM2",
-    500000
-  ],
-  "TGA1244": [
-    "COM3",
-    9600
-  ],
-  "FSV3000": [
+  "EcoVario":
+    [
+      "ASRL/dev/ttyUSB0::INSTR",
+      9600
+    ],
+  "Laser1":
+    [
+      "ASRL/dev/ttyUSB8::INSTR",
+      500000
+    ],
+  "Laser2":
+    [
+      "ASRL/dev/ttyUSB9::INSTR",
+      500000
+    ],  "TGA1244":
+    [
+      "ASRL/dev/ttyUSB1::INSTR",
+      9600
+    ],
+  "FSV3000":
+  [
     "COM4",
     null
   ]

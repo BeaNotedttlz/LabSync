@@ -57,7 +57,6 @@ class EcoConnect:
 		if self.simulate:
 			# predefined port for simulation
 			port = "ASRL4::INSTR"
-
 		try:
 			# open serial port
 			self.EcoVario = self.rm.open_resource(port, open_timeout=2000)
@@ -118,38 +117,64 @@ class EcoConnect:
 				self._write_sdo(0x01, 0x6040, 0x0037)
 		return None
 
+	# def _write_sdo(self, id: int, object: int, value: int) -> None:
+	# 	"""
+	# 	Write sdo to EcoVario controller.
+	# 	This method sends a write request to EcoVario controller and waits for the appropraite response.
+	#
+	#
+	# 	:param id: Id of the SDO
+	# 	:type id: int
+	# 	:param object: Object to write
+	# 	:tyoe object: int
+	# 	:param value: Value to write to device
+	# 	:type value: int
+	# 	:return: None
+	# 	:rtype: None
+	# 	"""
+	# 	# calculate message bytes
+	# 	object_1 = object >> 8
+	# 	object_2 = object & 0xFF
+	# 	hex_value = value.to_bytes(4, byteorder="little")
+	# 	value_list = list(hex_value)
+	#
+	# 	# generate message
+	# 	message = [id, 0x22, object_2, object_1, 0x00, value_list[0], value_list[1], value_list[2], value_list[3]]
+	# 	# caculate and append checksum
+	# 	trailing_byte = self._calculate_checksum(message)
+	# 	message.append(trailing_byte)
+	#
+	# 	# write message and read response
+	# 	self.EcoVario.write_raw(message)
+	# 	# but response can generally be ignored
+	# 	_ = self.EcoVario.read_bytes(20)
+	# 	return None
+
 	def _write_sdo(self, id: int, object: int, value: int) -> None:
-		"""
-		Write sdo to EcoVario controller.
-		This method sends a write request to EcoVario controller and waits for the appropraite response.
-
-
-		:param id: Id of the SDO
-		:type id: int
-		:param object: Object to write
-		:tyoe object: int
-		:param value: Value to write to device
-		:type value: int
-		:return: None
-		:rtype: None
-		"""
-		# calculate message bytes
+		# 1. Prepare Data
 		object_1 = object >> 8
 		object_2 = object & 0xFF
-		hex_value = value.to_bytes(4, byteorder="little")
+
+		# --- FIX START ---
+		# Apply 32-bit mask. This converts -17 to 4294967279 (0xFFFFFFEF)
+		unsigned_value = value & 0xFFFFFFFF
+		hex_value = unsigned_value.to_bytes(4, byteorder="little")
+		# --- FIX END ---
+
 		value_list = list(hex_value)
 
-		# generate message
-		message = [id, 0x22, object_2, object_1, value_list[0], value_list[1], value_list[2], value_list[3]]
-		# caculate and append checksum
+		# 2. Build Message (Remember to keep the 0x00 subindex we fixed earlier!)
+		message = [id, 0x22, object_2, object_1, 0x00, value_list[0], value_list[1], value_list[2], value_list[3]]
+
+		# 3. Checksum & Send
 		trailing_byte = self._calculate_checksum(message)
 		message.append(trailing_byte)
 
-		# write message and read response
-		self.EcoVario.write(message)
-		# but response can generally be ignored
-		_ = self.EcoVario.read_bytes(20)
-		return None
+		self.EcoVario.write_raw(bytes(message))
+
+		# Read response (check buffer first to avoid timeout
+		_ = self.EcoVario.read_bytes(self.EcoVario.bytes_in_buffer)
+		return
 
 	def _read_sdo(self, id, object) -> str:
 		"""
@@ -405,7 +430,7 @@ class EcoConnect:
 			# Turning on Stage / Ready to start
 			self._write_sdo(0x01, 0x6040, 0xF)
 			# Set the homing method
-			self._write_sdo(0x01, 0x6098, 0x11)
+			self._write_sdo(0x01, 0x6098, -0x11)
 			# Set the operating mode to homing
 			self._write_sdo(0x01, 0x6060, 0x6)
 			# Start the homing process
