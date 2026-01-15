@@ -157,7 +157,6 @@ class LabSyncWorker(QObject):
 					self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=result_val))
 			except Exception as e:
 				import traceback
-				print(traceback.format_exc())
 				# Catch all exceptions during SET and POLL operations and return as Task error.
 				self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e), error_type=ErrorType.TASK))
 
