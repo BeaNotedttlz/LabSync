@@ -476,6 +476,7 @@ class LabSync(QObject):
 		}
 
 		for device_id, new_port_config in new_port_info.items():
+
 			# Get device worker and current port
 			worker = self.workers.worker.get(device_id, None)
 			if worker is None:
@@ -489,6 +490,7 @@ class LabSync(QObject):
 				if new_port_config[1] is None:
 					# If the baudrate is None, device uses TCPIP
 					new_port_config = new_port_config[0]
+					current_port_config = current_port_config[0]
 				# Only disconnect and change port config if something changed
 				if current_port_config != new_port_config:
 					self.disconnect_device(device_id)
