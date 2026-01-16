@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, QMessageBox,
 							   QSpacerItem, QGridLayout, QCheckBox, QDialog,
 							   QGroupBox, QVBoxLayout, QHBoxLayout)
 from src.frontend.widgets.utilities import create_input_field
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, List, Literal
+import ipaddress
 
 class LaserInfoDialog(QDialog):
 	"""
@@ -172,6 +173,49 @@ class PortSelectionDialog(QDialog):
 		def_button.clicked.connect(self._set_default)
 		return
 
+	@staticmethod
+	def _normalize_port(port_str: str, baud_val: str) -> tuple:
+
+		port_str = port_str.strip()
+		if not port_str:
+			return port_str, baud_val
+
+		def is_valid_ip(s):
+			clean = s.replace("TCPIP::", "").replace("::INSTR", "").replace("::SOCKET","")
+			try:
+				ipaddress.ip_address(clean)
+				return True
+			except ValueError:
+				return False
+
+		match port_str:
+			case s if s.upper().startswith("COM"):
+				return s.upper(), int(baud_val)
+
+			case s if s.upper().startswith("USB"):
+				return f"ASRL/dev/tty{s}::INSTR", int(baud_val)
+
+			case s if s.startswith("/dev/ttyUSB"):
+				return f"ASRL{s}::INSTR", int(baud_val)
+
+			case s if is_valid_ip(s):
+				clean_ip = s.replace("TCPIP::", "").replace("::INSTR", "").replace("::SOCKET", "")
+				return f"TCPIP::{clean_ip}::INSTR", None
+
+			case _:
+				return port_str, int(baud_val)
+
+	def _get_dialog_data(self) -> tuple:
+		try:
+			stage = self._normalize_port(self.stage_port.text(), self.stage_baud.text())
+			laser1 = self._normalize_port(self.laser1_port.text(), self.laser1_baud.text())
+			laser2 = self._normalize_port(self.laser2_port.text(), self.laser2_baud.text())
+			freq_gen = self._normalize_port(self.freq_gen_port.text(), self.freq_gen_baud.text())
+			fsv = self._normalize_port(self.fsv_port.text(), self.fsv_baud.text())
+			return stage, laser1, laser2, freq_gen, fsv
+		except ValueError as e:
+			raise TypeError(f"{e}") from e
+
 	@Slot()
 	def _apply_ports(self) -> None:
 		"""
@@ -179,20 +223,15 @@ class PortSelectionDialog(QDialog):
 		:return: None
 		"""
 		try:
-			stage = [self.stage_port.text(), int(self.stage_baud.text()) if self.stage_baud.text() != "None" else None]
-			laser1 = [self.laser1_port.text(), int(self.laser1_baud.text()) if self.laser1_baud.text() != "None" else None]
-			laser2 = [self.laser2_port.text(), int(self.laser2_baud.text()) if self.laser2_baud.text() != "None" else None]
-			freq_gen = [self.freq_gen_port.text(), int(self.freq_gen_baud.text()) if self.freq_gen_baud.text() != "None" else None]
-			fsv = [self.fsv_port.text(), int(self.fsv_baud.text()) if self.fsv_baud.text() != "None" else None]
-		except ValueError as e:
-			QMessageBox.critical(
+			stage, laser1, laser2, freq_gen, fsv = self._get_dialog_data()
+
+		except TypeError as e:
+			QMessageBox.warning(
 				self.parent(),
-				"Error",
-				"One of the entered Values is not allowed\n"
-				f"{e}"
+				"Error with port information",
+				f"One of the values entered is invalid:\n{e}"
 			)
 			return
-
 		self.applyPorts.emit(stage, laser1, laser2, freq_gen, fsv)
 		return
 
@@ -203,20 +242,13 @@ class PortSelectionDialog(QDialog):
 		:return: None
 		"""
 		try:
-			stage = [self.stage_port.text(), int(self.stage_baud.text()) if self.stage_baud.text() != "None" else None]
-			laser1 = [self.laser1_port.text(),
-					  int(self.laser1_baud.text()) if self.laser1_baud.text() != "None" else None]
-			laser2 = [self.laser2_port.text(),
-					  int(self.laser2_baud.text()) if self.laser2_baud.text() != "None" else None]
-			freq_gen = [self.freq_gen_port.text(),
-						int(self.freq_gen_baud.text()) if self.freq_gen_baud.text() != "None" else None]
-			fsv = [self.fsv_port.text(), int(self.fsv_baud.text()) if self.fsv_baud.text() != "None" else None]
-		except ValueError as e:
-			QMessageBox.critical(
+			stage, laser1, laser2, freq_gen, fsv = self._get_dialog_data()
+
+		except TypeError as e:
+			QMessageBox.warning(
 				self.parent(),
-				"Error",
-				"One of the entered Values is not allowed\n"
-				f"{e}"
+				"Error with port information",
+				f"One of the values entered is invalid:\n{e}"
 			)
 			return
 

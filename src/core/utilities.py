@@ -35,7 +35,7 @@ class FilesUtils:
 			"Laser1": ["COM1", 500000],
 			"Laser2": ["COM2", 500000],
 			"TGA1244": ["COM3", 9600],
-			"FSV3000": ["COM4", None]
+			"FSV3000": ["141.99.144.147", None]
 		}
 		# save file name to self
 		self.filename = file_name
