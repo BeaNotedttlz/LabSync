@@ -35,7 +35,8 @@ class StageWidgetExpert(QWidget):
 		# creating and adding widgets to layout
 		start_button = QPushButton("Start")
 		stop_button = QPushButton("Stop")
-		home_stage_button = QPushButton("Home Stage")
+		auto_home_button = QPushButton("Auto Home")
+		manual_home_button = QPushButton("Manual Home")
 		self.sync = QCheckBox("Sync Accel. \n and Deaccel.")
 		self.sync.setChecked(True)
 		reset_error_button = QPushButton("Reset \n Error")
@@ -60,16 +61,19 @@ class StageWidgetExpert(QWidget):
 		self.out_error_code = create_output_field(layout, "Error code", "", "", 10, 2)
 		self.out_error_code.setAlignment(Qt.AlignLeft)
 
-		layout.addWidget(home_stage_button, 9, 2)
+		layout.addWidget(auto_home_button, 8, 2)
+		layout.addWidget(manual_home_button, 9, 2)
 		layout.addWidget(self.sync, 5, 2)
-		layout.addWidget(reset_error_button, 8, 2)
+		layout.addWidget(reset_error_button, 10, 2)
 		self.setLayout(layout)
 
 		# signal routing #
 		stop_button.clicked.connect(self._stop)
 		start_button.clicked.connect(self._start)
-		home_stage_button.clicked.connect(self._home_stage)
 		reset_error_button.clicked.connect(self._reset_error)
+
+		auto_home_button.clicked.connect(lambda: self._home_stage(True))
+		manual_home_button.clicked.connect(lambda: self._home_stage(False))
 
 		self.in_new_position.returnPressed.connect(self._send_update)
 		self.in_speed.editingFinished.connect(self._send_update)
@@ -171,10 +175,15 @@ class StageWidgetExpert(QWidget):
 		return
 
 	@Slot()
-	def _home_stage(self) -> None:
-		self.sendRequest.emit({
-			(self.device_id, "HOME"): None
-		})
+	def _home_stage(self, auto: bool) -> None:
+		if auto:
+			self.sendRequest.emit({
+				(self.device_id, "AHOME"): None
+			})
+		else:
+			self.sendRequest.emit({
+				(self.device_id, "HOME"): None
+			})
 		return
 
 	@Slot()

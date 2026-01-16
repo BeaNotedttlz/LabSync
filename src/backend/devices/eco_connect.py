@@ -421,17 +421,46 @@ class EcoConnect:
 		else:
 			return None
 
-	def home_stage(self) -> None:
+	def auto_home(self) -> None:
 		if self.simulate:
 			# only print command in simulation mode
-			print("homing stage ...")
+			print("Running auto home ...")
 		else:
 			# Turning on Stage / Ready to start
 			self._write_sdo(0x01, 0x6040, 0xF)
 			# Set the homing method
+			'''
+			17 (0x11) - Use negative end switch
+			18 (0x12) - Use positive end switch
+			-17 (-0x11) - Use negative max pos (running until too much torque)
+			-18 (-0x12) - Use positive max pos (running until too much torque)
+			0 (0x0) - Set current position
+			'''
 			self._write_sdo(0x01, 0x6098, -0x11)
-			# Set the operating mode to homing
+			# Set operating mode to homing
 			self._write_sdo(0x01, 0x6060, 0x6)
-			# Start the homing process
+			# Start homing process
+			self._write_sdo(0x01, 0x6040, 0x1F)
+		return
+
+	def set_current_home(self) -> None:
+		if self.simulate:
+			# only print command in simulation mode
+			print("Running current home ...")
+		else:
+			# Turning on Stage / Ready to start
+			self._write_sdo(0x01, 0x6040, 0xF)
+			# Set the homing method
+			'''
+			17 (0x11) - Use negative end switch
+			18 (0x12) - Use positive end switch
+			-17 (-0x11) - Use negative max pos (running until too much torque)
+			-18 (-0x12) - Use positive max pos (running until too much torque)
+			0 (0x0) - Set current position
+			'''
+			self._write_sdo(0x01, 0x6098, 0x0)
+			# Set operating mode to homing
+			self._write_sdo(0x01, 0x6060, 0x6)
+			# Start homing process
 			self._write_sdo(0x01, 0x6040, 0x1F)
 		return
