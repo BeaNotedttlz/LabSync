@@ -6,9 +6,7 @@ Main application for controlling backend and frontend of the LabSync application
 @note:
 """
 import os
-
 import numpy as np
-from mypyc.primitives.str_ops import str_get_item_unsafe_op
 
 from src.core.context import (DeviceRequest, RequestType, RequestResult,
 							  ErrorType, DeviceProfile, Parameter)
@@ -449,56 +447,25 @@ class LabSync(QObject):
 			)
 			return
 
-	@Slot(str, str, str, str, str)
-	def _set_default_ports(self, stage: str, laser1: str, laser2: str,
-						   freq_gen: str, fsv: str) -> None:
-		"""
-		Set the default ports of the devices. This is called by the ports dialog.str
-		TODO implement the baudrates
+	@Slot(list, list, list, list, list)
+	def _set_default_ports(self, stage: list, laser1: list, laser2: list,
+						   freq_gen: list, fsv: list) -> None:
 
-		:param stage: Stage port from dialog window
-		:type stage: str
-		:param laser1: Laser1 port from dialog window
-		:type laser1: str
-		:param laser2: Laser2 port from dialog window
-		:type laser2: str
-		:param freq_gen: Frequency generator from dialog window
-		:type freq_gen: str
-		:param fsv: FSV port from dialog window
-		:type fsv: str
-		:return: None
-		:rtype: None
-		"""
 		try:
-			# set the new default ports using the file utils
-			self.file_utils.set_ports(stage, freq_gen, laser1, laser2, fsv)
+			self.file_utils.set_ports(stage, laser1, laser2, freq_gen, fsv)
 			return
-		except PortSetError as e:
-			# Show critical message box on port set error
+		except PortSetError:
 			QMessageBox.critical(
-				None,
-				"Error",
-				f"Something went wrong while saving the ports\n{e}"
+				self.main_window,
+				"Critical Error",
+				"Could not reset the device port file to default ports! "
 			)
 			return
 
 	@Slot(list, list, list, list, list)
 	def manage_device_ports(self, stage: list, laser1: list, laser2: list,
 						   freq_gen: list, fsv: list) -> None:
-		"""
-		Disconnects all devices and requests a reconnect with new ports.
-		:param stage: New stage port
-		:type stage: str
-		:param laser1: New laser 1 port
-		:type laser1: str
-		:param laser2: New laser 2 port
-		:type laser2: str
-		:param freq_gen: New frequency generator port
-		:type freq_gen: str
-		:param fsv: New FSV port
-		:type fsv: str
-		:return: None
-		"""
+
 		# Define new device ports for easy access
 		new_port_info = {
 			"EcoVario": stage,

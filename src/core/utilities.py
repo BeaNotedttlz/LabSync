@@ -35,7 +35,7 @@ class FilesUtils:
 			"Laser1": ["COM1", 500000],
 			"Laser2": ["COM2", 500000],
 			"TGA1244": ["COM3", 9600],
-			"FSV3000": "COM4"
+			"FSV3000": ["COM4", None]
 		}
 		# save file name to self
 		self.filename = file_name
@@ -138,25 +138,9 @@ class FilesUtils:
 				f.close()
 			return self.default_ports.copy()
 
-	def set_ports(self, stage: str, freq_gen: str, laser1: str, laser2: str, fsv: str, set_def:bool=False) -> None:
-		"""
-		Update the new ports and save to ports file.
+	def set_ports(self, stage: list, laser1: list, laser2: list, freq_gen: list, fsv: list, set_def:bool=False) -> None:
 
-		:param set_def:
-		:param stage: New stage port
-		:type stage: str
-		:param freq_gen: New TGA port
-		:type freq_gen: str
-		:param laser1: New Laser1 port
-		:type laser1: str
-		:param laser2: New Laser2 port
-		:type laser2: str
-		:param fsv: New FSV port
-		:type fsv: str
-		:return: The new contents of the ports file
-		:rtype: dict
-		"""
-		# TODO need to implement the baud rates
+
 		if set_def:
 			# For setting default ports, just overwrite with default ports
 			# TODO: Why do I need this?
@@ -166,11 +150,11 @@ class FilesUtils:
 			return
 		# Create new ports dictionary
 		ports = {
-			"EcoVario": [stage, 9600],
-			"Laser1": [laser1, 500000],
-			"Laser2": [laser2, 500000],
-			"TGA1244": [freq_gen, 9600],
-			"FSV3000": fsv,
+			"EcoVario": stage,
+			"Laser1": laser1,
+			"Laser2": laser2,
+			"TGA1244": freq_gen,
+			"FSV3000": fsv
 		}
 		# Atomic write
 		fd, tmp_path = tempfile.mkstemp(dir=self.ports_folder, prefix="ports_", text=True)
