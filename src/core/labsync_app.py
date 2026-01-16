@@ -226,6 +226,7 @@ class LabSync(QObject):
 			"START": ["start", None, None, None, None],
 			"STOP": ["stop", None, None, None, None],
 			"HOME": ["home_stage", None, None, None, None],
+			"RESET": ["reset_current_error", None, None, None, None],
 			"current_error_code": ["get_current_error", None, None, None, None]
 		}
 		laser_keys = {

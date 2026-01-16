@@ -69,6 +69,7 @@ class StageWidgetExpert(QWidget):
 		stop_button.clicked.connect(self._stop)
 		start_button.clicked.connect(self._start)
 		home_stage_button.clicked.connect(self._home_stage)
+		reset_error_button.clicked.connect(self._reset_error)
 
 		self.in_new_position.returnPressed.connect(self._send_update)
 		self.in_speed.editingFinished.connect(self._send_update)
@@ -173,5 +174,12 @@ class StageWidgetExpert(QWidget):
 	def _home_stage(self) -> None:
 		self.sendRequest.emit({
 			(self.device_id, "HOME"): None
+		})
+		return
+
+	@Slot()
+	def _reset_error(self) -> None:
+		self.sendRequest.emit({
+			(self.device_id, "RESET"): None
 		})
 		return

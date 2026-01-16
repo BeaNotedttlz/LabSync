@@ -377,7 +377,6 @@ class EcoConnect:
 		Reset the latest error code to allow movement again.
 
 		:return: None
-		:rtype: None
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
