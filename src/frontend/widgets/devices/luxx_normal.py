@@ -18,9 +18,12 @@ class LaserWidgetNormal(QWidget):
 	"""
 	Create Normal mode widgets and functionality.
 	"""
+	# Request signal to send device parameters to device handler
 	sendRequest = Signal(object)
+	# Update signal to update device parameters in device handler
 	sendUpdate = Signal(object, str)
 
+	# Available options of device parameters for combo boxes
 	modulation_modes = ["Standby", "CW", "Digital", "Analog"]
 	control_modes = ["ACC", "APC"]
 	lock_modes = ["indep", "master", "slave", "off"]
@@ -31,11 +34,11 @@ class LaserWidgetNormal(QWidget):
 		"""
 		super().__init__()
 
+		# creating layout
 		layout = QGridLayout()
 		layout.setVerticalSpacing(10)
 
-		# creating and adding widgets to layout #
-
+		# creating and adding widgets to layout
 		self.modulation1 = create_combo_box(layout, self.modulation_modes, "Modulation mode", 1, 0)
 		self.modulation2 = create_combo_box(layout, self.modulation_modes, "Modulation mode", 1, 2)
 
@@ -94,6 +97,7 @@ class LaserWidgetNormal(QWidget):
 		Sends all device parameters as a Device request.
 		:return: None
 		"""
+		# Mapping modulation and control modes to operating modes for both lasers
 		op_mode_1 = self._map_operating_mode(
 			self.modulation_modes[self.modulation1.currentIndex()],
 			self.control_modes[self.control_mode1.currentIndex()]
@@ -102,6 +106,7 @@ class LaserWidgetNormal(QWidget):
 			self.modulation_modes[self.modulation2.currentIndex()],
 			self.control_modes[self.control_mode2.currentIndex()]
 		)
+		# mapping modulation modes to frequency generator waveforms for both lasers
 		wave_1 = self._map_waveforms(
 			self.modulation_modes[self.modulation1.currentIndex()]
 		)
@@ -109,23 +114,28 @@ class LaserWidgetNormal(QWidget):
 			self.modulation_modes[self.modulation2.currentIndex()]
 		)
 
+		# Ensuring power values are multiples of 5
+		# and updating spinboxes accordingly
 		power_1 = (self.spinbox1.value() // 5) * 5
 		self.spinbox1.setValue(power_1)
 		power_2 = (self.spinbox2.value() // 5) * 5
 		self.spinbox2.setValue(power_2)
+		# Retrieving frequency values and converting to float
 		frequency_1 = float(self.frequency1.text().replace(',', '.'))
 		frequency_2 = float(self.frequency2.text().replace(',', '.'))
 
+		# Retrieving selected frequency generator channels
 		channel_1 = int(self.freq_gen_channels[self.channel1.currentIndex()])
 		channel_2 = int(self.freq_gen_channels[self.channel2.currentIndex()])
 
-
+		# Retrieving selected lock modes
 		lockmode_1 = self.lock_modes[self.lockmode1.currentIndex()]
 		lockmode_2 = self.lock_modes[self.lockmode2.currentIndex()]
-
+		# Retrieving output states
 		output_1 = self.output1.isChecked()
 		output_2 = self.output2.isChecked()
 
+		# Creating parameter dictionaries for both channels and emitting signals
 		ch1_parameters = {
 			("TGA1244","waveform"): (wave_1, channel_1),
 			("TGA1244","frequency"): (frequency_1, channel_1),
@@ -134,8 +144,10 @@ class LaserWidgetNormal(QWidget):
 			("Laser1","operating_mode"): op_mode_1,
 			("Laser1","temp_power"): float(power_1),
 		}
+		# Emitting signals for channel 1
 		self.sendRequest.emit(ch1_parameters)
 		self.sendUpdate.emit(ch1_parameters, "laser")
+		# Creating parameter dictionary for channel 2
 		ch2_parameters = {
 			("TGA1244","waveform"): (wave_2, channel_2),
 			("TGA1244","frequency"): (frequency_2, channel_2),
@@ -144,6 +156,7 @@ class LaserWidgetNormal(QWidget):
 			("Laser2","operating_mode"): op_mode_2,
 			("Laser2","temp_power"): float(power_2),
 		}
+		# Emitting signals for channel 2
 		self.sendRequest.emit(ch2_parameters)
 		self.sendUpdate.emit(ch2_parameters, "laser")
 		return

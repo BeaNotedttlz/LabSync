@@ -8,26 +8,41 @@ Module for creating and operating the PySide6 dialog window widgets.
 
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import Qt
-from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, QProgressBar,
+from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, QMessageBox,
 							   QSpacerItem, QGridLayout, QCheckBox, QDialog,
 							   QGroupBox, QVBoxLayout, QHBoxLayout)
 from src.frontend.widgets.utilities import create_input_field
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, List, Literal
+import ipaddress
 
 class LaserInfoDialog(QDialog):
+	"""
+	Dialog to show information about connected lasers.
+	"""
 	class SingleLaserWidget(QWidget):
+		"""
+		Nested class to create the widget for a single laser.
+		Note that this is generally not a good practice, but it is done here to keep the code organized.
+		"""
 		def __init__(self, laser_name: str="Laser", parent=None) -> None:
+			"""Constructor method
+			"""
 			super().__init__(parent)
 
+			# make group box
 			self.group = QGroupBox(laser_name)
 
+			# create labels
+			# The labels are initialized with "Not connected" text
 			self.model_code = QLabel("Model Code: Not connected")
 			self.device_id = QLabel("Device ID: Not connected")
 			self.firmware = QLabel("Firmware Version: Not connected")
 			self.wavelength = QLabel("Operation Wavelength: Not connected")
 			self.max_power = QLabel("Maximum Power: Not connected")
 			self.status = QLabel("Device Stats: Not connected")
+			# set layout
 			layout = QVBoxLayout()
+			# add widgets to layout
 			layout.addWidget(self.model_code)
 			layout.addWidget(self.device_id)
 			layout.addWidget(self.firmware)
@@ -35,20 +50,29 @@ class LaserInfoDialog(QDialog):
 			layout.addWidget(self.max_power)
 			layout.addWidget(self.status)
 
+			# set layout to group box
 			self.group.setLayout(layout)
 
+			# set main layout
 			main_layout = QVBoxLayout()
 			main_layout.addWidget(self.group)
 			self.setLayout(main_layout)
 			return
 
 		def update_data(self, data: Dict[str, Any]) -> None:
+			"""
+			Update the laser information labels with new data.
+			:param data: New data dictionary
+			:type data: Dict[str, Any]
+			:return: None
+			"""
 			# Convert dict to a list
 			# This is done because the data will always be the same and the keys can be ignored
 			data_list = []
 			for key, data in data.items():
 				data_list.append(data)
 
+			# Update labels
 			self.model_code.setText("Model Code: " + str(data_list[0]))
 			self.device_id.setText("Device ID :" + str(data_list[1]))
 			self.firmware.setText(str(data_list[2]))
@@ -58,6 +82,8 @@ class LaserInfoDialog(QDialog):
 			return
 
 	def __init__(self, parent=None) -> None:
+		"""Constructor method
+		"""
 		super().__init__(parent)
 		# set window information
 		self.setWindowTitle("Laser Information")
@@ -77,39 +103,61 @@ class LaserInfoDialog(QDialog):
 
 	@Slot(object)
 	def update_info(self, data:Dict[str, dict]) -> None:
+		"""
+		Update the laser information widgets with new data.
+		:param data: New Data dictionary
+		:type data: Dict[str, dict]
+		:return: None
+		"""
+		# Update laser 1 data if available
 		if "Laser1" in data:
 			self.laser1_widget.update_data(data["Laser1"])
 
+		# Update laser 2 data if available
 		if "Laser2" in data:
 			self.laser2_widget.update_data(data["Laser2"])
-
 		return
 
 class PortSelectionDialog(QDialog):
-
-	applyPorts = Signal(str, str, str, str, str)
-	defaultPorts = Signal(str, str, str, str, str)
+	"""
+	Dialog to select the device ports for the connected devices.
+	"""
+	# Signal to apply the port changes
+	applyPorts = Signal(list, list, list, list, list)
+	# Signal to set the default ports
+	defaultPorts = Signal(list, list, list, list, list)
 
 	def __init__(self, parent=None) -> None:
 		"""Constructor method
 		"""
 		super().__init__(parent)
+		# Set window information
 		self.setWindowTitle("Port Selection")
-		self.setFixedSize(300, 400)
+		self.setFixedSize(400, 400)
 
+		# set layout
 		layout = QGridLayout()
 
-		# crea input fields
+		# create input fields
 		self.stage_port = create_input_field(layout, "EcoVatio Port:", "", "", 0, 0)
 		self.stage_port.setAlignment(Qt.AlignLeft)
-		self.freq_gen_port = create_input_field(layout, "TGA 1244 Port:", "", "", 2, 0)
-		self.freq_gen_port.setAlignment(Qt.AlignLeft)
-		self.laser1_port = create_input_field(layout, "Laser 1 Port:", "", "", 4, 0)
+		self.stage_baud = create_input_field(layout, "Baudrate:", "", "baud", 0, 1)
+
+		self.laser1_port = create_input_field(layout, "Laser 1 Port:", "", "", 2, 0)
 		self.laser1_port.setAlignment(Qt.AlignLeft)
-		self.laser2_port = create_input_field(layout, "Laser 2 Port:", "", "", 6, 0)
+		self.laser1_baud = create_input_field(layout, "Baudrate:", "", "baud", 2, 1)
+
+		self.laser2_port = create_input_field(layout, "Laser 2 Port:", "", "", 4, 0)
 		self.laser2_port.setAlignment(Qt.AlignLeft)
+		self.laser2_baud = create_input_field(layout, "Baudrate:", "", "baud", 4, 1)
+
+		self.freq_gen_port = create_input_field(layout, "TGA 1244 Port:", "", "", 6, 0)
+		self.freq_gen_port.setAlignment(Qt.AlignLeft)
+		self.freq_gen_baud = create_input_field(layout, "Baudrate:", "", "baud", 6, 1)
+
 		self.fsv_port = create_input_field(layout, "FSV Port:", "", "", 8, 0)
 		self.fsv_port.setAlignment(Qt.AlignLeft)
+		self.fsv_baud = create_input_field(layout, "Baudrate:", "", "", 8, 1)
 
 		# create apply button
 		apply_button = QPushButton("Apply")
@@ -125,19 +173,66 @@ class PortSelectionDialog(QDialog):
 		def_button.clicked.connect(self._set_default)
 		return
 
+	@staticmethod
+	def _normalize_port(port_str: str, baud_val: str) -> tuple:
+
+		port_str = port_str.strip()
+		if not port_str:
+			return port_str, baud_val
+
+		def is_valid_ip(s):
+			clean = s.replace("TCPIP::", "").replace("::INSTR", "").replace("::SOCKET","")
+			try:
+				ipaddress.ip_address(clean)
+				return True
+			except ValueError:
+				return False
+
+		match port_str:
+			case s if s.upper().startswith("COM"):
+				return s.upper(), int(baud_val)
+
+			case s if s.upper().startswith("USB"):
+				return f"ASRL/dev/tty{s}::INSTR", int(baud_val)
+
+			case s if s.startswith("/dev/ttyUSB"):
+				return f"ASRL{s}::INSTR", int(baud_val)
+
+			case s if is_valid_ip(s):
+				clean_ip = s.replace("TCPIP::", "").replace("::INSTR", "").replace("::SOCKET", "")
+				return f"TCPIP::{clean_ip}::INSTR", None
+
+			case _:
+				return port_str, int(baud_val)
+
+	def _get_dialog_data(self) -> tuple:
+		try:
+			stage = self._normalize_port(self.stage_port.text(), self.stage_baud.text())
+			laser1 = self._normalize_port(self.laser1_port.text(), self.laser1_baud.text())
+			laser2 = self._normalize_port(self.laser2_port.text(), self.laser2_baud.text())
+			freq_gen = self._normalize_port(self.freq_gen_port.text(), self.freq_gen_baud.text())
+			fsv = self._normalize_port(self.fsv_port.text(), self.fsv_baud.text())
+			return stage, laser1, laser2, freq_gen, fsv
+		except ValueError as e:
+			raise TypeError(f"{e}") from e
+
 	@Slot()
 	def _apply_ports(self) -> None:
 		"""
 		Get all ports and emit signal to save and close
 		:return: None
 		"""
-		stage = self.stage_port.text()
-		freq_gen = self.freq_gen_port.text()
-		laser1 = self.laser1_port.text()
-		laser2 = self.laser2_port.text()
-		fsv = self.fsv_port.text()
+		try:
+			stage, laser1, laser2, freq_gen, fsv = self._get_dialog_data()
 
-		self.applyPorts.emit(stage, freq_gen, laser1, laser2, fsv)
+		except TypeError as e:
+			QMessageBox.warning(
+				self.parent(),
+				"Error with port information",
+				f"One of the values entered is invalid:\n{e}"
+			)
+			return
+		self.applyPorts.emit(stage, laser1, laser2, freq_gen, fsv)
 		return
 
 	@Slot()
@@ -146,13 +241,18 @@ class PortSelectionDialog(QDialog):
 		Get all ports and save to default file
 		:return: None
 		"""
-		stage = self.stage_port.text()
-		freq_gen = self.freq_gen_port.text()
-		laser1 = self.laser1_port.text()
-		laser2 = self.laser2_port.text()
-		fsv = self.fsv_port.text()
+		try:
+			stage, laser1, laser2, freq_gen, fsv = self._get_dialog_data()
 
-		self.defaultPorts.emit(stage, freq_gen, laser1, laser2, fsv)
+		except TypeError as e:
+			QMessageBox.warning(
+				self.parent(),
+				"Error with port information",
+				f"One of the values entered is invalid:\n{e}"
+			)
+			return
+
+		self.defaultPorts.emit(stage, laser1, laser2, freq_gen, fsv)
 		return
 
 	@Slot(object)
@@ -161,27 +261,48 @@ class PortSelectionDialog(QDialog):
 		Get the currently set device ports and show in the dialog
 		:return: None
 		"""
-		# TODO no baudrate -> add baudrate selection?
-		self.stage_port.setText(current_ports["EcoVario"][0])
-		self.freq_gen_port.setText(current_ports["TGA1244"][0])
-		self.laser1_port.setText(current_ports["Laser1"][0])
-		self.laser2_port.setText(current_ports["Laser2"][0])
-		self.fsv_port.setText(current_ports["FSV3000"])
+		for device_id, port_config in current_ports.items():
+			match device_id:
+				case "EcoVario":
+					self.stage_port.setText(port_config[0])
+					self.stage_baud.setText(str(port_config[1]))
+				case "Laser1":
+					self.laser1_port.setText(port_config[0])
+					self.laser1_baud.setText(str(port_config[1]))
+				case "Laser2":
+					self.laser2_port.setText(port_config[0])
+					self.laser2_baud.setText(str(port_config[1]))
+				case "TGA1244":
+					self.freq_gen_port.setText(port_config[0])
+					self.freq_gen_baud.setText(str(port_config[1]))
+				case "FSV3000":
+					self.fsv_port.setText(port_config[0])
+					self.fsv_baud.setText(str(port_config[1]))
+				case _:
+					continue
 		return
 
-
 class SettingsDialog(QDialog):
+	"""
+	Dialog to change application settings.
+	"""
+	# Signal to apply the settings changes
 	applySettings = Signal(str, bool)
 
 	def __init__(self, parent=None) -> None:
+		"""Constructor method
+		"""
 		super().__init__(parent)
 
+		# Set window information
 		self.setWindowTitle("Settings")
 		self.setMinimumSize(300, 150)
 
+		# set layout
 		layout = QGridLayout()
 		layout.setVerticalSpacing(10)
 
+		# create input fields
 		self.username_input = create_input_field(layout, "Username:", "", "", 0, 0)
 		self.username_input.setAlignment(Qt.AlignLeft)
 		self.debug_mode_box = QCheckBox("Debug Mode")
@@ -200,12 +321,13 @@ class SettingsDialog(QDialog):
 	def _apply(self) -> None:
 		"""
 		Get all settings and emit signal to close
-
 		:return: Only emits signal does not return anything
 		"""
+		# get settings
 		username = self.username_input.text()
 		debug_mode = self.debug_mode_box.isChecked()
 
+		# emit signal
 		self.applySettings.emit(username, debug_mode)
 		return
 
@@ -215,12 +337,15 @@ class SettingsDialog(QDialog):
 		:return: None
 		"""
 		try:
+			# extract settings from dict
 			username = settings["username"]
 			debug_mode = settings["debug_mode"]
 		except KeyError:
+			# set default values
 			username = ""
 			debug_mode = False
 
+		# set values in dialog
 		self.username_input.setText(username)
 		self.debug_mode_box.setChecked(debug_mode)
 		return

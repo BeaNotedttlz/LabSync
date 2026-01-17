@@ -6,7 +6,7 @@ This focuses on the RS232 serial interface of the device. However the GPIO shoul
 @file: src/backend/devices/tga.py
 @note: Use at your own risk.
 """
-# TODO this needs a rework without the attributes
+# TODO this needs a rework without the attributes (?)
 
 import pyvisa, os
 from pyvisa import errors
@@ -18,18 +18,18 @@ class FrequencyGenerator:
 	"""
 	FrequencyGenerator class for controlling TTi TGA1244 Frequency Generator devices.
 
-	:param name: Name of the frequency generator device.
-	:type name: str
+	:param ID: Name of the frequency generator device.
+	:type ID: str
 	:param simulate: Flag to indicate if simulation mode is enabled.
 	:type simulate: bool
 	:return: None
 	:rtype: None
 	"""
-	def __init__(self, name: str, simulate: bool) -> None:
+	def __init__(self, ID: str, simulate: bool) -> None:
 		"""Constructor method
 		"""
 		# save variables to self and create connected variable
-		self.name = name
+		self.ID = ID
 		self.status = ConnectionStatus.DISCONNECTED
 		self.simulate = simulate
 		self.current_channel = 1
@@ -44,6 +44,7 @@ class FrequencyGenerator:
 			f"{sim_path}@sim"
 			if self.simulate else ""
 		)
+		return
 
 	def open_port(self, port: str, baudrate: int) -> None:
 		"""
@@ -59,6 +60,7 @@ class FrequencyGenerator:
 		"""
 		# set port for simulation
 		if self.simulate:
+			# use predefined simulation port
 			port = "ASRL3::INSTR"
 		try:
 			# open serial port
@@ -72,9 +74,10 @@ class FrequencyGenerator:
 			# set connected variable
 			self.status = ConnectionStatus.CONNECTED
 			self.current_channel = 1
+			return
 		except (errors.VisaIOError, SerialException) as e:
 			self.status = ConnectionStatus.DISCONNECTED
-			raise DeviceConnectionError(device_id=self.name, original_error=e) from e
+			raise DeviceConnectionError(device_id=self.ID, original_error=e) from e
 
 	def close_port(self) -> None:
 		"""
@@ -85,7 +88,9 @@ class FrequencyGenerator:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			# only close port if connected
+			self.status = ConnectionStatus.DISCONNECTING
 			self.TGA.close()
+			self.status = ConnectionStatus.DISCONNECTED
 		return None
 
 	def _write(self, channel: int, what: str, value: str) -> None:
@@ -219,7 +224,6 @@ class FrequencyGenerator:
 		:rtype: None
 		"""
 		lockmodes = ["indep", "master", "slave", "off"]
-		print(lockmode)
 		if lockmode not in lockmodes:
 			raise AttributeError(f"Lockmode {lockmode} is not supported.")
 		if lockmode == "indep":

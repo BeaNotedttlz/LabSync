@@ -18,24 +18,18 @@ from src.core.context import DeviceConnectionError
 class EcoConnect:
 	"""
 	EcoConnect class for serial communication with EcoVario linear stage. Using PyVISA for communication protocols.
-
-	:param name: Name of the device instance.
-	:type name: str
-	:param simulate: Flag to indicate simulation mode.
-	:type simulate: bool
-	:return None
-	:rtype: None
 	"""
-	def __init__(self, name: str, simulate: bool) -> None :
+	def __init__(self, ID: str, simulate: bool) -> None :
 		"""Constructor method
 		"""
 		# save variables to self
-		self.name = name
+		self.ID = ID
 		self.simulate = simulate
 		self.EcoVario = None
 		# connection status
 		self.status = ConnectionStatus.DISCONNECTED
 
+		# Get simulation path
 		sim_path = os.path.join(
 			os.path.dirname(os.path.abspath(__file__)),
 			"simulation.yaml"
@@ -45,6 +39,7 @@ class EcoConnect:
 			f"{sim_path}@sim"
 			if self.simulate else ""
 		)
+		return
 
 	def open_port(self, port: str, baudrate: int) -> None:
 		"""
@@ -60,8 +55,8 @@ class EcoConnect:
 		"""
 		# port for simulation
 		if self.simulate:
+			# predefined port for simulation
 			port = "ASRL4::INSTR"
-
 		try:
 			# open serial port
 			self.EcoVario = self.rm.open_resource(port, open_timeout=2000)
@@ -71,8 +66,9 @@ class EcoConnect:
 			# if successful
 			self.status = ConnectionStatus.CONNECTED
 		except (errors.VisaIOError, SerialException) as e:
+			# set status to disconnected and raise error
 			self.status = ConnectionStatus.DISCONNECTED
-			raise DeviceConnectionError(device_id=self.name, original_error=e) from e
+			raise DeviceConnectionError(device_id=self.ID, original_error=e) from e
 
 	def close_port(self) -> None:
 		"""
@@ -81,9 +77,13 @@ class EcoConnect:
 		:return: None
 		:rtype: None
 		"""
+		# Only close port if connected
 		if self.status == ConnectionStatus.CONNECTED:
-			self.EcoVario.close()
+			# Set status to disconnecting
 			self.status = ConnectionStatus.DISCONNECTING
+			self.EcoVario.close()
+			# On successful close, set status to disconnected
+			self.status = ConnectionStatus.DISCONNECTED
 		return None
 
 	def start(self) -> None:
@@ -111,43 +111,70 @@ class EcoConnect:
 
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print(self.EcoVario.query("stop"))
 			else:
 				self._write_sdo(0x01, 0x6040, 0x0037)
 		return None
 
+	# def _write_sdo(self, id: int, object: int, value: int) -> None:
+	# 	"""
+	# 	Write sdo to EcoVario controller.
+	# 	This method sends a write request to EcoVario controller and waits for the appropraite response.
+	#
+	#
+	# 	:param id: Id of the SDO
+	# 	:type id: int
+	# 	:param object: Object to write
+	# 	:tyoe object: int
+	# 	:param value: Value to write to device
+	# 	:type value: int
+	# 	:return: None
+	# 	:rtype: None
+	# 	"""
+	# 	# calculate message bytes
+	# 	object_1 = object >> 8
+	# 	object_2 = object & 0xFF
+	# 	hex_value = value.to_bytes(4, byteorder="little")
+	# 	value_list = list(hex_value)
+	#
+	# 	# generate message
+	# 	message = [id, 0x22, object_2, object_1, 0x00, value_list[0], value_list[1], value_list[2], value_list[3]]
+	# 	# caculate and append checksum
+	# 	trailing_byte = self._calculate_checksum(message)
+	# 	message.append(trailing_byte)
+	#
+	# 	# write message and read response
+	# 	self.EcoVario.write_raw(message)
+	# 	# but response can generally be ignored
+	# 	_ = self.EcoVario.read_bytes(20)
+	# 	return None
+
 	def _write_sdo(self, id: int, object: int, value: int) -> None:
-		"""
-		Write sdo to EcoVario controller.
-		This method sends a write request to EcoVario controller and waits for the appropraite response.
-
-
-		:param id: Id of the SDO
-		:type id: int
-		:param object: Object to write
-		:tyoe object: int
-		:param value: Value to write to device
-		:type value: int
-		:return: None
-		:rtype: None
-		"""
-		# calculate message bytes
+		# 1. Prepare Data
 		object_1 = object >> 8
 		object_2 = object & 0xFF
-		hex_value = value.to_bytes(4, byteorder="little")
+
+		# --- FIX START ---
+		# Apply 32-bit mask. This converts -17 to 4294967279 (0xFFFFFFEF)
+		unsigned_value = value & 0xFFFFFFFF
+		hex_value = unsigned_value.to_bytes(4, byteorder="little")
+		# --- FIX END ---
+
 		value_list = list(hex_value)
 
-		# generate message
-		message = [id, 0x22, object_2, object_1, value_list[0], value_list[1], value_list[2], value_list[3]]
-		# caculate and append checksum
+		# 2. Build Message (Remember to keep the 0x00 subindex we fixed earlier!)
+		message = [id, 0x22, object_2, object_1, 0x00, value_list[0], value_list[1], value_list[2], value_list[3]]
+
+		# 3. Checksum & Send
 		trailing_byte = self._calculate_checksum(message)
 		message.append(trailing_byte)
 
-		# write message and read response
-		self.EcoVario.write(message)
-		# but response can generally be ignored
-		_ = self.EcoVario.read_bytes(20)
-		return None
+		self.EcoVario.write_raw(bytes(message))
+
+		# Read response (check buffer first to avoid timeout
+		_ = self.EcoVario.read_bytes(self.EcoVario.bytes_in_buffer)
+		return
 
 	def _read_sdo(self, id, object) -> str:
 		"""
@@ -223,6 +250,7 @@ class EcoConnect:
 		:rtype: None
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
+			# only print command in simulation mode
 			if self.simulate:
 				print(self.EcoVario.query(f"pos{position}"))
 			else:
@@ -245,6 +273,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print(self.EcoVario.query(f"speed{speed}"))
 			else:
 				# convert speed from mm/s to encoder units
@@ -266,6 +295,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print(self.EcoVario.query(f"accel{acceleration}"))
 			else:
 				# convert acceleration from mm/s² to encoder units
@@ -287,6 +317,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print(self.EcoVario.query(f"deaccel{deacceleration}"))
 			else:
 				# convert deceleration from mm/s² to encoder units
@@ -346,10 +377,10 @@ class EcoConnect:
 		Reset the latest error code to allow movement again.
 
 		:return: None
-		:rtype: None
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print("resetting error...")
 			else:
 				self._write_sdo(0x01, 0x6040, 0x01AF)
@@ -367,6 +398,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command in simulation mode
 				print(self.EcoVario.query("control word"))
 			else:
 				self._write_sdo(0x01, 0x6040, control_word)
@@ -381,6 +413,7 @@ class EcoConnect:
 		"""
 		if self.status == ConnectionStatus.CONNECTED:
 			if self.simulate:
+				# only print command and response in simulation mode
 				return self.EcoVario.query("currstatus")
 			else:
 				status_hex = self._read_sdo(0x01, 0x6041)
@@ -388,16 +421,46 @@ class EcoConnect:
 		else:
 			return None
 
-	def home_stage(self) -> None:
+	def auto_home(self) -> None:
 		if self.simulate:
-			print("homing stage ...")
+			# only print command in simulation mode
+			print("Running auto home ...")
 		else:
 			# Turning on Stage / Ready to start
 			self._write_sdo(0x01, 0x6040, 0xF)
 			# Set the homing method
-			self._write_sdo(0x01, 0x6098, 0x11)
-			# Set the operating mode to homing
+			'''
+			17 (0x11) - Use negative end switch
+			18 (0x12) - Use positive end switch
+			-17 (-0x11) - Use negative max pos (running until too much torque)
+			-18 (-0x12) - Use positive max pos (running until too much torque)
+			0 (0x0) - Set current position
+			'''
+			self._write_sdo(0x01, 0x6098, -0x11)
+			# Set operating mode to homing
 			self._write_sdo(0x01, 0x6060, 0x6)
-			# Start the homing process
+			# Start homing process
+			self._write_sdo(0x01, 0x6040, 0x1F)
+		return
+
+	def set_current_home(self) -> None:
+		if self.simulate:
+			# only print command in simulation mode
+			print("Running current home ...")
+		else:
+			# Turning on Stage / Ready to start
+			self._write_sdo(0x01, 0x6040, 0xF)
+			# Set the homing method
+			'''
+			17 (0x11) - Use negative end switch
+			18 (0x12) - Use positive end switch
+			-17 (-0x11) - Use negative max pos (running until too much torque)
+			-18 (-0x12) - Use positive max pos (running until too much torque)
+			0 (0x0) - Set current position
+			'''
+			self._write_sdo(0x01, 0x6098, 0x0)
+			# Set operating mode to homing
+			self._write_sdo(0x01, 0x6060, 0x6)
+			# Start homing process
 			self._write_sdo(0x01, 0x6040, 0x1F)
 		return

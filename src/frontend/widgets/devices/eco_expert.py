@@ -15,21 +15,28 @@ from typing import Dict, Any
 class StageWidgetExpert(QWidget):
 	"""
 	Create EcoVario expert mode widgets and functionality.
-	:return: None
 	"""
+	# Send request signal to the controller
 	sendRequest = Signal(object)
+	# Send update singal to the main application
 	sendUpdate = Signal(object, str)
 
 	def __init__(self, device_id: str) -> None:
+		"""Constructor method
+		"""
 		super().__init__()
+		# Store the device ID
 		self.device_id = device_id
 
+		# creating layout
 		layout = QGridLayout()
 		layout.setVerticalSpacing(10)
 
+		# creating and adding widgets to layout
 		start_button = QPushButton("Start")
 		stop_button = QPushButton("Stop")
-		home_stage_button = QPushButton("Home Stage")
+		auto_home_button = QPushButton("Auto Home")
+		manual_home_button = QPushButton("Manual Home")
 		self.sync = QCheckBox("Sync Accel. \n and Deaccel.")
 		self.sync.setChecked(True)
 		reset_error_button = QPushButton("Reset \n Error")
@@ -54,15 +61,19 @@ class StageWidgetExpert(QWidget):
 		self.out_error_code = create_output_field(layout, "Error code", "", "", 10, 2)
 		self.out_error_code.setAlignment(Qt.AlignLeft)
 
-		layout.addWidget(home_stage_button, 9, 2)
+		layout.addWidget(auto_home_button, 8, 2)
+		layout.addWidget(manual_home_button, 9, 2)
 		layout.addWidget(self.sync, 5, 2)
-		layout.addWidget(reset_error_button, 8, 2)
+		layout.addWidget(reset_error_button, 10, 2)
 		self.setLayout(layout)
 
 		# signal routing #
 		stop_button.clicked.connect(self._stop)
 		start_button.clicked.connect(self._start)
-		home_stage_button.clicked.connect(self._home_stage)
+		reset_error_button.clicked.connect(self._reset_error)
+
+		auto_home_button.clicked.connect(lambda: self._home_stage(True))
+		manual_home_button.clicked.connect(lambda: self._home_stage(False))
 
 		self.in_new_position.returnPressed.connect(self._send_update)
 		self.in_speed.editingFinished.connect(self._send_update)
@@ -75,11 +86,14 @@ class StageWidgetExpert(QWidget):
 		:return: None
 		"""
 		try:
+			# Read and convert input values
 			pos = float(self.out_target_position.text().replace(",", "."))
 			vel = float(self.in_speed.text().replace(",", "."))
 			accell = float(self.in_accell.text().replace(",", "."))
 			deaccell = float(self.in_deaccell.text().replace(",", "."))
 
+			# TODO: Does the sync checkbox have any effect in expert mode?
+			# Store parameters in a dictionary
 			parameters = {
 				(self.device_id,"target_pos"): pos,
 				(self.device_id,"target_vel"): vel,
@@ -87,7 +101,7 @@ class StageWidgetExpert(QWidget):
 				(self.device_id,"target_deacc"): deaccell,
 				(self.device_id,"START"): None
 			}
-
+			# Emit the parameters to the controller
 			self.sendRequest.emit(parameters)
 			return
 		except Exception as e:
@@ -118,6 +132,7 @@ class StageWidgetExpert(QWidget):
 		:type parameters: Dict[str, Any]
 		:return: None
 		"""
+		# define supproted parameters and their corresponding UI elements
 		supproted_parameters = {
 			"target_pos": "out_target_position",
 			"target_vel": "in_speed",
@@ -126,22 +141,32 @@ class StageWidgetExpert(QWidget):
 			"current_pos": "out_current_position",
 			"error_code": "out_error_code"
 		}
+		# Update UI elements with received parameters
 		for key, parameter in parameters.items():
 			if not key[1] in supproted_parameters:
 				pass
 			else:
+				# get the corresponding widget
 				widget = getattr(self, supproted_parameters[key[1]])
+				# update the widget with the new parameter value
 				widget.setText(str(parameter))
 		return
 
 	@Slot()
 	def _send_update(self) -> None:
+		"""
+		Sends updated target position and speed to the controller
+		:return: None
+		"""
+		# Read and format input values
 		speed = self.in_speed.text().replace(",", ".")
 		pos = self.in_new_position.text().replace(",", ".")
 
+		# Update the target position output field
 		self.out_target_position.clear()
 		self.out_target_position.setText(pos)
 
+		# Create update dictionary and emit it to the MainWindow
 		update = {
 			(self.device_id,"target_pos"): pos,
 			(self.device_id,"target_vel"): speed,
@@ -150,8 +175,20 @@ class StageWidgetExpert(QWidget):
 		return
 
 	@Slot()
-	def _home_stage(self) -> None:
+	def _home_stage(self, auto: bool) -> None:
+		if auto:
+			self.sendRequest.emit({
+				(self.device_id, "AHOME"): None
+			})
+		else:
+			self.sendRequest.emit({
+				(self.device_id, "HOME"): None
+			})
+		return
+
+	@Slot()
+	def _reset_error(self) -> None:
 		self.sendRequest.emit({
-			(self.device_id, "HOME"): None
+			(self.device_id, "RESET"): None
 		})
 		return

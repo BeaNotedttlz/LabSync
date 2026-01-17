@@ -6,7 +6,7 @@ Module for creating and operating the PySide6 LuxX+ expert mode widgets.
 @note:
 """
 from PySide6.QtCore import Signal, Slot
-from PySide6.QtGui import QDoubleValidator, Qt
+from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import QWidget, QGridLayout, QCheckBox, QPushButton, QSpacerItem, QLabel, QMessageBox
 
 from src.frontend.widgets.utilities import create_input_field, create_combo_box
@@ -15,10 +15,11 @@ from typing import Dict, Any
 class LaserWidgetExpert(QWidget):
 	"""
 	Create LuxX+ expert mode widgets and functionality.
-	:return: None
 	"""
+	# Signal to send requests to the controller
 	sendRequest = Signal(object)
 
+	# Available modulation and control modes
 	modulation_types = ["Standby", "CW", "Digital", "Analog"]
 	control_modes = ["ACC", "APC"]
 
@@ -26,14 +27,16 @@ class LaserWidgetExpert(QWidget):
 		"""Constructor method
 		"""
 		super().__init__()
+		# store device and laser information
 		self.device_id = device_id
 		self.laser_index = laser_index
 		self.max_power = max_power
 
+		# creating layout
 		layout = QGridLayout()
 		layout.setVerticalSpacing(10)
 
-		# creating and adding widgets to layout #
+		# creating and adding widgets to layout
 		apply_button = QPushButton("Apply")
 		self.if_active = QCheckBox("Set active")
 
@@ -72,21 +75,21 @@ class LaserWidgetExpert(QWidget):
 		Sends all laser parameters as a Device request.
 		:return: None
 		"""
+		# Retrieve parameters from the UI
 		temp_power = float(self.laser_power_percent.text().replace(",", "."))
 		modulation = self.modulation_mode.currentIndex()
 		modulation = self.modulation_types[modulation]
 		control_mode = self.control_mode.currentIndex()
 		control_mode = self.control_modes[control_mode]
 		emission = self.if_active.isChecked()
-
 		operating_mode = self._map_operating_mode(modulation, control_mode)
 
+		# Create parameter dictionary and emit request signal
 		parameters = {
 			(self.device_id, "temp_power"): temp_power,
 			(self.device_id, "operating_mode"): operating_mode,
 			(self.device_id, "emission_status"): emission
 		}
-
 		self.sendRequest.emit(parameters)
 		return
 
@@ -115,7 +118,7 @@ class LaserWidgetExpert(QWidget):
 	@Slot()
 	def _calc_power(self, called_from_percent: bool) -> None:
 		"""
-		Calculated the laser power for either input fields
+		Calculates the laser power for either input fields.
 		:param called_from_percent: Flag if called from percent of absolute
 		:type called_from_percent: bool
 		:return: None
@@ -140,6 +143,7 @@ class LaserWidgetExpert(QWidget):
 		:type parameters: Dict[str, Any]
 		:return: None
 		"""
+		# Define supported parameters and their corresponding UI widgets
 		supported_parameters = {
 			"temp_power": "laser_power_percent",
 			"operating_mode": None,
@@ -147,6 +151,7 @@ class LaserWidgetExpert(QWidget):
 		}
 		for key, parameter in parameters.items():
 			if key[1] not in supported_parameters:
+				# Show warning if unsupported parameter is encountered
 				QMessageBox.warning(
 					self,
 					"UI Error",
@@ -154,19 +159,30 @@ class LaserWidgetExpert(QWidget):
 				)
 				return
 			if key[1] == "operating_mode":
+				# Map operating mode to modulation and control modes
 				modulation, control = self._map_ui_modes(parameter)
 				self.modulation_mode.setCurrentIndex(modulation)
 				self.control_mode.setCurrentIndex(control)
 			elif key[1] == "emission_status":
+				# Don't update checkbox state, this has to be done manually
 				continue
 			else:
+				# Update the corresponding UI widget with the new parameter value
 				widget = getattr(self, supported_parameters[key[1]])
+				# Clear and set new value
 				widget.clear()
 				widget.setText(str(parameter))
 		return
 
 	@staticmethod
 	def _map_ui_modes(operating_mode: int) -> tuple:
+		"""
+		Maps the operating mode from the device to the modulation and control modes in the UI.
+		:param operating_mode: Numeric operating mode from the device
+		:type operating_mode: int
+		:return: The corresponding modulation and control mode indices in the UI
+		:rtype: tuple
+		"""
 		if operating_mode == 0:
 			return 0, 0
 		elif operating_mode == 1:

@@ -15,16 +15,20 @@ from typing import Dict, Any
 class FrequencyGeneratorWidget(QWidget):
 	"""
 	Create TGA1244 expert mode widgets and functionality.
-	:return: None
 	"""
+	# Signal to send requests to the controller
 	sendRequest = Signal(object)
 
+	# Possible options for the frequency generator
 	wave_forms = ["sine", "square", "triang", "dc"]
 	input_modes = ["Amp+Offset", "Low+High"]
 	lock_modes = ["indep", "master", "slave", "off"]
 
 	def __init__(self, device_id: str, channel_index = int) -> None:
+		"""Constructor Method
+		"""
 		super().__init__()
+		# storing device and channel index
 		self.device_id = device_id
 		self.channel_index = channel_index
 
@@ -40,9 +44,7 @@ class FrequencyGeneratorWidget(QWidget):
 		layout = QGridLayout()
 		layout.setVerticalSpacing(15)
 
-
 		self.waveform = create_combo_box(layout, self.wave_forms, "Waveform", 1, 0)
-
 		self.input_mode = create_combo_box(layout, self.input_modes, "Inputmode", 3, 0)
 		self.amplitude = create_input_field(layout, "Amp/Low", "0.0", "V", 5, 0)
 		self.amplitude.setValidator(QDoubleValidator())
@@ -61,6 +63,7 @@ class FrequencyGeneratorWidget(QWidget):
 		self.setLayout(layout)
 
 		apply_button.clicked.connect(self._apply)
+		return
 
 	@Slot()
 	def _apply(self) -> None:
@@ -69,6 +72,7 @@ class FrequencyGeneratorWidget(QWidget):
 		:return: None
 		"""
 		try:
+			# retrieving values from the UI
 			wave_form = self.wave_forms[self.waveform.currentIndex()]
 			input_mode = self.input_modes[self.input_mode.currentIndex()]
 			lock_mode = self.lock_modes[self.lockmode.currentIndex()]
@@ -84,10 +88,12 @@ class FrequencyGeneratorWidget(QWidget):
 				f"Something went wrong:\n{e}"
 			)
 			return
+		# adjusting amplitude and offset based on input mode
 		if input_mode == "Low+High":
 			amplitude = offset - amplitude
 			offset = (offset + amplitude) / 2
 
+		# creating parameter dictionary
 		parameters = {
 			(self.device_id, "waveform"): (wave_form, self.channel_index),
 			(self.device_id, "lockmode"): (lock_mode, self.channel_index),
@@ -109,6 +115,7 @@ class FrequencyGeneratorWidget(QWidget):
 		:type parameters: Dict[str, Any]
 		:return: None
 		"""
+		# Defining supported parameters of the frequency generator
 		supported_parameters = {
 			"waveform": "waveform",
 			"lockmode": "lockmode",
@@ -119,6 +126,8 @@ class FrequencyGeneratorWidget(QWidget):
 			"output": "output",
 		}
 		for key, parameter in parameters.items():
+			# extracting actual value and channel index
+			# TODO: This should probably be switched to use device_id instead of channel_index
 			channel_index = parameter[1]
 			actual_value = parameter[0]
 			if key[1] not in supported_parameters:
@@ -129,6 +138,7 @@ class FrequencyGeneratorWidget(QWidget):
 				)
 				return
 			if not channel_index == self.channel_index:
+				# mismatch in channel index informs the User
 				QMessageBox.warning(
 					self,
 					"UI Error",
@@ -136,15 +146,20 @@ class FrequencyGeneratorWidget(QWidget):
 				)
 				return
 			if key[1] == "waveform":
+				# mapping waveform to index
 				idx = self._map_wave(actual_value)
 				self.waveform.setCurrentIndex(idx)
 			elif key[1] == "lockmode":
+				# mapping lockmode to index
 				idx = self._map_lock(actual_value)
 				self.lockmode.setCurrentIndex(idx)
 			elif key[1] == "output":
+				# setting output checkbox
 				continue
 			else:
+				# setting value in the corresponding widget
 				widget = getattr(self, supported_parameters[key[1]])
+				# updating the value in the widget
 				widget.clear()
 				widget.insert(str(actual_value))
 		return

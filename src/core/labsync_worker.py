@@ -47,45 +47,69 @@ class LabSyncWorker(QObject):
 		:type cmd: DeviceRequest
 		:return: None
 		"""
+		# Handle connection and disconnection requests
 		if cmd.cmd_type == RequestType.CONNECT:
 			self._connect_device(cmd)
 		elif cmd.cmd_type == RequestType.DISCONNECT:
 			self._disconnect_device(cmd)
+
+		# Handle quit request on application shutdown
 		elif cmd.cmd_type == RequestType.QUIT:
+			# disconnect device and clear poll contexts
 			self._disconnect_device(cmd)
 			self._poll_contexts.clear()
+
+		# Handle polling requests
 		elif cmd.cmd_type == RequestType.START_POLL:
+			# get interval from the value, default to 500ms
 			interval = int(cmd.value) if cmd.value else 500
+			# only add new poll context if not already existing
 			if not any(ctx.parameter == cmd.parameter for ctx, _ in self._poll_contexts):
 				poll_request = DeviceRequest(
 					device_id=cmd.device_id,
 					cmd_type=RequestType.POLL,
 					parameter=cmd.parameter
 				)
+				# add to poll contexts
 				self._poll_contexts.append((poll_request, interval))
 
+			'''
+			(re)start timer with the minimum interval of all poll contexts.
+			This ensures that the minimum polling rate is maintained, while individual rates will be ignored.
+			This is the only "pretty" solution without creating <x> timers for all poll contexts with different intervals.
+			'''
 			if self._poll_contexts:
 				min_interval = min(interval for _, interval in self._poll_contexts)
 				self._timer.start(min_interval)
+		# Handle stopping of polling
+		# Stops all polling if no parameter is given. Otherwise, stops only the given parameter.
 		elif cmd.cmd_type == RequestType.STOP_POLL:
 			if cmd.parameter is None:
 				self._timer.stop()
 				self._poll_contexts.clear()
 			else:
+				# This removes the poll context with the given parameter
+				# This uses a list comprehension to filter out the context, as removing items during iteration is not safe.
 				self._poll_contexts = [(c, i) for (c, i) in self._poll_contexts if c.parameter != cmd.parameter]
 				if not self._poll_contexts:
+					# If no poll contexts are left, the current timer will be stopped
 					self._timer.stop()
 				else:
+					# Otherwise restart the timer with the new minimum interval as explained before.
 					min_interval = min(interval for _, interval in self._poll_contexts)
 					self._timer.start(min_interval)
+		# Handle SET and POLL requests
 		else:
 			try:
+				# Get parameter definition from profile
 				param_def = self.profile.parameters[cmd.parameter]
 			except KeyError as e:
+				# Return error if parameter is not found / defined.
 				self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e)))
 				return
 			try:
 				if cmd.cmd_type == RequestType.SET:
+					# Return Error if no method is defined for the given parameter. This should not happen if the profile is defined correctly.
 					if not param_def.method:
 						self.resultReady.emit(RequestResult(
 							self.device_id,
@@ -94,6 +118,8 @@ class LabSyncWorker(QObject):
 							error_type=ErrorType.TASK
 						))
 						return
+					# Validate the value before setting it.
+					# If validation fails, return an error (Low level Task error).
 					if not param_def.validate(cmd.value):
 						self.resultReady.emit(RequestResult(
 							self.device_id,
@@ -104,24 +130,34 @@ class LabSyncWorker(QObject):
 						))
 						return
 
+					# Get method to call for the parameter
 					method_to_call = getattr(self.driver, param_def.method)
 					if isinstance(cmd.value, tuple):
+						# Handle tuple values (e.g., (value, channel)) for the frequency generator.
 						method_to_call(cmd.value[1], cmd.value[0])
 					elif cmd.value is None:
+						# If no value is given, call the method without parameters. E.g. Start for EcoVario.
 						method_to_call()
 					else:
+						# Otherwise call the method with the given parameter value.
 						method_to_call(cmd.value)
+					# Emit successful result after setting the value without exceptions.
 					result_val = cmd.value
 					self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=result_val))
 				elif cmd.cmd_type == RequestType.POLL:
 					if not param_def.method:
+						# Return error if no method is defined for the parameter. This should not happen if the profile is defined correctly.
 						raise ValueError(f"Parameter '{cmd.parameter}' has no method to call.")
 
+					# Get the method and call once to retrieve the value.
 					method_to_call = getattr(self.driver, param_def.method)
 					result_val = method_to_call()
 
+					# Return the polled value.
 					self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=result_val))
 			except Exception as e:
+				import traceback
+				# Catch all exceptions during SET and POLL operations and return as Task error.
 				self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e), error_type=ErrorType.TASK))
 
 	def _connect_device(self, cmd: DeviceRequest) -> None:
@@ -132,14 +168,21 @@ class LabSyncWorker(QObject):
 		:return: None
 		"""
 		try:
+			# Attempt to open the port with the given port and baudrate
 			self.driver.open_port(cmd.value[0], cmd.value[1])
+			# on success emit result to update UI
 			self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=True))
 			if self._poll_contexts:
+				# Restart timer if there are active poll contexts waiting to be called
 				min_interval = min(interval for _, interval in self._poll_contexts)
 				self._timer.start(min_interval)
 			return
 		except DeviceConnectionError as e:
+			# On connection error, emit error result
 			if cmd.parameter is not None and cmd.parameter == "SILENT":
+				# For silent connections, only emit INIT_CONNECTION errors
+				# TODO: This works but allows for active polling after failed silent connection attempts.
+				# This should be fixed in future solutions -> no need for the "None" handling later on.
 				self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e), error_type=ErrorType.INIT_CONNECTION))
 			else:
 				self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e), error_type=ErrorType.CONNECTION))
@@ -153,19 +196,26 @@ class LabSyncWorker(QObject):
 		:return:
 		"""
 		if self._poll_contexts:
+			# emit None for all active poll contexts to indicate disconnection
+			# TODO: This suffers the same issue as above with silent connections. Needs to be fixed in future solutions.
+			# This should be handled differently to avoid active polling after disconnection.
 			for ctx, _ in self._poll_contexts:
 				self.resultReady.emit(RequestResult(
 					device_id=self.device_id,
 					request_id=ctx.id,
-					value="Not Connected!"
+					value=None
 				))
+		# Stop active timer
 		if self._timer.isActive():
 			self._timer.stop()
 
 		try:
+			# Try to close the device port
 			self.driver.close_port()
+			# on success emit result to update UI
 			self.resultReady.emit(RequestResult(self.device_id, cmd.id, value=False))
 		except Exception as e:
+			# on error emit error result
 			self.resultReady.emit(RequestResult(self.device_id, cmd.id, error=str(e), error_type=ErrorType.CONNECTION))
 		return
 
@@ -174,7 +224,10 @@ class LabSyncWorker(QObject):
 		"""
 		Handles the polling of the device. Iterate over all active poll contexts.
 		"""
-		# copy to avoid modification during iteration
+		# Execute poll requests on timer timeout. This will call the execute_request method for each poll context.
+		# TODO: This could lead to long downtimes if many poll contexts are active with long response times.
+		# This could also lead to overlapping calls if the response time is longer than the polling interval.
+		# Future solutions could implement individual timers for each poll context or a more complex scheduling system
 		for ctx, _ in list(self._poll_contexts):
 			self.execute_request(ctx)
 		return
@@ -189,7 +242,7 @@ class WorkerHandler(QObject):
 	receivedResult = Signal(RequestResult)
 	# Signal for requesting a task from the worker
 	requestWorker = Signal(DeviceRequest)
-
+	# Signal emitted when the handler has finished shutting down
 	handlerFinished = Signal(str)
 
 	def __init__(self, device_id: str, driver_instance: object,
@@ -219,19 +272,21 @@ class WorkerHandler(QObject):
 	def send_request(self, cmd: DeviceRequest) -> None:
 		"""
 		Sends the request to the device worker. Checks if the device ID from the request matches the requested device ID.
-		Otherwise returns an error signal.
+		Otherwise, returns an error signal.
 		:return: None
 		"""
-		# dont do anything is the thread is not running
+		# Don't do anything is the thread is not running
 		if not self._thread.isRunning():
 			return
 
+		# Check requested device ID and emit error if not matching
 		request_device_id = cmd.device_id
 		if not request_device_id == self.device_id or request_device_id is None:
 			self.receivedResult.emit(RequestResult(self.device_id, cmd.id,
 												   error=f"Request device_id: {request_device_id} is not valid",
 												   error_type=ErrorType.TASK))
 			return
+		# Emit the request to the worker
 		else:
 			self.requestWorker.emit(cmd)
 			return
@@ -243,8 +298,10 @@ class WorkerHandler(QObject):
 		:type result: RequestResult
 		:return: None
 		"""
+		# Pass the result to the LabSyncController
 		self.receivedResult.emit(result)
 		if result.request_id.startswith(RequestType.QUIT.value):
+			# If the result is from a QUIT request, stop the thread and wait for close.
 			self._thread.quit()
 			self._thread.wait()
 		return
@@ -254,15 +311,19 @@ class WorkerHandler(QObject):
 		Non-blocking shutdown request. Called by MainWindow.closeEvent
 		:return: None
 		"""
+		# Don't do anything is the thread is not running
 		if not self._thread.isRunning():
+			# Immediately emit finished signal
 			self.handlerFinished.emit(self.device_id)
 			return
 
+		# Generate QUIT request to stop all active polls
 		self.requestWorker.emit(DeviceRequest(
 			device_id=self.device_id,
 			cmd_type=RequestType.STOP_POLL
 		))
 
+		# Generate QUIT request to stop the worker and thread
 		self.requestWorker.emit(DeviceRequest(
 			device_id=self.device_id,
 			cmd_type=RequestType.QUIT
